@@ -22,7 +22,13 @@ class Level(tools.State):
         self.game_info[c.CURRENT_TIME] = current_time
         self.death_timer = 0
         self.castle_timer = 0
-        
+
+        self.coin_group = pg.sprite.Group()
+        self.powerup_group = pg.sprite.Group()
+        self.brick_group = pg.sprite.Group()
+        self.brickpiece_group = pg.sprite.Group()
+        self.box_group = pg.sprite.Group()
+
         self.moving_score_list = []
         self.overhead_info = info.Info(self.game_info, c.LEVEL)
         self.load_map()
@@ -33,7 +39,7 @@ class Level(tools.State):
         self.setup_pipe()
         self.setup_slider()
         self.setup_static_coin()
-        self.setup_brick_and_box()
+        # self.setup_brick_and_box()
         self.setup_player()
         self.setup_enemies()
         self.setup_checkpoints()
@@ -119,17 +125,15 @@ class Level(tools.State):
             for data in self.map_data[c.MAP_COIN]:
                 self.static_coin_group.add(coin.StaticCoin(data['x'], data['y']))
 
-    def setup_brick_and_box(self):
-        self.coin_group = pg.sprite.Group()
-        self.powerup_group = pg.sprite.Group()
-        self.brick_group = pg.sprite.Group()
-        self.brickpiece_group = pg.sprite.Group()
+    def setup_brick_and_box(self, bricks):
+        # For each brick in the bricks list, create a brick with the brick's coordinates
+        for brick_coordinates in bricks:
+            brick.create_brick(self.brick_group, {'x': brick_coordinates[0], 'y': brick_coordinates[1], 'type': 0}, self)
 
         if c.MAP_BRICK in self.map_data:
             for data in self.map_data[c.MAP_BRICK]:
                 brick.create_brick(self.brick_group, data, self)
-        
-        self.box_group = pg.sprite.Group()
+
         if c.MAP_BOX in self.map_data:
             for data in self.map_data[c.MAP_BOX]:
                 if data['type'] == c.TYPE_COIN:
@@ -213,11 +217,22 @@ class Level(tools.State):
 
         map_gen_file = 'level_gen.txt'
         file_path = os.path.join('source', 'data', 'maps', map_gen_file)
+        bricks = []
         for i in range(c.GEN_LENGTH):
-            print(linecache.getline(file_path, self.gen_line))
+            line = linecache.getline(file_path, self.gen_line)
+            j = 0
+            print(c.GROUND_HEIGHT)
+            for ch in line:
+                if ch == 'B':
+                    bricks.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
+                # if ch == 'E'
+                j += 1
+
+            self.map_data[c.GEN_BORDER] += 43
             self.gen_line += 1
 
-        self.map_data[c.GEN_BORDER] += 43 * c.GEN_LENGTH
+        self.setup_brick_and_box(bricks)
+
     
     def update_all_sprites(self, keys):
         if self.player.dead:
