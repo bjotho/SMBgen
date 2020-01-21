@@ -8,7 +8,7 @@ import random
 import pygame as pg
 from .. import setup, tools
 from .. import constants as c
-from ..components import info, stuff, player, brick, box, enemy, powerup, coin
+from ..components import info, stuff, player, brick, step, box, enemy, powerup, coin
 
 
 class Level(tools.State):
@@ -28,6 +28,7 @@ class Level(tools.State):
         self.brick_group = pg.sprite.Group()
         self.brickpiece_group = pg.sprite.Group()
         self.box_group = pg.sprite.Group()
+        self.step_sprite_group = pg.sprite.Group()
 
         self.moving_score_list = []
         self.overhead_info = info.Info(self.game_info, c.LEVEL)
@@ -140,7 +141,14 @@ class Level(tools.State):
                     self.box_group.add(box.Box(data['x'], data['y'], data['type'], self.coin_group))
                 else:
                     self.box_group.add(box.Box(data['x'], data['y'], data['type'], self.powerup_group))
-            
+
+    def setup_step(self, steps):
+        # For each step in the steps list, create a step with the step's coordinates
+        for step_coordinates in steps:
+            step.create_step(self.brick_group, {'x': step_coordinates[0], 'y': step_coordinates[1], 'type': 0}, self)
+
+        # self.step_group = self.setup_collide(c.MAP_STEP)
+
     def setup_player(self):
         if self.player is None:
             self.player = player.Player(self.game_info[c.PLAYER_NAME])
@@ -218,20 +226,23 @@ class Level(tools.State):
         map_gen_file = 'level_gen.txt'
         file_path = os.path.join('source', 'data', 'maps', map_gen_file)
         bricks = []
+        steps = []
         for i in range(c.GEN_LENGTH):
             line = linecache.getline(file_path, self.gen_line)
             j = 0
-            print(c.GROUND_HEIGHT)
             for ch in line:
                 if ch == 'B':
                     bricks.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
-                # if ch == 'E'
+                if ch == 'X':
+                    steps.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
+
                 j += 1
 
             self.map_data[c.GEN_BORDER] += 43
             self.gen_line += 1
 
         self.setup_brick_and_box(bricks)
+        self.setup_step(steps)
 
     
     def update_all_sprites(self, keys):
@@ -262,6 +273,7 @@ class Level(tools.State):
             self.enemy_group.update(self.game_info, self)
             self.shell_group.update(self.game_info, self)
             self.brick_group.update()
+            self.step_sprite_group.update()
             self.box_group.update(self.game_info)
             self.powerup_group.update(self.game_info, self)
             self.coin_group.update(self.game_info)

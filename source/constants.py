@@ -1,6 +1,6 @@
 __author__ = 'marble_xu'
 
-DEBUG = False
+DEBUG = True
 DEBUG_START_X = 110
 DEBUG_START_y = 538
 
@@ -34,6 +34,7 @@ BGCOLOR = WHITE
 
 SIZE_MULTIPLIER = 2.5
 BRICK_SIZE_MULTIPLIER = 2.69
+STEP_SIZE_MULTIPLIER = 2.69
 BACKGROUND_MULTIPLER = 2.679
 GROUND_HEIGHT = SCREEN_HEIGHT - 62
 
@@ -75,6 +76,7 @@ PIPE_TYPE_IN = 1                # can go down in the pipe
 PIPE_TYPE_HORIZONTAL = 2        # can go right in the pipe
 MAP_STEP = 'step'
 MAP_BRICK = 'brick'
+STEP_NUM = 'step_num'
 BRICK_NUM = 'brick_num'
 TYPE_NONE = 0
 TYPE_COIN = 1
