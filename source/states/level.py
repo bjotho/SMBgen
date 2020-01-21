@@ -6,7 +6,7 @@ import json
 import random
 
 import pygame as pg
-from .. import setup, tools
+from .. import setup, tools, generation
 from .. import constants as c
 from ..components import info, stuff, player, brick, step, box, enemy, powerup, coin
 
@@ -49,6 +49,10 @@ class Level(tools.State):
 
         self.generations = 0
         self.gen_line = 0
+        self.map_gen_file = 'level_gen.txt'
+        self.file_path = os.path.join('source', 'data', 'maps', self.map_gen_file)
+        open(self.file_path, 'w').close()
+        self.gan = generation.GAN()
 
     def load_map(self):
         map_file = 'level_gen.json'
@@ -223,23 +227,49 @@ class Level(tools.State):
         print("Generation", self.generations)
         print(self.player.rect.x)
 
-        map_gen_file = 'level_gen.txt'
-        file_path = os.path.join('source', 'data', 'maps', map_gen_file)
+        self.gan.generate(self.map_gen_file)
+
         bricks = []
         steps = []
+
+        lines = 0
+        with open(self.file_path) as file:
+            for line in file:
+                if lines >= self.gen_line:
+                    j = 0
+                    for ch in line:
+                        if ch == 'B':
+                            bricks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                        if ch == 'X':
+                            steps.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+
+                        j += 1
+                    self.map_data[c.GEN_BORDER] += 43
+                    self.gen_line += 1
+                lines += 1
+
+        '''
         for i in range(c.GEN_LENGTH):
-            line = linecache.getline(file_path, self.gen_line)
+            line = linecache.getline(self.file_path, self.gen_line)
             j = 0
             for ch in line:
                 if ch == 'B':
-                    bricks.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
+                    bricks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
                 if ch == 'X':
-                    steps.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
+                    steps.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
 
                 j += 1
+        
 
             self.map_data[c.GEN_BORDER] += 43
             self.gen_line += 1
+        '''
+
+        #linecache.updatecache(self.file_path)
+        #linecache.clearcache()
+
+        print(sum(1 for line in linecache.getlines(self.file_path)))
+        print(self.gen_line)
 
         self.setup_brick_and_box(bricks)
         self.setup_step(steps)
