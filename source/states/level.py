@@ -8,7 +8,7 @@ import random
 import pygame as pg
 from .. import setup, tools
 from .. import constants as c
-from ..components import info, stuff, player, brick, step, box, enemy, powerup, coin
+from ..components import info, stuff, player, brick, static_tile, box, enemy, powerup, coin
 
 
 class Level(tools.State):
@@ -28,15 +28,16 @@ class Level(tools.State):
         self.brick_group = pg.sprite.Group()
         self.brickpiece_group = pg.sprite.Group()
         self.box_group = pg.sprite.Group()
-        self.step_sprite_group = pg.sprite.Group()
+        self.step_group = pg.sprite.Group()
+        self.ground_group = pg.sprite.Group()
+        self.solid_group = pg.sprite.Group()
 
         self.moving_score_list = []
         self.overhead_info = info.Info(self.game_info, c.LEVEL)
         self.load_map()
         self.setup_background()
         self.setup_maps()
-        self.ground_group = self.setup_collide(c.MAP_GROUND)
-        self.step_group = self.setup_collide(c.MAP_STEP)
+        self.start_ground_group = self.setup_collide(c.MAP_GROUND)
         self.setup_pipe()
         self.setup_slider()
         self.setup_static_coin()
@@ -47,6 +48,7 @@ class Level(tools.State):
         self.setup_flagpole()
         self.setup_sprite_groups()
 
+        self.do_generate = True
         self.generations = 0
         self.gen_line = 0
 
@@ -142,13 +144,6 @@ class Level(tools.State):
                 else:
                     self.box_group.add(box.Box(data['x'], data['y'], data['type'], self.powerup_group))
 
-    def setup_step(self, steps):
-        # For each step in the steps list, create a step with the step's coordinates
-        for step_coordinates in steps:
-            step.create_step(self.brick_group, {'x': step_coordinates[0], 'y': step_coordinates[1], 'type': 0}, self)
-
-        # self.step_group = self.setup_collide(c.MAP_STEP)
-
     def setup_player(self):
         if self.player is None:
             self.player = player.Player(self.game_info[c.PLAYER_NAME])
@@ -204,7 +199,7 @@ class Level(tools.State):
         self.enemy_group = pg.sprite.Group()
         self.shell_group = pg.sprite.Group()
         
-        self.ground_step_pipe_group = pg.sprite.Group(self.ground_group,
+        self.ground_step_pipe_group = pg.sprite.Group(self.start_ground_group,
                         self.pipe_group, self.step_group, self.slider_group)
         self.player_group = pg.sprite.Group(self.player)
         
@@ -214,9 +209,14 @@ class Level(tools.State):
         self.draw(surface)
     
     def handle_states(self, keys):
-        if self.map_data[c.GEN_BORDER] - self.player.rect.x < c.GEN_DISTANCE:
+        if self.map_data[c.GEN_BORDER] - self.player.rect.x < c.GEN_DISTANCE and self.do_generate:
             self.generate()
         self.update_all_sprites(keys)
+
+    def setup_static_tile(self, tiles, group, sprite_x, sprite_y):
+        # For each tile in the tiles list, create a tile with the tile's coordinates
+        for tile_coordinates in tiles:
+            static_tile.create_static_tile(group, {'sprite_x': sprite_x, 'sprite_y': sprite_y, 'x': tile_coordinates[0], 'y': tile_coordinates[1], 'type': 0}, self)
 
     def generate(self):
         self.generations += 1
@@ -225,16 +225,22 @@ class Level(tools.State):
 
         map_gen_file = 'level_gen.txt'
         file_path = os.path.join('source', 'data', 'maps', map_gen_file)
+        ground = []
         bricks = []
         steps = []
+        solid_blocks = []
         for i in range(c.GEN_LENGTH):
             line = linecache.getline(file_path, self.gen_line)
             j = 0
             for ch in line:
+                if ch == 'G':
+                    ground.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
                 if ch == 'B':
                     bricks.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
                 if ch == 'X':
                     steps.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
+                if ch == 'S':
+                    solid_blocks.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
 
                 j += 1
 
@@ -242,8 +248,9 @@ class Level(tools.State):
             self.gen_line += 1
 
         self.setup_brick_and_box(bricks)
-        self.setup_step(steps)
-
+        self.setup_static_tile(steps, self.step_group, 0, 16)
+        self.setup_static_tile(ground, self.ground_group, 0, 0)
+        self.setup_static_tile(solid_blocks, self.solid_group, 16, 0)
     
     def update_all_sprites(self, keys):
         if self.player.dead:
@@ -273,7 +280,10 @@ class Level(tools.State):
             self.enemy_group.update(self.game_info, self)
             self.shell_group.update(self.game_info, self)
             self.brick_group.update()
-            self.step_sprite_group.update()
+            self.step_group.update()
+            self.start_ground_group.update()
+            self.ground_group.update()
+            self.solid_group.update()
             self.box_group.update(self.game_info)
             self.powerup_group.update(self.game_info, self)
             self.coin_group.update(self.game_info)
@@ -351,15 +361,25 @@ class Level(tools.State):
     
     def check_player_x_collisions(self):
         ground_step_pipe = pg.sprite.spritecollideany(self.player, self.ground_step_pipe_group)
+        ground = pg.sprite.spritecollideany(self.player, self.ground_group)
         brick = pg.sprite.spritecollideany(self.player, self.brick_group)
         box = pg.sprite.spritecollideany(self.player, self.box_group)
+        step = pg.sprite.spritecollideany(self.player, self.step_group)
+        solid = pg.sprite.spritecollideany(self.player, self.solid_group)
+
         enemy = pg.sprite.spritecollideany(self.player, self.enemy_group)
         shell = pg.sprite.spritecollideany(self.player, self.shell_group)
         powerup = pg.sprite.spritecollideany(self.player, self.powerup_group)
         coin = pg.sprite.spritecollideany(self.player, self.static_coin_group)
 
-        if box:
+        if ground:
+            self.adjust_player_for_x_collisions(ground)
+        elif box:
             self.adjust_player_for_x_collisions(box)
+        elif step:
+            self.adjust_player_for_x_collisions(step)
+        elif solid:
+            self.adjust_player_for_x_collisions(solid)
         elif brick:
             self.adjust_player_for_x_collisions(brick)
         elif ground_step_pipe:
@@ -443,19 +463,29 @@ class Level(tools.State):
         self.player.x_vel = 0
 
     def check_player_y_collisions(self):
+        ground = pg.sprite.spritecollideany(self.player, self.ground_group)
+        step = pg.sprite.spritecollideany(self.player, self.step_group)
+        solid = pg.sprite.spritecollideany(self.player, self.solid_group)
+
         ground_step_pipe = pg.sprite.spritecollideany(self.player, self.ground_step_pipe_group)
         enemy = pg.sprite.spritecollideany(self.player, self.enemy_group)
         shell = pg.sprite.spritecollideany(self.player, self.shell_group)
 
         # decrease runtime delay: when player is on the ground, don't check brick and box
-        if self.player.rect.bottom < c.GROUND_HEIGHT:
-            brick = pg.sprite.spritecollideany(self.player, self.brick_group)
-            box = pg.sprite.spritecollideany(self.player, self.box_group)
-            brick, box = self.prevent_collision_conflict(brick, box)
-        else:
-            brick, box = False, False
+        # if self.player.rect.bottom < c.GROUND_HEIGHT:
+        brick = pg.sprite.spritecollideany(self.player, self.brick_group)
+        box = pg.sprite.spritecollideany(self.player, self.box_group)
+        brick, box = self.prevent_collision_conflict(brick, box)
+        # else:
+        #     brick, box = False, False
 
-        if box:
+        if ground:
+            self.adjust_player_for_y_collisions(ground)
+        elif step:
+            self.adjust_player_for_y_collisions(step)
+        elif solid:
+            self.adjust_player_for_y_collisions(solid)
+        elif box:
             self.adjust_player_for_y_collisions(box)
         elif brick:
             self.adjust_player_for_y_collisions(brick)
@@ -568,7 +598,11 @@ class Level(tools.State):
     def check_is_falling(self, sprite):
         sprite.rect.y += 1
         check_group = pg.sprite.Group(self.ground_step_pipe_group,
-                            self.brick_group, self.box_group)
+                                      self.brick_group,
+                                      self.ground_group,
+                                      self.step_group,
+                                      self.solid_group,
+                                      self.box_group)
         
         if pg.sprite.spritecollideany(sprite, check_group) is None:
             if (sprite.state == c.WALK_AUTO or
@@ -636,8 +670,13 @@ class Level(tools.State):
     def draw(self, surface):
         self.level.blit(self.background, self.viewport, self.viewport)
         self.powerup_group.draw(self.level)
+
         self.brick_group.draw(self.level)
         self.box_group.draw(self.level)
+        self.ground_group.draw(self.level)
+        self.step_group.draw(self.level)
+        self.solid_group.draw(self.level)
+
         self.coin_group.draw(self.level)
         self.dying_group.draw(self.level)
         self.brickpiece_group.draw(self.level)

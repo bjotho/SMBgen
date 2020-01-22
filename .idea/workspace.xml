@@ -2,11 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="55c5775c-f020-4976-9c04-25a18b953cb5" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/source/components/step.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/source/components/static_tile.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/source/components/brick.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/components/brick.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/components/step.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/source/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/constants.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/data/maps/level_1.json" beforeDir="false" afterPath="$PROJECT_DIR$/source/data/maps/level_1.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/data/maps/level_2.json" beforeDir="false" afterPath="$PROJECT_DIR$/source/data/maps/level_2.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/data/maps/level_3.json" beforeDir="false" afterPath="$PROJECT_DIR$/source/data/maps/level_3.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/data/maps/level_4.json" beforeDir="false" afterPath="$PROJECT_DIR$/source/data/maps/level_4.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/data/maps/level_gen.json" beforeDir="false" afterPath="$PROJECT_DIR$/source/data/maps/level_gen.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/source/data/maps/level_gen.txt" beforeDir="false" afterPath="$PROJECT_DIR$/source/data/maps/level_gen.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/source/states/level.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/states/level.py" afterDir="false" />
     </list>
@@ -91,26 +95,50 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
-    <state width="1095" height="269" key="GridCell.Tab.0.bottom" timestamp="1579604012346">
+    <state x="359" y="302" width="524" height="502" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1579604952995">
       <screen x="67" y="27" width="1853" height="1053" />
     </state>
-    <state width="1095" height="269" key="GridCell.Tab.0.bottom/67.27.1853.1053@67.27.1853.1053" timestamp="1579604012346" />
-    <state width="1095" height="269" key="GridCell.Tab.0.center" timestamp="1579604012345">
+    <state x="359" y="302" width="524" height="502" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/67.27.1853.1053@67.27.1853.1053" timestamp="1579604952995" />
+    <state width="1095" height="269" key="GridCell.Tab.0.bottom" timestamp="1579616509501">
       <screen x="67" y="27" width="1853" height="1053" />
     </state>
-    <state width="1095" height="269" key="GridCell.Tab.0.center/67.27.1853.1053@67.27.1853.1053" timestamp="1579604012345" />
-    <state width="1095" height="269" key="GridCell.Tab.0.left" timestamp="1579604012345">
+    <state width="1095" height="269" key="GridCell.Tab.0.bottom/67.27.1853.1053@67.27.1853.1053" timestamp="1579616509501" />
+    <state width="1095" height="269" key="GridCell.Tab.0.center" timestamp="1579616509500">
       <screen x="67" y="27" width="1853" height="1053" />
     </state>
-    <state width="1095" height="269" key="GridCell.Tab.0.left/67.27.1853.1053@67.27.1853.1053" timestamp="1579604012345" />
-    <state width="1095" height="269" key="GridCell.Tab.0.right" timestamp="1579604012346">
+    <state width="1095" height="269" key="GridCell.Tab.0.center/67.27.1853.1053@67.27.1853.1053" timestamp="1579616509500" />
+    <state width="1095" height="269" key="GridCell.Tab.0.left" timestamp="1579616509499">
       <screen x="67" y="27" width="1853" height="1053" />
     </state>
-    <state width="1095" height="269" key="GridCell.Tab.0.right/67.27.1853.1053@67.27.1853.1053" timestamp="1579604012346" />
+    <state width="1095" height="269" key="GridCell.Tab.0.left/67.27.1853.1053@67.27.1853.1053" timestamp="1579616509499" />
+    <state width="1095" height="269" key="GridCell.Tab.0.right" timestamp="1579616509501">
+      <screen x="67" y="27" width="1853" height="1053" />
+    </state>
+    <state width="1095" height="269" key="GridCell.Tab.0.right/67.27.1853.1053@67.27.1853.1053" timestamp="1579616509501" />
+    <state width="1095" height="333" key="GridCell.Tab.1.bottom" timestamp="1579613715597">
+      <screen x="67" y="27" width="1853" height="1053" />
+    </state>
+    <state width="1095" height="333" key="GridCell.Tab.1.bottom/67.27.1853.1053@67.27.1853.1053" timestamp="1579613715597" />
+    <state width="1095" height="333" key="GridCell.Tab.1.center" timestamp="1579613715596">
+      <screen x="67" y="27" width="1853" height="1053" />
+    </state>
+    <state width="1095" height="333" key="GridCell.Tab.1.center/67.27.1853.1053@67.27.1853.1053" timestamp="1579613715596" />
+    <state width="1095" height="333" key="GridCell.Tab.1.left" timestamp="1579613715596">
+      <screen x="67" y="27" width="1853" height="1053" />
+    </state>
+    <state width="1095" height="333" key="GridCell.Tab.1.left/67.27.1853.1053@67.27.1853.1053" timestamp="1579613715596" />
+    <state width="1095" height="333" key="GridCell.Tab.1.right" timestamp="1579613715597">
+      <screen x="67" y="27" width="1853" height="1053" />
+    </state>
+    <state width="1095" height="333" key="GridCell.Tab.1.right/67.27.1853.1053@67.27.1853.1053" timestamp="1579613715597" />
     <state x="120" y="188" key="SettingsEditor" timestamp="1579527527384">
       <screen x="67" y="27" width="1853" height="1053" />
     </state>
     <state x="120" y="188" key="SettingsEditor/67.27.1853.1053@67.27.1853.1053" timestamp="1579527527384" />
+    <state width="463" height="526" key="XDebugger.FullValuePopup" timestamp="1579613493437">
+      <screen x="67" y="27" width="1853" height="1053" />
+    </state>
+    <state width="463" height="526" key="XDebugger.FullValuePopup/67.27.1853.1053@67.27.1853.1053" timestamp="1579613493437" />
     <state x="282" y="381" key="com.intellij.ide.util.TipDialog" timestamp="1579527657681">
       <screen x="67" y="27" width="1853" height="1053" />
     </state>
@@ -119,5 +147,16 @@
       <screen x="67" y="27" width="1853" height="1053" />
     </state>
     <state x="1475" y="396" width="894" height="684" key="dock-window-1/67.27.1853.1053@67.27.1853.1053" timestamp="1579535018543" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/source/components/player.py</url>
+          <line>347</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

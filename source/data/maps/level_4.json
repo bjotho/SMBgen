@@ -83,5 +83,6 @@
         {"x":3900, "y":0, "width":10, "height":600, "type":0, "enemy_groupid":7},
         {"x":6026, "y":324, "width":40, "height":40, "type":7, "enemy_groupid":0},
         {"x":6510, "y":0, "width":10, "height":600, "type":2, "enemy_groupid":0}
-    ]
+    ],
+    "gen_border": 0
 }
