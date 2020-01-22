@@ -1,6 +1,6 @@
 __author__ = 'marble_xu'
 
-DEBUG = True
+DEBUG = False
 DEBUG_START_X = 110
 DEBUG_START_y = 538
 
@@ -71,6 +71,7 @@ MAP_PIPE = 'pipe'
 GEN_BORDER = 'gen_border'
 GEN_DISTANCE = 430
 GEN_LENGTH = 5
+COL_HEIGHT = 13
 PIPE_TYPE_NONE = 0
 PIPE_TYPE_IN = 1                # can go down in the pipe
 PIPE_TYPE_HORIZONTAL = 2        # can go right in the pipe

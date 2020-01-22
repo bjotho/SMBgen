@@ -19,7 +19,8 @@
     "enemy":[
     ],
     "checkpoint":[
-        {"x":8504, "y":-10, "width": 6, "height":600, "type":1}
+        {"x":8504, "y":-10, "width": 6, "height":600, "type":1},
+        {"x":8780, "y":  0, "width":10, "height":600, "type":2}
     ],
     "flagpole":[
         {"x":8470, "y":116, "type":0},

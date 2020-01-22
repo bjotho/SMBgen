@@ -41,7 +41,7 @@ class Level(tools.State):
         self.setup_pipe()
         self.setup_slider()
         self.setup_static_coin()
-        # self.setup_brick_and_box()
+        self.setup_brick_and_box([], [])
         self.setup_player()
         self.setup_enemies()
         self.setup_checkpoints()
@@ -134,10 +134,14 @@ class Level(tools.State):
             for data in self.map_data[c.MAP_COIN]:
                 self.static_coin_group.add(coin.StaticCoin(data['x'], data['y']))
 
-    def setup_brick_and_box(self, bricks):
+    def setup_brick_and_box(self, bricks, boxes):
         # For each brick in the bricks list, create a brick with the brick's coordinates
         for brick_coordinates in bricks:
             brick.create_brick(self.brick_group, {'x': brick_coordinates[0], 'y': brick_coordinates[1], 'type': 0}, self)
+
+        # For each box in the boxes list, create a box with the box's coordinates
+        for box_coordinates in boxes:
+            self.box_group.add(box.Box(box_coordinates[0], box_coordinates[1], 1, self.coin_group))
 
         if c.MAP_BRICK in self.map_data:
             for data in self.map_data[c.MAP_BRICK]:
@@ -231,8 +235,14 @@ class Level(tools.State):
 
         new_terrain = self.gan.generate(self.map_gen_file)
 
+        if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x']:
+            new_terrain = []
+            for i in range(c.GEN_LENGTH - 1):
+                new_terrain.append("\nGG")
+
         ground = []
         bricks = []
+        boxes = []
         steps = []
         solid_blocks = []
         line_num = 0
@@ -241,66 +251,52 @@ class Level(tools.State):
             with open(self.file_path) as file:
                 for line in file:
                     if line_num >= self.gen_line:
-                        j = 0
+                        i = 0
                         for ch in line:
                             if ch == 'G':
-                                ground.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
-                            if ch == 'B':
-                                bricks.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
-                            if ch == 'X':
-                                steps.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
-                            if ch == 'S':
-                                solid_blocks.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
+                                ground.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
+                            elif ch == 'B':
+                                bricks.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
+                            elif ch == 'Q':
+                                boxes.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
+                            elif ch == 'X':
+                                steps.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
+                            elif ch == 'S':
+                                solid_blocks.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
 
-                            j += 1
+                            i += 1
                         self.map_data[c.GEN_BORDER] += 43
                         self.gen_line += 1
                     line_num += 1
         else:
             for line in new_terrain:
-                j = 0
+                i = 0
                 for ch in line:
                     if ch == 'G':
-                        ground.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
-                    if ch == 'B':
-                        bricks.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
-                    if ch == 'X':
-                        steps.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
-                    if ch == 'S':
-                        solid_blocks.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
+                        ground.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
+                    elif ch == 'B':
+                        bricks.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
+                    elif ch == 'Q':
+                        boxes.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
+                    elif ch == 'X':
+                        steps.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
+                    elif ch == 'S':
+                        solid_blocks.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
 
-                    j += 1
+                    i += 1
                 self.map_data[c.GEN_BORDER] += 43
                 self.gen_line += 1
 
         '''
         for i in range(c.GEN_LENGTH):
             line = linecache.getline(self.file_path, self.gen_line)
-            j = 0
-            for ch in line:
-                if ch == 'G':
-                    ground.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
-                if ch == 'B':
-                    bricks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
-                if ch == 'X':
-                    steps.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
-                if ch == 'S':
-                    solid_blocks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+            [...]
 
-                j += 1
-        
-
-            self.map_data[c.GEN_BORDER] += 43
-            self.gen_line += 1
+        linecache.updatecache(self.file_path)
+        linecache.clearcache()
         '''
 
-        #linecache.updatecache(self.file_path)
-        #linecache.clearcache()
-
-        print(sum(1 for line in linecache.getlines(self.file_path)))
-        print(self.gen_line)
-
-        self.setup_brick_and_box(bricks)
+        self.setup_brick_and_box(bricks, boxes)
         self.setup_static_tile(steps, self.step_group, 0, 16)
         self.setup_static_tile(ground, self.ground_group, 0, 0)
         self.setup_static_tile(solid_blocks, self.solid_group, 16, 0)
