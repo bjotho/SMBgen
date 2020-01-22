@@ -52,10 +52,11 @@ class Level(tools.State):
         self.generations = 0
         self.gen_line = 0
         self.read_from_file = False
+        self.write_to_file = False
         self.map_gen_file = 'level_gen.txt'
         self.file_path = os.path.join('source', 'data', 'maps', self.map_gen_file)
         open(self.file_path, 'w').close()
-        self.gan = generation.GAN()
+        self.gan = generation.GAN(self.write_to_file)
 
     def load_map(self):
         map_file = 'level_gen.json'
@@ -243,13 +244,13 @@ class Level(tools.State):
                         j = 0
                         for ch in line:
                             if ch == 'G':
-                                ground.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                                ground.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
                             if ch == 'B':
-                                bricks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                                bricks.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
                             if ch == 'X':
-                                steps.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                                steps.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
                             if ch == 'S':
-                                solid_blocks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                                solid_blocks.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
 
                             j += 1
                         self.map_data[c.GEN_BORDER] += 43
@@ -257,15 +258,16 @@ class Level(tools.State):
                     line_num += 1
         else:
             for line in new_terrain:
+                j = 0
                 for ch in line:
                     if ch == 'G':
-                        ground.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                        ground.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
                     if ch == 'B':
-                        bricks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                        bricks.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
                     if ch == 'X':
-                        steps.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                        steps.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
                     if ch == 'S':
-                        solid_blocks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                        solid_blocks.append([self.map_data[c.GEN_BORDER], 624 - (43 * j)])
 
                     j += 1
                 self.map_data[c.GEN_BORDER] += 43
