@@ -9,11 +9,11 @@ class GAN():
 
     def generate(self, file_name):
         """Create 2D list """
-        choices = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "G", "B", "X", "S", "Q"]
+        choices = [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", "G", "B", "X", "S", "Q", "E"]
         output = []
 
         for i in range(c.GEN_LENGTH - 1):
-            map_row = "\nGG  "
+            map_row = ""
             for _ in range(c.COL_HEIGHT - 4):
                 map_row += random.choice(choices)
 
@@ -21,6 +21,6 @@ class GAN():
 
             if self.write:
                 with open("source/data/maps/" + file_name, "a") as file:
-                    file.write(map_row)
+                    file.write(map_row + "\n")
 
         return output

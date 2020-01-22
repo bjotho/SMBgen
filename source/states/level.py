@@ -41,9 +41,9 @@ class Level(tools.State):
         self.setup_pipe()
         self.setup_slider()
         self.setup_static_coin()
-        self.setup_brick_and_box([], [])
+        # self.setup_brick_and_box([], [])
         self.setup_player()
-        self.setup_enemies()
+        # self.setup_enemies([])
         self.setup_checkpoints()
         self.setup_flagpole()
         self.setup_sprite_groups()
@@ -166,13 +166,12 @@ class Level(tools.State):
             self.player.rect.bottom = c.DEBUG_START_y
         self.viewport.x = self.player.rect.x - 110
 
-    def setup_enemies(self):
+    def setup_enemies(self, enemies):
         self.enemy_group_list = []
         index = 0
-        for data in self.map_data[c.MAP_ENEMY]:
+        for enemy_data in enemies:
             group = pg.sprite.Group()
-            for item in data[str(index)]:
-                group.add(enemy.create_enemy(item, self))
+            group.add(enemy.create_enemy({'x': enemy_data[0], 'y': enemy_data[1], 'direction': 0, 'type': 0, 'color': 0}, self))
             self.enemy_group_list.append(group)
             index += 1
             
@@ -238,54 +237,26 @@ class Level(tools.State):
         if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x']:
             new_terrain = []
             for i in range(c.GEN_LENGTH - 1):
-                new_terrain.append("\nGG")
+                new_terrain.append("GG")
 
-        ground = []
-        bricks = []
-        boxes = []
-        steps = []
-        solid_blocks = []
-        line_num = 0
+        tiles = {'ground': [],
+                 'bricks': [],
+                 'boxes': [],
+                 'steps': [],
+                 'solid_blocks': [],
+                 'goomba': []
+                }
 
         if self.read_from_file:
+            line_num = 0
             with open(self.file_path) as file:
                 for line in file:
                     if line_num >= self.gen_line:
-                        i = 0
-                        for ch in line:
-                            if ch == 'G':
-                                ground.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-                            elif ch == 'B':
-                                bricks.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-                            elif ch == 'Q':
-                                boxes.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-                            elif ch == 'X':
-                                steps.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-                            elif ch == 'S':
-                                solid_blocks.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-
-                            i += 1
-                        self.map_data[c.GEN_BORDER] += 43
-                        self.gen_line += 1
+                        tiles = self.build_tiles_dict(tiles, line)
                     line_num += 1
         else:
             for line in new_terrain:
-                i = 0
-                for ch in line:
-                    if ch == 'G':
-                        ground.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-                    elif ch == 'B':
-                        bricks.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-                    elif ch == 'Q':
-                        boxes.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-                    elif ch == 'X':
-                        steps.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-                    elif ch == 'S':
-                        solid_blocks.append([self.map_data[c.GEN_BORDER], 624 - (43 * i)])
-
-                    i += 1
-                self.map_data[c.GEN_BORDER] += 43
-                self.gen_line += 1
+                tiles = self.build_tiles_dict(tiles, line)
 
         '''
         for i in range(c.GEN_LENGTH):
@@ -296,10 +267,32 @@ class Level(tools.State):
         linecache.clearcache()
         '''
 
-        self.setup_brick_and_box(bricks, boxes)
-        self.setup_static_tile(steps, self.step_group, 0, 16)
-        self.setup_static_tile(ground, self.ground_group, 0, 0)
-        self.setup_static_tile(solid_blocks, self.solid_group, 16, 0)
+        self.setup_brick_and_box(tiles['bricks'], tiles['boxes'])
+        self.setup_static_tile(tiles['steps'], self.step_group, 0, 16)
+        self.setup_static_tile(tiles['ground'], self.ground_group, 0, 0)
+        self.setup_static_tile(tiles['solid_blocks'], self.solid_group, 16, 0)
+        self.setup_enemies(tiles['goomba'])
+
+    def build_tiles_dict(self, tiles, line):
+        i = 0
+        for ch in line:
+            if ch == 'G':
+                tiles['ground'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+            elif ch == 'B':
+                tiles['bricks'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+            elif ch == 'Q':
+                tiles['boxes'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+            elif ch == 'X':
+                tiles['steps'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+            elif ch == 'S':
+                tiles['solid_blocks'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+            elif ch == 'E':
+                tiles['goomba'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+
+            i += 1
+        self.map_data[c.GEN_BORDER] += 44
+        self.gen_line += 1
+        return tiles
     
     def update_all_sprites(self, keys):
         if self.player.dead:
