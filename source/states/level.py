@@ -6,7 +6,7 @@ import json
 import random
 
 import pygame as pg
-from .. import setup, tools
+from .. import setup, tools, generation
 from .. import constants as c
 from ..components import info, stuff, player, brick, static_tile, box, enemy, powerup, coin
 
@@ -51,6 +51,11 @@ class Level(tools.State):
         self.do_generate = True
         self.generations = 0
         self.gen_line = 0
+        self.read_from_file = False
+        self.map_gen_file = 'level_gen.txt'
+        self.file_path = os.path.join('source', 'data', 'maps', self.map_gen_file)
+        open(self.file_path, 'w').close()
+        self.gan = generation.GAN()
 
     def load_map(self):
         map_file = 'level_gen.json'
@@ -223,29 +228,75 @@ class Level(tools.State):
         print("Generation", self.generations)
         print(self.player.rect.x)
 
-        map_gen_file = 'level_gen.txt'
-        file_path = os.path.join('source', 'data', 'maps', map_gen_file)
+        new_terrain = self.gan.generate(self.map_gen_file)
+
         ground = []
         bricks = []
         steps = []
         solid_blocks = []
+        line_num = 0
+
+        if self.read_from_file:
+            with open(self.file_path) as file:
+                for line in file:
+                    if line_num >= self.gen_line:
+                        j = 0
+                        for ch in line:
+                            if ch == 'G':
+                                ground.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                            if ch == 'B':
+                                bricks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                            if ch == 'X':
+                                steps.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                            if ch == 'S':
+                                solid_blocks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+
+                            j += 1
+                        self.map_data[c.GEN_BORDER] += 43
+                        self.gen_line += 1
+                    line_num += 1
+        else:
+            for line in new_terrain:
+                for ch in line:
+                    if ch == 'G':
+                        ground.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                    if ch == 'B':
+                        bricks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                    if ch == 'X':
+                        steps.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+                    if ch == 'S':
+                        solid_blocks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
+
+                    j += 1
+                self.map_data[c.GEN_BORDER] += 43
+                self.gen_line += 1
+
+        '''
         for i in range(c.GEN_LENGTH):
-            line = linecache.getline(file_path, self.gen_line)
+            line = linecache.getline(self.file_path, self.gen_line)
             j = 0
             for ch in line:
                 if ch == 'G':
-                    ground.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
+                    ground.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
                 if ch == 'B':
-                    bricks.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
+                    bricks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
                 if ch == 'X':
-                    steps.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
+                    steps.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
                 if ch == 'S':
-                    solid_blocks.append([self.map_data[c.GEN_BORDER], 667 - (43 * j)])
+                    solid_blocks.append([self.map_data[c.GEN_BORDER], 581 - (43 * j)])
 
                 j += 1
+        
 
             self.map_data[c.GEN_BORDER] += 43
             self.gen_line += 1
+        '''
+
+        #linecache.updatecache(self.file_path)
+        #linecache.clearcache()
+
+        print(sum(1 for line in linecache.getlines(self.file_path)))
+        print(self.gen_line)
 
         self.setup_brick_and_box(bricks)
         self.setup_static_tile(steps, self.step_group, 0, 16)
