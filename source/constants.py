@@ -62,18 +62,23 @@ PLAYER_NAME = 'player name'
 PLAYER_MARIO = 'mario'
 PLAYER_LUIGI = 'luigi'
 
-#MAP COMPONENTS
-MAP_IMAGE = 'image_name'
-MAP_MAPS = 'maps'
-SUB_MAP = 'sub_map'
-MAP_GROUND = 'ground'
-MAP_PIPE = 'pipe'
+#MAP GENERATION
+READ = True
+WRITE = True
+SAVE_LEVEL = False
 GEN_BORDER = 'gen_border'
 GEN_HEIGHT = 580
 GEN_DISTANCE = 440
 GEN_LENGTH = 5
 COL_HEIGHT = 13
 BLOCK_SIZE = 43
+
+#MAP COMPONENTS
+MAP_IMAGE = 'image_name'
+MAP_MAPS = 'maps'
+SUB_MAP = 'sub_map'
+MAP_GROUND = 'ground'
+MAP_PIPE = 'pipe'
 PIPE_TYPE_NONE = 0
 PIPE_TYPE_IN = 1                # can go down in the pipe
 PIPE_TYPE_HORIZONTAL = 2        # can go right in the pipe

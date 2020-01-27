@@ -54,16 +54,16 @@ class Level(tools.State):
         self.setup_sprite_groups()
 
         self.do_generate = True
+        self.only_ground = False
+        self.read = c.READ
         self.generations = 0
         self.gen_line = 0
         self.enemies = 0
-        self.only_ground = False
-        self.read_from_file = False
-        self.write_to_file = False
         self.map_gen_file = 'level_gen.txt'
         self.file_path = os.path.join('source', 'data', 'maps', self.map_gen_file)
-        open(self.file_path, 'w').close()
-        self.gan = generation.GAN(self.write_to_file)
+        # open(self.file_path, 'w').close()
+        self.gen_file_length = sum(1 for line in open(self.file_path))
+        self.gan = generation.GAN()
 
     def load_map(self):
         map_file = 'level_gen.json'
@@ -216,8 +216,7 @@ class Level(tools.State):
                 else:
                     sprite = stuff.PoleTop(data['x'], data['y'])
                 self.flagpole_group.add(sprite)
-        
-        
+
     def setup_sprite_groups(self):
         self.ground_step_pipe_group = pg.sprite.Group(self.start_ground_group,
                         self.pipe_group, self.step_group, self.slider_group)
@@ -248,14 +247,12 @@ class Level(tools.State):
     def generate(self):
         self.generations += 1
         print("Generation", self.generations)
-        print(self.player.rect.x)
-
-        new_terrain = self.gan.generate(self.map_gen_file)
-
-        if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or self.only_ground:
-            new_terrain = []
-            for i in range(c.GEN_LENGTH - 1):
-                new_terrain.append("GG")
+        # print(self.player.rect.x)
+        print(self.map_data[c.GEN_BORDER], "-", self.player.rect.x, "<", c.GEN_DISTANCE)
+        print("=", self.map_data[c.GEN_BORDER] - self.player.rect.x, "<", c.GEN_DISTANCE)
+        print("=", self.map_data[c.GEN_BORDER] - self.player.rect.x < c.GEN_DISTANCE)
+        print("gen_line:",self.gen_line)
+        print("")
 
         tiles = {'ground': [],
                  'bricks': [],
@@ -265,14 +262,27 @@ class Level(tools.State):
                  'enemies': []
                 }
 
-        if self.read_from_file:
+        if self.read:
             line_num = 0
+            limit = self.gen_line + c.GEN_LENGTH
             with open(self.file_path) as file:
                 for line in file:
+                    if line_num >= limit:
+                        break
                     if line_num >= self.gen_line:
                         tiles = self.build_tiles_dict(tiles, line)
                     line_num += 1
+
+                if self.gen_line >= self.gen_file_length:
+                    self.read = False
         else:
+            new_terrain = self.gan.generate(self.file_path)
+
+            if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or self.only_ground:
+                new_terrain = []
+                for i in range(c.GEN_LENGTH - 1):
+                    new_terrain.append("GG")
+
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
 
@@ -714,6 +724,9 @@ class Level(tools.State):
         else:
             self.game_info[c.LEVEL_NUM] += 1
             self.next = c.LOAD_SCREEN
+
+        self.read = c.READ
+        self.gen_line = 0
 
     def update_viewport(self):
         third = self.viewport.x + self.viewport.w//3
