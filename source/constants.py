@@ -2,7 +2,7 @@ __author__ = 'marble_xu'
 
 DEBUG = False
 DEBUG_START_X = 110
-DEBUG_START_y = 538
+DEBUG_START_y = 536
 
 SCREEN_HEIGHT = 600
 SCREEN_WIDTH = 800
@@ -69,9 +69,11 @@ SUB_MAP = 'sub_map'
 MAP_GROUND = 'ground'
 MAP_PIPE = 'pipe'
 GEN_BORDER = 'gen_border'
+GEN_HEIGHT = 580
 GEN_DISTANCE = 440
 GEN_LENGTH = 5
 COL_HEIGHT = 13
+BLOCK_SIZE = 43
 PIPE_TYPE_NONE = 0
 PIPE_TYPE_IN = 1                # can go down in the pipe
 PIPE_TYPE_HORIZONTAL = 2        # can go right in the pipe

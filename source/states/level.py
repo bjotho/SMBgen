@@ -1,6 +1,6 @@
 __author__ = 'marble_xu'
 
-import linecache
+# import linecache
 import os
 import json
 import random
@@ -31,7 +31,12 @@ class Level(tools.State):
         self.step_group = pg.sprite.Group()
         self.ground_group = pg.sprite.Group()
         self.solid_group = pg.sprite.Group()
+        self.dying_group = pg.sprite.Group()
+        self.enemy_group = pg.sprite.Group()
+        self.shell_group = pg.sprite.Group()
+        self.checkpoint_group = pg.sprite.Group()
 
+        self.enemy_group_list = []
         self.moving_score_list = []
         self.overhead_info = info.Info(self.game_info, c.LEVEL)
         self.load_map()
@@ -44,13 +49,15 @@ class Level(tools.State):
         # self.setup_brick_and_box([], [])
         self.setup_player()
         # self.setup_enemies([])
-        self.setup_checkpoints()
+        self.setup_checkpoints(initial=True)
         self.setup_flagpole()
         self.setup_sprite_groups()
 
         self.do_generate = True
         self.generations = 0
         self.gen_line = 0
+        self.enemies = 0
+        self.only_ground = False
         self.read_from_file = False
         self.write_to_file = False
         self.map_gen_file = 'level_gen.txt'
@@ -167,27 +174,35 @@ class Level(tools.State):
         self.viewport.x = self.player.rect.x - 110
 
     def setup_enemies(self, enemies):
-        self.enemy_group_list = []
         index = 0
         for enemy_data in enemies:
+            item = {'x': enemy_data[0], 'y': enemy_data[1], 'direction': 0, 'type': enemy_data[2], 'color': 0}
+            if item['type'] == c.ENEMY_TYPE_FLY_KOOPA:
+                item['is_vertical'] = random.randint(0, 1)
             group = pg.sprite.Group()
-            group.add(enemy.create_enemy({'x': enemy_data[0], 'y': enemy_data[1], 'direction': 0, 'type': 0, 'color': 0}, self))
+            group.add(enemy.create_enemy(item, self))
             self.enemy_group_list.append(group)
             index += 1
+
+        self.setup_checkpoints(coordinates=enemies)
             
-    def setup_checkpoints(self):
-        self.checkpoint_group = pg.sprite.Group()
-        for data in self.map_data[c.MAP_CHECKPOINT]:
-            if c.ENEMY_GROUPID in data:
-                enemy_groupid = data[c.ENEMY_GROUPID]
-            else:
-                enemy_groupid = 0
-            if c.MAP_INDEX in data:
-                map_index = data[c.MAP_INDEX]
-            else:
-                map_index = 0
-            self.checkpoint_group.add(stuff.Checkpoint(data['x'], data['y'], data['width'], 
-                data['height'], data['type'], enemy_groupid, map_index))
+    def setup_checkpoints(self, initial=False, coordinates=None):
+        if initial:
+            for data in self.map_data[c.MAP_CHECKPOINT]:
+                if c.ENEMY_GROUPID in data:
+                    enemy_groupid = data[c.ENEMY_GROUPID]
+                else:
+                    enemy_groupid = 0
+                if c.MAP_INDEX in data:
+                    map_index = data[c.MAP_INDEX]
+                else:
+                    map_index = 0
+                self.checkpoint_group.add(stuff.Checkpoint(data['x'], data['y'], data['width'],
+                    data['height'], data['type'], enemy_groupid, map_index))
+        else:
+            for data in coordinates:
+                self.checkpoint_group.add(stuff.Checkpoint(data[0], 0, 10, 600, 0, self.enemies, 0))
+                self.enemies += 1
     
     def setup_flagpole(self):
         self.flagpole_group = pg.sprite.Group()
@@ -204,13 +219,16 @@ class Level(tools.State):
         
         
     def setup_sprite_groups(self):
-        self.dying_group = pg.sprite.Group()
-        self.enemy_group = pg.sprite.Group()
-        self.shell_group = pg.sprite.Group()
-        
         self.ground_step_pipe_group = pg.sprite.Group(self.start_ground_group,
                         self.pipe_group, self.step_group, self.slider_group)
         self.player_group = pg.sprite.Group(self.player)
+
+    def get_collide_groups(self):
+        return pg.sprite.Group(self.brick_group,
+                        self.box_group,
+                        self.step_group,
+                        self.ground_group,
+                        self.solid_group)
         
     def update(self, surface, keys, current_time):
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
@@ -234,7 +252,7 @@ class Level(tools.State):
 
         new_terrain = self.gan.generate(self.map_gen_file)
 
-        if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x']:
+        if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or self.only_ground:
             new_terrain = []
             for i in range(c.GEN_LENGTH - 1):
                 new_terrain.append("GG")
@@ -244,7 +262,7 @@ class Level(tools.State):
                  'boxes': [],
                  'steps': [],
                  'solid_blocks': [],
-                 'goomba': []
+                 'enemies': []
                 }
 
         if self.read_from_file:
@@ -271,26 +289,30 @@ class Level(tools.State):
         self.setup_static_tile(tiles['steps'], self.step_group, 0, 16)
         self.setup_static_tile(tiles['ground'], self.ground_group, 0, 0)
         self.setup_static_tile(tiles['solid_blocks'], self.solid_group, 16, 0)
-        self.setup_enemies(tiles['goomba'])
+        self.setup_enemies(tiles['enemies'])
 
     def build_tiles_dict(self, tiles, line):
         i = 0
         for ch in line:
             if ch == 'G':
-                tiles['ground'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+                tiles['ground'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
             elif ch == 'B':
-                tiles['bricks'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+                tiles['bricks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
             elif ch == 'Q':
-                tiles['boxes'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+                tiles['boxes'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
             elif ch == 'X':
-                tiles['steps'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+                tiles['steps'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
             elif ch == 'S':
-                tiles['solid_blocks'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
-            elif ch == 'E':
-                tiles['goomba'].append([self.map_data[c.GEN_BORDER], 580 - (44 * i)])
+                tiles['solid_blocks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
+            elif ch == '0':
+                tiles['enemies'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i + 1), c.ENEMY_TYPE_GOOMBA])
+            elif ch == '1':
+                tiles['enemies'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i + 1), c.ENEMY_TYPE_KOOPA])
+            elif ch == '2':
+                tiles['enemies'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i + 1), c.ENEMY_TYPE_FLY_KOOPA])
 
             i += 1
-        self.map_data[c.GEN_BORDER] += 44
+        self.map_data[c.GEN_BORDER] += c.BLOCK_SIZE
         self.gen_line += 1
         return tiles
     
@@ -339,6 +361,12 @@ class Level(tools.State):
                 score.update(self.moving_score_list)
     
     def check_checkpoints(self):
+        for checkpoint in self.checkpoint_group:
+            if checkpoint.type == c.CHECKPOINT_TYPE_ENEMY:
+                group = self.enemy_group_list[checkpoint.enemy_groupid]
+                self.enemy_group.add(group)
+                checkpoint.kill()
+
         checkpoint = pg.sprite.spritecollideany(self.player, self.checkpoint_group)
         
         if checkpoint:

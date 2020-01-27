@@ -183,7 +183,7 @@ class Enemy(pg.sprite.Sprite):
                 self.rect.right = self.range_end
                 self.change_direction(c.LEFT)
         else:
-            collider = pg.sprite.spritecollideany(self, level.ground_step_pipe_group)
+            collider = pg.sprite.spritecollideany(self, level.get_collide_groups())
             if collider:
                 if self.direction == c.RIGHT:
                     self.rect.right = collider.rect.left
@@ -211,13 +211,7 @@ class Enemy(pg.sprite.Sprite):
                 self.frame_index = 0
 
     def check_y_collisions(self, level):
-        # decrease runtime delay: when enemey is on the ground, don't check brick and box
-        if self.rect.bottom >= c.GROUND_HEIGHT:
-            sprite_group = level.ground_step_pipe_group
-        else:
-            sprite_group = pg.sprite.Group(level.ground_step_pipe_group,
-                            level.brick_group, level.box_group)
-        sprite = pg.sprite.spritecollideany(self, sprite_group)
+        sprite = pg.sprite.spritecollideany(self, level.get_collide_groups())
         if sprite and sprite.name != c.MAP_SLIDER:
             if self.rect.top <= sprite.rect.top:
                 self.rect.bottom = sprite.rect.y
@@ -240,11 +234,9 @@ class Goomba(Enemy):
 
     def get_frame_rect(self, color):
         if color == c.COLOR_TYPE_GREEN:
-            frame_rect_list = [(0, 34, 16, 16), (30, 34, 16, 16), 
-                        (61, 30, 16, 16)]
+            frame_rect_list = [(0, 34, 16, 16), (30, 34, 16, 16), (61, 30, 16, 16)]
         else:
-            frame_rect_list = [(0, 4, 16, 16), (30, 4, 16, 16), 
-                        (61, 0, 16, 16)]
+            frame_rect_list = [(0, 4, 16, 16), (30, 4, 16, 16), (61, 0, 16, 16)]
         return frame_rect_list
 
     def jumped_on(self):
@@ -395,9 +387,7 @@ class Fire(Enemy):
         self.x_vel = 5 if self.direction == c.RIGHT else -5
 
     def check_x_collisions(self, level):
-        sprite_group = pg.sprite.Group(level.ground_step_pipe_group,
-                            level.brick_group, level.box_group)
-        sprite = pg.sprite.spritecollideany(self, sprite_group)
+        sprite = pg.sprite.spritecollideany(self, level.get_collide_groups())
         if sprite:
             self.kill()
 
