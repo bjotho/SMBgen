@@ -247,12 +247,7 @@ class Level(tools.State):
     def generate(self):
         self.generations += 1
         print("Generation", self.generations)
-        # print(self.player.rect.x)
-        print(self.map_data[c.GEN_BORDER], "-", self.player.rect.x, "<", c.GEN_DISTANCE)
-        print("=", self.map_data[c.GEN_BORDER] - self.player.rect.x, "<", c.GEN_DISTANCE)
-        print("=", self.map_data[c.GEN_BORDER] - self.player.rect.x < c.GEN_DISTANCE)
-        print("gen_line:",self.gen_line)
-        print("")
+        print(self.player.rect.x)
 
         tiles = {'ground': [],
                  'bricks': [],
