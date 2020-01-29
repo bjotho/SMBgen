@@ -3,6 +3,8 @@ __author__ = 'marble_xu'
 # import linecache
 import os
 import json
+import math
+import numpy as np
 import random
 
 import pygame as pg
@@ -10,6 +12,8 @@ from .. import setup, tools, generation
 from .. import constants as c
 from ..components import info, stuff, player, brick, static_tile, box, enemy, powerup, coin
 
+if c.PRINT_REWARD:
+    import matplotlib.pyplot as plt
 
 class Level(tools.State):
     def __init__(self):
@@ -61,9 +65,11 @@ class Level(tools.State):
         self.enemies = 0
         self.map_gen_file = 'level_gen.txt'
         self.file_path = os.path.join('source', 'data', 'maps', self.map_gen_file)
-        # open(self.file_path, 'w').close()
         self.gen_file_length = sum(1 for line in open(self.file_path))
         self.gan = generation.GAN()
+        self.reward_list = []
+        self.dx_list = []
+        self.optimal_mario_speed = 3
 
     def load_map(self):
         map_file = 'level_gen.json'
@@ -364,6 +370,8 @@ class Level(tools.State):
             self.overhead_info.update(self.game_info, self.player)
             for score in self.moving_score_list:
                 score.update(self.moving_score_list)
+
+            self.generator_reward()
     
     def check_checkpoints(self):
         for checkpoint in self.checkpoint_group:
@@ -423,6 +431,7 @@ class Level(tools.State):
         if self.player.state == c.UP_OUT_PIPE:
             return
 
+        self.old_player_x = self.player.rect.x
         self.player.rect.x += round(self.player.x_vel)
         if self.player.rect.x < self.start_x:
             self.player.rect.x = self.start_x
@@ -433,6 +442,17 @@ class Level(tools.State):
         if not self.player.dead:
             self.player.rect.y += round(self.player.y_vel)
             self.check_player_y_collisions()
+
+    def generator_reward(self):
+        if self.player.state in [c.STAND, c.WALK, c.JUMP, c.FALL, c.FLY]:
+            # Reward is defined as a normal distribution with symmetry around 3
+            dx = self.player.rect.x - self.old_player_x
+            reward = math.e**(-(1/2) * ((dx-self.optimal_mario_speed)**2))
+
+            if c.PRINT_REWARD:
+                if dx not in self.dx_list:
+                    self.reward_list.append(reward)
+                    self.dx_list.append(dx)
     
     def check_player_x_collisions(self):
         ground_step_pipe = pg.sprite.spritecollideany(self.player, self.ground_step_pipe_group)
@@ -722,6 +742,20 @@ class Level(tools.State):
 
         self.read = c.READ
         self.gen_line = 0
+
+        if c.PRINT_REWARD:
+            x = np.linspace(0.2, 10, 100)
+            plt.plot(x, 5 * math.e**(-(1/2) * ((x-3)**2)))
+            plt.plot(self.dx_list, self.reward_list, 'ro')
+            plt.grid(True, which='both')
+            plt.axis([-5, 10, 0, 7])
+            plt.axvline(x=0, color='black')
+            plt.xlabel('dx')
+            plt.ylabel('Reward')
+            plt.show()
+
+            self.dx_list.clear()
+            self.reward_list.clear()
 
     def update_viewport(self):
         third = self.viewport.x + self.viewport.w//3

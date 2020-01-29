@@ -2,8 +2,14 @@ __author__ = 'marble_xu'
 
 import os
 import pygame as pg
+import numpy as np
 from . import constants as c
 from . import tools
+
+# Fix random seed for reproducibility
+seed = np.random.randint(0,10000)
+np.random.seed(seed)
+print("random seed:", seed)
 
 pg.init()
 pg.event.set_allowed([pg.KEYDOWN, pg.KEYUP, pg.QUIT])
