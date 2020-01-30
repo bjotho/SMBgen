@@ -282,7 +282,7 @@ class Level(tools.State):
             if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or self.only_ground:
                 new_terrain = []
                 for i in range(c.GEN_LENGTH - 1):
-                    new_terrain.append("GG")
+                    new_terrain.append("gg")
 
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
@@ -299,21 +299,21 @@ class Level(tools.State):
         self.setup_brick_and_box(tiles['bricks'], tiles['boxes'])
         self.setup_static_tile(tiles['steps'], self.step_group, 0, 16)
         self.setup_static_tile(tiles['ground'], self.ground_group, 0, 0)
-        self.setup_static_tile(tiles['solid_blocks'], self.solid_group, 16, 0)
+        self.setup_static_tile(tiles['solid_blocks'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
 
     def build_tiles_dict(self, tiles, line):
         i = 0
         for ch in line:
-            if ch == 'G':
+            if ch == 'g':
                 tiles['ground'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
-            elif ch == 'B':
+            elif ch == 'b':
                 tiles['bricks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
-            elif ch == 'Q':
+            elif ch == 'q':
                 tiles['boxes'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
-            elif ch == 'X':
+            elif ch == 'x':
                 tiles['steps'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
-            elif ch == 'S':
+            elif ch == 's':
                 tiles['solid_blocks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
             elif ch == '0':
                 tiles['enemies'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i + 1), c.ENEMY_TYPE_GOOMBA])

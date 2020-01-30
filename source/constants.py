@@ -67,6 +67,7 @@ READ = True
 WRITE = True
 SAVE_LEVEL = False
 PRINT_REWARD = False
+SNAKING = True
 GEN_BORDER = 'gen_border'
 GEN_HEIGHT = 580
 GEN_DISTANCE = 440
