@@ -1,17 +1,18 @@
 __author__ = 'marble_xu'
 
-from random import random
 import pygame
 import gym as gym
 import pygame as pg
 from . import setup, tools
 from . import constants as c
+from .actions import COMPLEX_MOVEMENT
 from .states import main_menu, load_screen, level
 
 
 class MarioEnv(gym.Env):
 
     def __init__(self):
+        self.last_keypress = None
 
         self.game = tools.Control()
         state_dict = {c.MAIN_MENU: main_menu.Menu(),
@@ -25,14 +26,19 @@ class MarioEnv(gym.Env):
         # 0 = left
         # 1 = left + up
 
+        if action != self.last_keypress:
+            print(action)
+            print(self.game.done)
+            self.last_keypress = action
+
         # TODO - Translate action => keypress
         self.game.event_loop()
         self.game.keys = action
         self.game.update()
-        pg.display.update()
         self.game.clock.tick(self.game.fps)
 
-        return None, None, None, {}
+        # returns State, reward, done, info
+        return None, None, self.game.done, {}
 
     def reset(self):
         # TODO - RESET game
@@ -42,19 +48,26 @@ class MarioEnv(gym.Env):
         # TODO - read state
         return 0
 
+    def render(self, mode='human'):
+        if mode == 'human':
+            pg.display.update()
+
 def main():
 
     env = MarioEnv()
 
-    EPISODES = 1000
+    EPISODES = 3
 
-    for episode in range(EPISODES):
+    for ep in range(EPISODES):
+
+        print("Episode:", ep)
 
         state = env.reset()
-        terminal = False
+        done = False
 
-        while not terminal:
+        while not done:
 
             action = pygame.key.get_pressed()
-            state_1, reward, terminal, _ = env.step(action)
+            state_1, reward, done, info = env.step(action)
+            env.render()
             state = state_1
