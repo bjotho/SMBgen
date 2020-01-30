@@ -50,11 +50,11 @@ def main():
 
     for episode in range(EPISODES):
 
-        state = env.reset()
-        terminal = False
+        current_state = env.reset()
+        done = False
 
-        while not terminal:
+        while not done:
 
             action = pygame.key.get_pressed()
-            state_1, reward, terminal, _ = env.step(action)
-            state = state_1
+            new_state, reward, done, info = env.step(action)
+            current_state = new_state
