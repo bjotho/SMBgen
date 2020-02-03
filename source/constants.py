@@ -1,6 +1,7 @@
 __author__ = 'marble_xu'
 
-DEBUG = False
+DEBUG = True
+GENERATE_MAP = False
 DEBUG_START_X = 110
 DEBUG_START_y = 536
 
@@ -63,8 +64,8 @@ PLAYER_MARIO = 'mario'
 PLAYER_LUIGI = 'luigi'
 
 #MAP GENERATION
-READ = True
-WRITE = True
+READ = False
+WRITE = False
 SAVE_LEVEL = False
 PRINT_REWARD = False
 GEN_BORDER = 'gen_border'
@@ -171,7 +172,7 @@ MAX_Y_VEL = 'max_y_velocity'
 MAX_RUN_SPEED = 'max_run_speed'
 MAX_WALK_SPEED = 'max_walk_speed'
 SMALL_TURNAROUND = .35
-JUMP_GRAVITY = .31
+JUMP_GRAVITY = .031 #Var 0.31
 GRAVITY = 1.01
 
 #LIST of ENEMIES
