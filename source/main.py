@@ -6,7 +6,11 @@ import gym as gym
 import pygame as pg
 from . import setup, tools
 from . import constants as c
-from .states import main_menu, load_screen, level
+from .states import main_menu, load_screen
+if c.GENERATE_MAP:
+    from .states import level_gen as level
+else:
+    from .states import level
 
 
 class MarioEnv(gym.Env):
