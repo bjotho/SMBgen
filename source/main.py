@@ -1,11 +1,9 @@
-import pygame as pg
 from source.mario_gym.joypad_space import JoypadSpace
 from source.mario_gym.mario_env import MarioEnv
 from source.mario_gym.actions import COMPLEX_MOVEMENT
 
 env = MarioEnv()
 env = JoypadSpace(env, COMPLEX_MOVEMENT)
-# print("action_space:", env.get_keys_to_action())
 EPISODES = 1000
 
 
