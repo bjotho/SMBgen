@@ -1,6 +1,6 @@
 __author__ = 'marble_xu'
 
-DEBUG = False
+DEBUG = True
 DEBUG_START_X = 110
 DEBUG_START_y = 536
 
@@ -75,6 +75,9 @@ GEN_LENGTH = 5
 COL_HEIGHT = 13
 BLOCK_SIZE = 43
 COL_MEMORY = 10
+
+#GYM COMPONENTS
+ACTION_KEYS = 323
 
 #MAP COMPONENTS
 MAP_IMAGE = 'image_name'

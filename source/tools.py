@@ -45,6 +45,7 @@ class Control():
         self.state_dict = {}
         self.state_name = None
         self.state = None
+        self.x_btn = False
     
     def setup_states(self, state_dict, start_state):
         self.state_dict = state_dict
@@ -67,6 +68,7 @@ class Control():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.done = True
+                self.x_btn = True
             elif event.type == pg.KEYDOWN:
                 self.keys = pg.key.get_pressed()
             elif event.type == pg.KEYUP:
