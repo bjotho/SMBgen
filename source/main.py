@@ -2,10 +2,11 @@ from source.mario_gym.joypad_space import JoypadSpace
 from source.mario_gym.mario_env import MarioEnv
 from source.mario_gym.actions import COMPLEX_MOVEMENT
 
-env = MarioEnv(human_input=True)
-env = JoypadSpace(env, COMPLEX_MOVEMENT)
-EPISODES = 4
 
+# Use mode='human' as argument to enable keyboard input
+env = MarioEnv()
+env = JoypadSpace(env, COMPLEX_MOVEMENT)
+EPISODES = 100
 
 def main():
 

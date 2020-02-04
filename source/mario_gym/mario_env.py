@@ -2,13 +2,17 @@ import gym
 import pygame as pg
 from source import tools
 from source import constants as c
-from source.states import main_menu, load_screen, level
+from source.states import main_menu, load_screen
+if c.GENERATE_MAP:
+    from ..states import level_gen as level
+else:
+    from ..states import level
 
 
 class MarioEnv(gym.Env):
 
-    def __init__(self, human_input=False):
-        self.human_input = human_input
+    def __init__(self, mode='bot'):
+        self.mode = mode
         self.game = tools.Control()
         state_dict = {c.MAIN_MENU: main_menu.Menu(),
                       c.LOAD_SCREEN: load_screen.LoadScreen(),
@@ -19,7 +23,8 @@ class MarioEnv(gym.Env):
 
     def step(self, action):
         self.game.event_loop()
-        self.game.keys = action
+        if self.mode == 'bot':
+            self.game.keys = action
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
@@ -34,6 +39,6 @@ class MarioEnv(gym.Env):
         # TODO - read state
         return 0
 
-    def render(self, mode='human'):
-        if mode == 'human':
+    def render(self, display='human'):
+        if display == 'human':
             pg.display.update()

@@ -1,6 +1,6 @@
 __author__ = 'marble_xu'
 
-DEBUG = True
+DEBUG = False
 DEBUG_START_X = 110
 DEBUG_START_y = 536
 
@@ -63,8 +63,9 @@ PLAYER_MARIO = 'mario'
 PLAYER_LUIGI = 'luigi'
 
 #MAP GENERATION
-READ = True
-WRITE = True
+GENERATE_MAP = True
+READ = False
+WRITE = False
 SAVE_LEVEL = False
 PRINT_REWARD = False
 SNAKING = True
