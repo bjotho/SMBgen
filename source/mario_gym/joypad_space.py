@@ -2,6 +2,8 @@
 import gym
 from gym import Env
 from gym import Wrapper
+from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_RETURN, K_s, K_a, KMOD_NONE
+from .. import constants as c
 
 
 class JoypadSpace(Wrapper):
@@ -9,16 +11,18 @@ class JoypadSpace(Wrapper):
 
     # a mapping of buttons to binary values
     _button_map = {
-        'right':  0b10000000,
-        'left':   0b01000000,
-        'down':   0b00100000,
-        'up':     0b00010000,
-        'start':  0b00001000,
-        'select': 0b00000100,
-        'B':      0b00000010,
-        'A':      0b00000001,
-        'NOOP':   0b00000000,
+        'right':  K_RIGHT,
+        'left':   K_LEFT,
+        'down':   K_DOWN,
+        'up':     K_UP,
+        'start':  K_RETURN,
+        'select': K_RETURN,
+        'B':      K_s,
+        'A':      K_a,
+        'NOOP':   KMOD_NONE,
     }
+
+    _ACTION_TO_KEYS = {}
 
     @classmethod
     def buttons(cls) -> list:
@@ -47,13 +51,26 @@ class JoypadSpace(Wrapper):
         # iterate over all the actions (as button lists)
         for action, button_list in enumerate(actions):
             # the value of this action's bitmap
-            byte_action = 0
+            action_list = []
             # iterate over the buttons in this button list
             for button in button_list:
-                byte_action |= self._button_map[button]
+                action_list.append(self._button_map[button])
             # set this action maps value to the byte action value
-            self._action_map[action] = byte_action
+            self._action_map[action] = action_list
             self._action_meanings[action] = ' '.join(button_list)
+
+        print("action_map:", self._action_map)
+
+        self.setup_action_to_keys()
+
+    def setup_action_to_keys(self):
+        """Map action to keyboard keys"""
+        for action in self._action_map.items():
+            keyboard = [0 for i in range(c.ACTION_KEYS)]
+            for button in action[-1]:
+                keyboard[button] = 1
+
+            self._ACTION_TO_KEYS[action[0]] = tuple(keyboard)
 
     def step(self, action):
         """
@@ -71,28 +88,14 @@ class JoypadSpace(Wrapper):
 
         """
         # take the step and record the output
-        return self.env.step(self._action_map[action])
+        return self.env.step(self._ACTION_TO_KEYS[action])
 
     def reset(self):
         """Reset the environment and return the initial observation."""
         return self.env.reset()
 
-    def get_keys_to_action(self):
-        """Return the dictionary of keyboard keys to actions."""
-        # get the old mapping of keys to actions
-        old_keys_to_action = self.env.unwrapped.get_keys_to_action()
-        # invert the keys to action mapping to lookup key combos by action
-        action_to_keys = {v: k for k, v in old_keys_to_action.items()}
-        # create a new mapping of keys to actions
-        keys_to_action = {}
-        # iterate over the actions and their byte values in this mapper
-        for action, byte in self._action_map.items():
-            # get the keys to press for the action
-            keys = action_to_keys[byte]
-            # set the keys value in the dictionary to the current discrete act
-            keys_to_action[keys] = action
-
-        return keys_to_action
+    def get_action_to_keys(self):
+        return self._ACTION_TO_KEYS
 
     def get_action_meanings(self):
         """Return a list of actions meanings."""

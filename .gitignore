@@ -130,4 +130,4 @@ dmypy.json
 
 # Misc
 notes
-source/data/maps/level_gen.txt
+level_gen.txt

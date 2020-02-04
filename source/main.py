@@ -2,9 +2,9 @@ from source.mario_gym.joypad_space import JoypadSpace
 from source.mario_gym.mario_env import MarioEnv
 from source.mario_gym.actions import COMPLEX_MOVEMENT
 
-env = MarioEnv()
+env = MarioEnv(human_input=True)
 env = JoypadSpace(env, COMPLEX_MOVEMENT)
-EPISODES = 1000
+EPISODES = 4
 
 
 def main():

@@ -60,16 +60,16 @@ class GAN():
             if c.SNAKING:
                 self.step *= -1
 
-        for col in self.memory:
-            print(col)
-        print("[ ", end="", flush=True)
-        for n, i in enumerate(token_list_sequence):
-            if not (n+1) % c.COL_HEIGHT and n != 0 and n != len(token_list_sequence)-1:
-                print(str(i) + ",\n  ", end="", flush=True)
-            elif n == len(token_list_sequence)-1:
-                print(str(i) + " ]", flush=True)
-            else:
-                print(str(i) + ", ", end="", flush=True)
+        # for col in self.memory:
+        #     print(col)
+        # print("[ ", end="", flush=True)
+        # for n, i in enumerate(token_list_sequence):
+        #     if not (n+1) % c.COL_HEIGHT and n != 0 and n != len(token_list_sequence)-1:
+        #         print(str(i) + ",\n  ", end="", flush=True)
+        #     elif n == len(token_list_sequence)-1:
+        #         print(str(i) + " ]", flush=True)
+        #     else:
+        #         print(str(i) + ", ", end="", flush=True)
 
 
     def update_memory(self, update):

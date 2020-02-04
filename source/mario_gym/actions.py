@@ -7,7 +7,7 @@ RIGHT_ONLY = [
     ['right'],
     ['right', 'A'],
     ['right', 'B'],
-    ['right', 'A', 'B'],
+    ['right', 'A', 'B']
 ]
 
 
@@ -19,7 +19,7 @@ SIMPLE_MOVEMENT = [
     ['right', 'B'],
     ['right', 'A', 'B'],
     ['A'],
-    ['left'],
+    ['left']
 ]
 
 
@@ -37,4 +37,5 @@ COMPLEX_MOVEMENT = [
     ['left', 'A', 'B'],
     ['down'],
     ['up'],
+    ['start']
 ]
