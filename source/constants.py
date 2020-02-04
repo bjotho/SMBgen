@@ -64,8 +64,8 @@ PLAYER_LUIGI = 'luigi'
 
 #MAP GENERATION
 GENERATE_MAP = True
-READ = False
-WRITE = False
+READ = True
+WRITE = True
 SAVE_LEVEL = False
 PRINT_REWARD = False
 SNAKING = True

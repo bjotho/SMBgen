@@ -31,8 +31,19 @@ class MarioEnv(gym.Env):
         # returns State, reward, done, info
         return None, None, self.game.state_dict[c.LEVEL].done, {"x_btn": self.game.x_btn}
 
+    def _will_reset(self):
+        """Handle any hacking before a reset occurs."""
+        pass
+
+    def _did_reset(self):
+        """Handle any hacking after a reset occurs."""
+        pass
+
     def reset(self):
-        # TODO - RESET game
+        if self.mode != 'human':
+            self._will_reset()
+            self.game.flip_state(force=c.LEVEL)
+            self._did_reset()
         return self.get_state()
 
     def get_state(self):

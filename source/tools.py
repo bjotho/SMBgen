@@ -58,7 +58,9 @@ class Control():
             self.flip_state()
         self.state.update(self.screen, self.keys, self.current_time)
 
-    def flip_state(self):
+    def flip_state(self, force=None):
+        if force is not None:
+            self.state.next = force
         previous, self.state_name = self.state_name, self.state.next
         persist = self.state.cleanup()
         self.state = self.state_dict[self.state_name]
