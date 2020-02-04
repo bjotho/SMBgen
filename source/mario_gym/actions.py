@@ -36,6 +36,5 @@ COMPLEX_MOVEMENT = [
     ['left', 'B'],
     ['left', 'A', 'B'],
     ['down'],
-    ['up'],
-    ['start']
+    ['up']
 ]

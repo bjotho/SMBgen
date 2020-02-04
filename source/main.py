@@ -6,7 +6,7 @@ from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEME
 def main():
     # Use mode='human' as argument to enable keyboard input
     env = MarioEnv()
-    env = JoypadSpace(env, COMPLEX_MOVEMENT)
+    env = JoypadSpace(env, SIMPLE_MOVEMENT)
     EPISODES = 100
 
     for ep in range(EPISODES):
