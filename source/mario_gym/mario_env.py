@@ -14,6 +14,7 @@ class MarioEnv(gym.Env):
     def __init__(self, mode='bot'):
         self.mode = mode
         self.done = False
+        self.mario_x_last = c.DEBUG_START_X
         self.game = tools.Control()
         state_dict = {c.MAIN_MENU: main_menu.Menu(),
                       c.LOAD_SCREEN: load_screen.LoadScreen(),
@@ -29,7 +30,7 @@ class MarioEnv(gym.Env):
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
-        if c.SKIP_BORING_ACTIONS:
+        if self.game.state == self.game.state_dict[c.LEVEL]:
             if self.game.state_dict[c.LEVEL].done:
                 self.done = True
             elif self.game.state_dict[c.LEVEL].player.dead:
@@ -38,8 +39,18 @@ class MarioEnv(gym.Env):
         info = self.game.state.persist
         info['x_btn'] = self.game.x_btn
 
+        reward = 0
+        if self.game.state == self.game.state_dict[c.LEVEL]:
+            reward = self._reward()
+
         # returns State, reward, done, info
-        return None, None, self.done, info
+        return None, reward, self.done, info
+
+    def _reward(self):
+        current_x = self.game.state_dict[c.LEVEL].player.rect.x
+        reward = current_x - self.mario_x_last
+        self.mario_x_last = current_x
+        return reward
 
     def _will_reset(self):
         """Handle any hacking before a reset occurs."""
