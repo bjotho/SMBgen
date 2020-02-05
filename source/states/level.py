@@ -5,7 +5,12 @@ import json
 import pygame as pg
 from .. import setup, tools
 from .. import constants as c
-from ..components import info, stuff, player, brick, box, enemy, powerup, coin
+from ..components import info, stuff, brick, box, enemy, powerup, coin
+
+if c.SKIP_BORING_ACTIONS:
+    from ..components import fast_player as player
+else:
+    from ..components import player
 
 
 class Level(tools.State):
@@ -193,6 +198,9 @@ class Level(tools.State):
         return self.ground_step_pipe_group
 
     def update(self, surface, keys, current_time):
+        if self.player.state == c.FLAGPOLE and c.SKIP_BORING_ACTIONS:
+            self.done = True
+            return
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
         self.handle_states(keys)
         self.draw(surface)

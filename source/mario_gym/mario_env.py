@@ -13,6 +13,7 @@ class MarioEnv(gym.Env):
 
     def __init__(self, mode='bot'):
         self.mode = mode
+        self.done = False
         self.game = tools.Control()
         state_dict = {c.MAIN_MENU: main_menu.Menu(),
                       c.LOAD_SCREEN: load_screen.LoadScreen(),
@@ -28,22 +29,41 @@ class MarioEnv(gym.Env):
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
+        if c.SKIP_BORING_ACTIONS:
+            if self.game.state_dict[c.LEVEL].done:
+                self.done = True
+            elif self.game.state_dict[c.LEVEL].player.dead:
+                self.done = True
+
+        info = self.game.state.persist
+        info['x_btn'] = self.game.x_btn
+
         # returns State, reward, done, info
-        return None, None, self.game.state_dict[c.LEVEL].done, {"x_btn": self.game.x_btn}
+        return None, None, self.done, info
 
     def _will_reset(self):
         """Handle any hacking before a reset occurs."""
-        pass
+        if self.game.state.next == c.GAME_OVER:
+            self.game.state.persist = {
+                c.COIN_TOTAL: 0,
+                c.SCORE: 0,
+                c.LIVES: 3,
+                c.TOP_SCORE: 0,
+                c.CURRENT_TIME: 0.0,
+                c.LEVEL_NUM: 1,
+                c.PLAYER_NAME: c.PLAYER_MARIO
+            }
 
     def _did_reset(self):
         """Handle any hacking after a reset occurs."""
         pass
 
     def reset(self):
-        if self.mode != 'human':
+        if self.mode != 'human' or c.SKIP_BORING_ACTIONS:
             self._will_reset()
             self.game.flip_state(force=c.LEVEL)
             self._did_reset()
+            self.done = False
         return self.get_state()
 
     def get_state(self):
