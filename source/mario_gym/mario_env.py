@@ -22,11 +22,12 @@ class MarioEnv(gym.Env):
                       c.GAME_OVER: load_screen.GameOver(),
                       c.TIME_OUT: load_screen.TimeOut()}
         self.game.setup_states(state_dict, c.MAIN_MENU)
+        if mode == 'human':
+            self.game.main()
 
     def step(self, action):
         self.game.event_loop()
-        if self.mode == 'bot':
-            self.game.keys = action
+        self.game.keys = action
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
@@ -70,7 +71,7 @@ class MarioEnv(gym.Env):
         pass
 
     def reset(self):
-        if self.mode != 'human' or c.SKIP_BORING_ACTIONS:
+        if c.SKIP_BORING_ACTIONS:
             self._will_reset()
             self.game.flip_state(force=c.LEVEL)
             self._did_reset()

@@ -1,10 +1,9 @@
 {
-    "image_name":"level_gen",
+    "image_name":"level_gen_1",
     "maps":[
         {"start_x":   0, "end_x": 9086, "player_x": 110, "player_y":536}
     ],
     "ground":[
-        {"x":   0, "y":536, "width":430, "height":60}
     ],
     "pipe":[
     ],
@@ -33,8 +32,9 @@
         {"x":8505, "y":337, "type":1},
         {"x":8505, "y":377, "type":1},
         {"x":8505, "y":417, "type":1},
-        {"x":8505, "y":450, "type":1},
+        {"x":8505, "y":457, "type":1},
+        {"x":8505, "y":497, "type":1},
         {"x":8497, "y": 97, "type":2}
     ],
-    "gen_border": 428
+    "gen_border": 0
 }

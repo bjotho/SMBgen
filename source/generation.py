@@ -8,6 +8,7 @@ from keras.layers import Dense, LSTM, Embedding, RepeatVector, TimeDistributed
 from keras.callbacks import ModelCheckpoint
 
 from . import constants as c
+from .states import level_state
 
 
 class GAN():

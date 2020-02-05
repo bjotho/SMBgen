@@ -5,6 +5,7 @@ import json
 import pygame as pg
 from .. import setup, tools
 from .. import constants as c
+from .level_state import state
 from ..components import info, stuff, brick, box, enemy, powerup, coin
 
 if c.SKIP_BORING_ACTIONS:

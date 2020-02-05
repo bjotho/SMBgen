@@ -59,8 +59,6 @@ class JoypadSpace(Wrapper):
             self._action_map[action] = action_list
             self._action_meanings[action] = ' '.join(button_list)
 
-        print("action_map:", self._action_map)
-
         self.setup_action_to_keys()
 
     def setup_action_to_keys(self):

@@ -10,6 +10,7 @@ import random
 import pygame as pg
 from .. import setup, tools, generation
 from .. import constants as c
+from .level_state import state
 from ..components import info, stuff, brick, static_tile, box, enemy, powerup, coin
 
 if c.SKIP_BORING_ACTIONS:
@@ -62,7 +63,6 @@ class Level(tools.State):
         self.setup_flagpole()
         self.setup_sprite_groups()
 
-        self.only_ground = False
         self.read = c.READ
         self.generations = 0
         self.gen_line = 0
@@ -284,12 +284,13 @@ class Level(tools.State):
                 if self.gen_line >= self.gen_file_length:
                     self.read = False
         else:
-            new_terrain = self.gan.generate(self.file_path)
+            new_terrain = []
 
-            if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or self.only_ground:
-                new_terrain = []
+            if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or c.ONLY_GROUND:
                 for i in range(c.GEN_LENGTH - 1):
                     new_terrain.append("gg")
+            else:
+                new_terrain = self.gan.generate(self.file_path)
 
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
@@ -458,7 +459,7 @@ class Level(tools.State):
 
     def generator_reward(self):
         if self.player.state in [c.STAND, c.WALK, c.JUMP, c.FALL, c.FLY]:
-            # Reward is defined as a normal distribution with symmetry around 3
+            # Reward is defined as a gaussian distribution with symmetry around dx=3
             dx = self.player.rect.x - self.old_player_x
             reward = math.e**(-(1/2) * ((dx-self.optimal_mario_speed)**2))
 

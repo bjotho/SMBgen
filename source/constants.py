@@ -63,7 +63,8 @@ PLAYER_MARIO = 'mario'
 PLAYER_LUIGI = 'luigi'
 
 #MAP GENERATION
-GENERATE_MAP = False
+GENERATE_MAP = True
+ONLY_GROUND = False
 READ = True
 WRITE = True
 SAVE_LEVEL = False
