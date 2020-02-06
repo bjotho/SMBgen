@@ -1,3 +1,4 @@
+import sys
 import gym
 import pygame as pg
 from source import tools
@@ -12,7 +13,9 @@ else:
 class MarioEnv(gym.Env):
 
     def __init__(self, mode='bot'):
-        self.mode = mode
+        if mode == 'human':
+            c.HUMAN_PLAYER = True
+
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
         self.game = tools.Control()
@@ -22,8 +25,10 @@ class MarioEnv(gym.Env):
                       c.GAME_OVER: load_screen.GameOver(),
                       c.TIME_OUT: load_screen.TimeOut()}
         self.game.setup_states(state_dict, c.MAIN_MENU)
-        if mode == 'human':
+        if c.HUMAN_PLAYER:
             self.game.main()
+            sys.exit(0)
+
 
     def step(self, action):
         self.game.event_loop()
@@ -71,17 +76,16 @@ class MarioEnv(gym.Env):
         pass
 
     def reset(self):
-        if c.SKIP_BORING_ACTIONS:
-            self._will_reset()
-            self.game.flip_state(force=c.LEVEL)
-            self._did_reset()
-            self.done = False
+        self._will_reset()
+        self.game.flip_state(force=c.LEVEL)
+        self._did_reset()
+        self.done = False
         return self.get_state()
 
     def get_state(self):
         # TODO - read state
         return 0
 
-    def render(self, display='human'):
-        if display == 'human':
+    def render(self, mode='human'):
+        if mode == 'human':
             pg.display.update()

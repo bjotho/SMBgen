@@ -13,7 +13,7 @@ from .. import constants as c
 from . import level_state
 from ..components import info, stuff, brick, static_tile, box, enemy, powerup, coin
 
-if c.SKIP_BORING_ACTIONS:
+if c.HUMAN_PLAYER:
     from ..components import fast_player as player
 else:
     from ..components import player
@@ -239,7 +239,7 @@ class Level(tools.State):
                         self.solid_group)
 
     def update(self, surface, keys, current_time):
-        if self.player.state == c.FLAGPOLE and c.SKIP_BORING_ACTIONS:
+        if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
             self.done = True
             return
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
@@ -310,7 +310,19 @@ class Level(tools.State):
         self.setup_static_tile(tiles['solid_blocks'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
 
-        # print(self.solid_group)
+        # tmp = [s.rect for s in self.solid_group.sprites()]
+        # print(self.solid_group.sprites, ":", tmp)
+        # for tile in self.solid_group.sprites():
+        #     print(tile.rect)
+        self.randomly_clear_tiles([self.solid_group,
+                                   self.brick_group,
+                                   self.step_group,
+                                   self.box_group,
+                                   self.ground_group])
+
+    def randomly_clear_tiles(self, groups):
+        if np.random.random() < 0.02:
+            group.empty()
 
     def build_tiles_dict(self, tiles, line):
         i = 0

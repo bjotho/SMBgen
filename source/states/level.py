@@ -8,7 +8,7 @@ from .. import constants as c
 from . import level_state
 from ..components import info, stuff, brick, box, enemy, powerup, coin
 
-if c.SKIP_BORING_ACTIONS:
+if c.HUMAN_PLAYER:
     from ..components import fast_player as player
 else:
     from ..components import player
@@ -199,7 +199,7 @@ class Level(tools.State):
         return self.ground_step_pipe_group
 
     def update(self, surface, keys, current_time):
-        if self.player.state == c.FLAGPOLE and c.SKIP_BORING_ACTIONS:
+        if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
             self.done = True
             return
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
