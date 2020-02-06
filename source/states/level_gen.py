@@ -321,8 +321,9 @@ class Level(tools.State):
                                    self.ground_group])
 
     def randomly_clear_tiles(self, groups):
-        if np.random.random() < 0.02:
-            group.empty()
+        for group in groups:
+            if np.random.random() < 0.02:
+                group.empty()
 
     def build_tiles_dict(self, tiles, line):
         i = 0
