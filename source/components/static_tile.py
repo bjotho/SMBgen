@@ -1,13 +1,15 @@
 from .. import setup
 from .. import constants as c
 from . import stuff
+from ..states import level_state
 
 
 def create_static_tile(group, item, level):
     sprite_x, sprite_y, x, y, type = item['sprite_x'], item['sprite_y'], item['x'], item['y'], item['type']
-    group.add(Static_tile(sprite_x, sprite_y, x, y, type))
+    group.add(StaticTile(sprite_x, sprite_y, x, y, type))
 
-class Static_tile(stuff.Stuff):
+
+class StaticTile(stuff.Stuff):
     def __init__(self, sprite_x, sprite_y, x, y, type, group=None, name=c.MAP_STEP):
         frame_rect = [(sprite_x, sprite_y, 16, 16)]
         stuff.Stuff.__init__(self, x, y, setup.GFX['tile_set'], frame_rect, c.SOLID_TILE_SIZE_MULTIPLIER)

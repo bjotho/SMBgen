@@ -8,3 +8,16 @@ def insert_tile(tile):
         state.append([])
 
     state[-1].append(tile)
+
+
+def print_state():
+    output = "[\n  "
+    for col in state:
+        output += "[ "
+        for tile in col:
+            output += str(tile) + ", "
+
+        output = output[:-2] + " ]\n"
+
+    output += "]"
+    print(output)

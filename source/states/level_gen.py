@@ -10,7 +10,7 @@ import random
 import pygame as pg
 from .. import setup, tools, generation
 from .. import constants as c
-from .level_state import state
+from . import level_state
 from ..components import info, stuff, brick, static_tile, box, enemy, powerup, coin
 
 if c.SKIP_BORING_ACTIONS:
@@ -39,6 +39,7 @@ class Level(tools.State):
         self.brickpiece_group = pg.sprite.Group()
         self.box_group = pg.sprite.Group()
         self.ground_group = pg.sprite.Group()
+        self.step_group = pg.sprite.Group()
         self.solid_group = pg.sprite.Group()
         self.dying_group = pg.sprite.Group()
         self.enemy_group = pg.sprite.Group()
@@ -49,7 +50,6 @@ class Level(tools.State):
         self.moving_score_list = []
         self.overhead_info = info.Info(self.game_info, c.LEVEL)
         self.load_map()
-        self.step_group = pg.sprite.Group()
         self.setup_background()
         self.setup_maps()
         self.start_ground_group = self.setup_collide(c.MAP_GROUND)
@@ -309,6 +309,8 @@ class Level(tools.State):
         self.setup_static_tile(tiles['ground'], self.ground_group, 0, 0)
         self.setup_static_tile(tiles['solid_blocks'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
+
+        # print(self.solid_group)
 
     def build_tiles_dict(self, tiles, line):
         i = 0
