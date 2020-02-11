@@ -17,11 +17,11 @@ pg.display.set_caption(c.ORIGINAL_CAPTION)
 SCREEN = pg.display.set_mode(c.SCREEN_SIZE)
 SCREEN_RECT = SCREEN.get_rect()
 
-# Clear level_gen.txt file if SAVE_LEVEL is set to False
+# Reset level_gen.txt file if SAVE_LEVEL is set to False
 if not c.SAVE_LEVEL:
-    map_gen_file = 'level_gen.txt'
+    map_gen_file = "level_gen.txt"
     file_path = os.path.join('source', 'data', 'maps', map_gen_file)
     with open(file_path, 'w') as file:
-        file.write("ggaaaaaaaaaaa\nggaaaaaaaaaaa\nggaaaaaaaaaaa\nggaaaaaaaaaaa\nggaaaaaaaaaaa\n")
+        file.write((c.GROUND_ID * 2 + c.AIR_ID * 11 + "\n") * 5)
 
 GFX = tools.load_all_gfx(os.path.join("resources","graphics"))

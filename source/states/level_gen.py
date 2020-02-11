@@ -11,7 +11,7 @@ import pygame as pg
 from .. import setup, tools, generation
 from .. import constants as c
 from . import level_state
-from ..components import info, stuff, brick, static_tile, box, enemy, powerup, coin
+from ..components import info, stuff, brick, solid_tile, box, enemy, powerup, coin
 
 if c.HUMAN_PLAYER:
     from ..components import fast_player as player
@@ -20,6 +20,7 @@ else:
 
 if c.PRINT_REWARD:
     import matplotlib.pyplot as plt
+
 
 class Level(tools.State):
     def __init__(self):
@@ -70,10 +71,12 @@ class Level(tools.State):
         self.map_gen_file = 'level_gen.txt'
         self.file_path = os.path.join('source', 'data', 'maps', self.map_gen_file)
         self.gen_file_length = sum(1 for line in open(self.file_path))
-        self.gan = generation.GAN()
+        self.gan = generation.Generator()
         self.reward_list = []
         self.dx_list = []
         self.optimal_mario_speed = 3
+
+        level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
 
     def load_map(self):
         map_file = 'level_gen.json'
@@ -233,10 +236,10 @@ class Level(tools.State):
 
     def get_collide_groups(self):
         return pg.sprite.Group(self.brick_group,
-                        self.box_group,
-                        self.step_group,
-                        self.ground_group,
-                        self.solid_group)
+                               self.box_group,
+                               self.step_group,
+                               self.ground_group,
+                               self.solid_group)
 
     def update(self, surface, keys, current_time):
         if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
@@ -251,22 +254,22 @@ class Level(tools.State):
             self.generate()
         self.update_all_sprites(keys)
 
-    def setup_static_tile(self, tiles, group, sprite_x, sprite_y):
+    def setup_solid_tile(self, tiles, group, sprite_x, sprite_y):
         # For each tile in the tiles list, create a tile with the tile's coordinates
         for tile_coordinates in tiles:
-            static_tile.create_static_tile(group, {'sprite_x': sprite_x, 'sprite_y': sprite_y, 'x': tile_coordinates[0],
+            solid_tile.create_solid_tile(group, {'sprite_x': sprite_x, 'sprite_y': sprite_y, 'x': tile_coordinates[0],
                                                    'y': tile_coordinates[1], 'type': 0}, self)
 
     def generate(self):
         self.generations += 1
-        print("Generation", self.generations)
-        print(self.player.rect.x)
+        # print("Generation", self.generations)
+        # print(self.player.rect.x)
 
         tiles = {'ground': [],
                  'bricks': [],
                  'boxes': [],
                  'steps': [],
-                 'solid_blocks': [],
+                 'solid': [],
                  'enemies': []
                  }
 
@@ -287,8 +290,8 @@ class Level(tools.State):
             new_terrain = []
 
             if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or c.ONLY_GROUND:
-                for i in range(c.GEN_LENGTH - 1):
-                    new_terrain.append("gg")
+                for _ in range(c.GEN_LENGTH - 1):
+                    new_terrain.append(c.GROUND_ID * 2)
             else:
                 new_terrain = self.gan.generate(self.file_path)
 
@@ -305,21 +308,21 @@ class Level(tools.State):
         '''
 
         self.setup_brick_and_box(tiles['bricks'], tiles['boxes'])
-        self.setup_static_tile(tiles['steps'], self.step_group, 0, 16)
-        self.setup_static_tile(tiles['ground'], self.ground_group, 0, 0)
-        self.setup_static_tile(tiles['solid_blocks'], self.solid_group, 432, 0)
+        self.setup_solid_tile(tiles['steps'], self.step_group, 0, 16)
+        self.setup_solid_tile(tiles['ground'], self.ground_group, 0, 0)
+        self.setup_solid_tile(tiles['solid'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
 
-        # tmp = [s.rect for s in self.solid_group.sprites()]
-        # print(self.solid_group.sprites, ":", tmp)
-        # for tile in self.solid_group.sprites():
-        #     print(tile.rect)
-        self.randomly_clear_tiles([self.solid_group,
-                                   self.brick_group,
-                                   self.step_group,
-                                   self.box_group,
-                                   self.ground_group])
+        level_state.print_state()
+        # for tile in tmp:
+        #     print(tile)
+        # self.randomly_clear_tiles([self.solid_group,
+        #                            self.brick_group,
+        #                            self.step_group,
+        #                            self.box_group,
+        #                            self.ground_group])
 
+    @staticmethod
     def randomly_clear_tiles(self, groups):
         for group in groups:
             if np.random.random() < 0.02:
@@ -328,28 +331,28 @@ class Level(tools.State):
     def build_tiles_dict(self, tiles, line):
         i = 0
         for ch in line:
-            if ch == 'g':
-                tiles['ground'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
-            elif ch == 'b':
-                tiles['bricks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
-            elif ch == 'q':
-                tiles['boxes'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
-            elif ch == 'x':
-                tiles['steps'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
-            elif ch == 's':
-                tiles['solid_blocks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i)])
-            elif ch == '0':
+            if ch == c.GROUND_ID:
+                tiles['ground'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+            elif ch == c.BRICK_ID:
+                tiles['bricks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+            elif ch == c.BOX_ID:
+                tiles['boxes'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+            elif ch == c.STEP_ID:
+                tiles['steps'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+            elif ch == c.SOLID_ID:
+                tiles['solid'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+            elif ch == c.GOOMBA_ID:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i + 1), c.ENEMY_TYPE_GOOMBA])
-            elif ch == '1':
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i), c.ENEMY_TYPE_GOOMBA])
+            elif ch == c.KOOPA_ID:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i + 1), c.ENEMY_TYPE_KOOPA])
-            elif ch == '2':
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i), c.ENEMY_TYPE_KOOPA])
+            elif ch == c.FLY_KOOPA_ID:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.BLOCK_SIZE * i + 1), c.ENEMY_TYPE_FLY_KOOPA])
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i), c.ENEMY_TYPE_FLY_KOOPA])
 
             i += 1
-        self.map_data[c.GEN_BORDER] += c.BLOCK_SIZE
+        self.map_data[c.GEN_BORDER] += c.TILE_SIZE
         self.gen_line += 1
         return tiles
 
@@ -410,8 +413,8 @@ class Level(tools.State):
 
         if checkpoint:
             if checkpoint.type == c.CHECKPOINT_TYPE_ENEMY:
-                print("self.enemy_group_list: ", self.enemy_group_list)
-                print("checkpoint.enemy_groupid: ", checkpoint.enemy_groupid)
+                # print("self.enemy_group_list: ", self.enemy_group_list)
+                # print("checkpoint.enemy_groupid: ", checkpoint.enemy_groupid)
 
                 group = self.enemy_group_list[checkpoint.enemy_groupid]
                 self.enemy_group.add(group)
@@ -774,10 +777,10 @@ class Level(tools.State):
 
         if c.PRINT_REWARD:
             x = np.linspace(0.2, 10, 100)
-            plt.plot(x, 5 * math.e**(-(1/2) * ((x-3)**2)))
+            plt.plot(x, math.e**(-(1/2) * ((x-3)**2)))
             plt.plot(self.dx_list, self.reward_list, 'ro')
             plt.grid(True, which='both')
-            plt.axis([-5, 10, 0, 7])
+            plt.axis([-5, 10, 0, 2])
             plt.axvline(x=0, color='black')
             plt.xlabel('dx')
             plt.ylabel('Reward')

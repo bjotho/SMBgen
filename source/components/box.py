@@ -4,6 +4,8 @@ import pygame as pg
 from .. import setup, tools
 from .. import constants as c
 from . import coin, powerup
+from ..states import level_state
+
 
 class Box(pg.sprite.Sprite):
     def __init__(self, x, y, type, group=None, name=c.MAP_BOX):
@@ -26,6 +28,8 @@ class Box(pg.sprite.Sprite):
         self.type = type
         self.group = group
         self.name = name
+
+        level_state.insert_observation(x, y, c.BOX_ID)
         
     def load_frames(self):
         sheet = setup.GFX['tile_set']

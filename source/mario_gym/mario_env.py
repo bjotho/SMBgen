@@ -1,9 +1,9 @@
 import sys
 import gym
 import pygame as pg
-from source import tools
-from source import constants as c
-from source.states import main_menu, load_screen
+from .. import tools
+from .. import constants as c
+from ..states import main_menu, load_screen, level_state
 if c.GENERATE_MAP:
     from ..states import level_gen as level
 else:
@@ -28,7 +28,6 @@ class MarioEnv(gym.Env):
         if c.HUMAN_PLAYER:
             self.game.main()
             sys.exit(0)
-
 
     def step(self, action):
         self.game.event_loop()
@@ -73,7 +72,7 @@ class MarioEnv(gym.Env):
 
     def _did_reset(self):
         """Handle any hacking after a reset occurs."""
-        pass
+        level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
 
     def reset(self):
         self._will_reset()

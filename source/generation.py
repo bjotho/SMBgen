@@ -11,7 +11,7 @@ from . import constants as c
 from .states import level_state
 
 
-class GAN():
+class Generator:
     def __init__(self):
         self.memory = []
         for _ in range(c.COL_MEMORY):
@@ -19,19 +19,19 @@ class GAN():
 
         self.step = 1
 
-        # self.tiles = ["0", "1", "2", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "g", "b", "x", "s", "q"]
-        self.tiles = ["a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "g", "b", "x", "s", "q"]
+        self.tiles = ["0", "1", "2", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "g", "b", "x", "s", "q"]
+        # self.tiles = ["a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "g", "b", "x", "s", "q"]
         # self.tiles = ["0", "1", "2", "a", "g", "b", "x", "s", "q"]
 
         self.tokenizer = Tokenizer()
         self.tokenizer.fit_on_texts(self.tiles)
-        self.generator = self.create_generator()
+        # self.generator = self.create_generator()
 
     def generate(self, file_path):
         """Create 2D list """
         output = []
 
-        for i in range(c.GEN_LENGTH - 1):
+        for _ in range(c.GEN_LENGTH - 1):
             map_col = ""
             map_col_list = []
             for _ in range(c.COL_HEIGHT - len(map_col)):
@@ -43,7 +43,7 @@ class GAN():
             self.tokenize_input()
 
             if c.WRITE:
-                with open(file_path, "a") as file:
+                with open(file_path, 'a') as file:
                     file.write(map_col + "\n")
 
         return output
@@ -71,7 +71,6 @@ class GAN():
         #         print(str(i) + " ]", flush=True)
         #     else:
         #         print(str(i) + ", ", end="", flush=True)
-
 
     def update_memory(self, update):
         # if column is full, shift all columns left and insert new empty column

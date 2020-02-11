@@ -14,6 +14,7 @@ keybinding = {
     'down':pg.K_DOWN
 }
 
+
 class State():
     def __init__(self):
         self.start_time = 0.0
@@ -33,6 +34,7 @@ class State():
     @abstractmethod
     def update(sefl, surface, keys, current_time):
         '''abstract method'''
+
 
 class Control():
     def __init__(self):
@@ -83,16 +85,18 @@ class Control():
             pg.display.update()
             self.clock.tick(self.fps)
 
-def get_image(sheet, x, y, width, height, colorkey, scale):
-        image = pg.Surface([width, height])
-        rect = image.get_rect()
 
-        image.blit(sheet, (0, 0), (x, y, width, height))
-        image.set_colorkey(colorkey)
-        image = pg.transform.scale(image,
-                                   (int(rect.width*scale),
-                                    int(rect.height*scale)))
-        return image
+def get_image(sheet, x, y, width, height, colorkey, scale):
+    image = pg.Surface([width, height])
+    rect = image.get_rect()
+
+    image.blit(sheet, (0, 0), (x, y, width, height))
+    image.set_colorkey(colorkey)
+    image = pg.transform.scale(image,
+                               (int(rect.width*scale),
+                                int(rect.height*scale)))
+    return image
+
 
 def load_all_gfx(directory, colorkey=(255,0,255), accept=('.png', '.jpg', '.bmp', '.gif')):
     graphics = {}
