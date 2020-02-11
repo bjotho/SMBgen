@@ -101,10 +101,8 @@ class Enemy(pg.sprite.Sprite):
         self.handle_state()
         self.animation()
         self.update_position(level)
-        print(self.id, "rect:", "(", self.rect.x, self.rect.y, ")")
 
         self.center_x, self.center_y = self.get_center(self.rect.x, self.rect.y)
-        print(self.id, "center:", "(", self.center_x, self.center_y, ")")
         y = int(c.COL_HEIGHT - ((self.center_x - c.Y_OFFSET) // c.TILE_SIZE) - 1)
         if y >= c.COL_HEIGHT or y < 0:
             return
@@ -196,6 +194,7 @@ class Enemy(pg.sprite.Sprite):
             self.kill()
         elif self.rect.y > (level.viewport.bottom):
             self.kill()
+            print(self.id, "killed. Prev center: (", self.prev_center_x, self.prev_center_y, ")")
             level_state.delete_observation(self.prev_center_x, self.prev_center_y)
     
     def check_x_collisions(self, level):
