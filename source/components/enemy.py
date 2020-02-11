@@ -76,12 +76,15 @@ class Enemy(pg.sprite.Sprite):
 
         self.center_x, self.center_y = self.get_center(x, y)
         level_state.insert_observation(self.center_x, self.center_y, id)
-        self.prev_center_x = self.center_x
-        self.prev_center_y = self.center_y
+        self.prev_x, self.prev_y = self.get_coordinates()
 
     def get_center(self, x, y):
         return int(x + (self.rect.right - self.rect.left) / 2), \
                int(y - (self.rect.bottom - self.rect.top) / 2)
+
+    def get_coordinates(self):
+        return int(self.rect.x // c.TILE_SIZE), \
+               int(c.COL_HEIGHT - ((self.rect.y - c.Y_OFFSET) // c.TILE_SIZE) - 1)
 
     def load_frames(self, sheet, frame_rect_list):
         for frame_rect in frame_rect_list:
@@ -103,13 +106,12 @@ class Enemy(pg.sprite.Sprite):
         self.update_position(level)
 
         self.center_x, self.center_y = self.get_center(self.rect.x, self.rect.y)
-        y = int(c.COL_HEIGHT - ((self.center_x - c.Y_OFFSET) // c.TILE_SIZE) - 1)
-        if y >= c.COL_HEIGHT or y < 0:
-            return
-        level_state.update_observation(self.prev_center_x, self.prev_center_y,
-                                       self.center_x, self.center_y, self.id)
-        self.prev_center_x = self.center_x
-        self.prev_center_y = self.center_y
+        new_x, new_y = self.get_coordinates()
+        # if new_y >= c.COL_HEIGHT or new_y < 0:
+        #     return
+        level_state.update_observation(self.prev_x, self.prev_y, new_x, new_y, self.id)
+        self.prev_x = new_x
+        self.prev_y = new_y
 
     def handle_state(self):
         if (self.state == c.WALK or
@@ -194,8 +196,15 @@ class Enemy(pg.sprite.Sprite):
             self.kill()
         elif self.rect.y > (level.viewport.bottom):
             self.kill()
-            print(self.id, "killed. Prev center: (", self.prev_center_x, self.prev_center_y, ")")
-            level_state.delete_observation(self.prev_center_x, self.prev_center_y)
+            self.center_x, self.center_y = self.get_center(self.rect.x, self.rect.y)
+            new_x, new_y = self.get_coordinates()
+            # print(self.id, "killed. Prev center: (", self.prev_x, self.prev_y, ")")
+            level_state.delete_observation(self.prev_x, self.prev_y)
+            # print(self.id, "killed. New center: (", new_x, new_y, ")")
+            level_state.delete_observation(new_x, new_y)
+            self.prev_x = new_x
+            self.prev_y = new_y
+            # level_state.print_state()
     
     def check_x_collisions(self, level):
         if self.in_range and not self.isVertical:

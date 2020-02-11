@@ -17,12 +17,29 @@ def insert_observation(x_px, y_px, id):
     state[x][y] = id
 
 
-def update_observation(old_x_px, old_y_px, new_x_px, new_y_px, id):
-    old_x = int(old_x_px // c.TILE_SIZE)
-    old_y = int(c.COL_HEIGHT - ((old_y_px - c.Y_OFFSET) // c.TILE_SIZE) - 1)
-    new_x = int(new_x_px // c.TILE_SIZE)
-    new_y = int(c.COL_HEIGHT - ((new_y_px - c.Y_OFFSET) // c.TILE_SIZE) - 1)
+# def update_observation(old_x_px, old_y_px, new_x_px, new_y_px, id):
+#     old_x = int(old_x_px // c.TILE_SIZE)
+#     old_y = int(c.COL_HEIGHT - ((old_y_px - c.Y_OFFSET) // c.TILE_SIZE) - 1)
+#     new_x = int(new_x_px // c.TILE_SIZE)
+#     new_y = int(c.COL_HEIGHT - ((new_y_px - c.Y_OFFSET) // c.TILE_SIZE) - 1)
+#
+#     if old_x == new_x and old_y == new_y:
+#         return
+#
+#     if old_y >= c.COL_HEIGHT:
+#         old_y = c.COL_HEIGHT - 1
+#     if new_y >= c.COL_HEIGHT:
+#         new_y = c.COL_HEIGHT - 1
+#
+#     while old_x >= len(state) or new_x >= len(state):
+#         state.append([c.AIR_ID for _ in range(c.COL_HEIGHT)])
+#
+#     state[old_x][old_y] = c.AIR_ID
+#     state[new_x][new_y] = id
+#
+#     print_state()
 
+def update_observation(old_x, old_y, new_x, new_y, id):
     if old_x == new_x and old_y == new_y:
         return
 
@@ -40,10 +57,10 @@ def update_observation(old_x_px, old_y_px, new_x_px, new_y_px, id):
     print_state()
 
 
-def delete_observation(x_px, y_px):
-    x = int(x_px // c.TILE_SIZE)
-    y = int(c.COL_HEIGHT - ((y_px - c.Y_OFFSET) // c.TILE_SIZE) - 1)
-    print("deleting (", x, y, ")")
+def delete_observation(x, y):
+    # print("deleting (", x, y, ")")
+    # print("state[" + str(x) + "][" + str(y) + "]:", state[x][y])
+    # print_state()
     state[x][y] = c.AIR_ID
 
 

@@ -313,7 +313,7 @@ class Level(tools.State):
         self.setup_solid_tile(tiles['solid'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
 
-        level_state.print_state()
+        # level_state.print_state()
         # for tile in tmp:
         #     print(tile)
         # self.randomly_clear_tiles([self.solid_group,
