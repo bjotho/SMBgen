@@ -72,6 +72,7 @@ class MarioEnv(gym.Env):
 
     def _did_reset(self):
         """Handle any hacking after a reset occurs."""
+        self.mario_x_last = c.DEBUG_START_X
         level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
 
     def reset(self):
