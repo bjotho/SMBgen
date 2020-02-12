@@ -73,7 +73,7 @@ class Enemy(pg.sprite.Sprite):
         self.set_velocity()
         self.death_timer = 0
         self.id = id
-        self.placeholder = c.AIR_ID
+        self.replacement = c.AIR_ID
         self.prev_x, self.prev_y = self.get_coordinates()
 
     def get_coordinates(self):
@@ -109,17 +109,17 @@ class Enemy(pg.sprite.Sprite):
         self.update_position(level)
 
         new_x, new_y = self.get_coordinates()
-        self.placeholder = level_state.update_observation(self.prev_x, self.prev_y,
-                                                          new_x, new_y, self.id, self.placeholder)
+        self.replacement = level_state.update_observation(self.prev_x, self.prev_y,
+                                                          new_x, new_y, self.id, self.replacement)
         self.prev_x = new_x
         self.prev_y = new_y
 
         if len(self._Sprite__g) == 0:
-            # print(self.id, "killed. Prev center: (", self.prev_x, self.prev_y, ")")
+            print(self.id, "killed. Prev center: (", self.prev_x, self.prev_y, ")")
             level_state.delete_observation(self.prev_x, self.prev_y)
-            # print(self.id, "killed. New center: (", new_x, new_y, ")")
+            print(self.id, "killed. New center: (", new_x, new_y, ")")
             level_state.delete_observation(new_x, new_y)
-            # level_state.print_state()
+            level_state.print_state()
 
     def handle_state(self):
         if (self.state == c.WALK or
