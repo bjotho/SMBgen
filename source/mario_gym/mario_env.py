@@ -1,6 +1,7 @@
 import sys
 import gym
 import pygame as pg
+import numpy as np
 from .. import tools
 from .. import constants as c
 from ..states import main_menu, load_screen, level_state
@@ -44,12 +45,14 @@ class MarioEnv(gym.Env):
         info = self.game.state.persist
         info['x_btn'] = self.game.x_btn
 
+        observation = None
         reward = 0
         if self.game.state == self.game.state_dict[c.LEVEL]:
+            observation = self.get_state()
             reward = self._reward()
 
-        # returns State, reward, done, info
-        return None, reward, self.done, info
+        # returns observation, reward, done, info
+        return observation, reward, self.done, info
 
     def _reward(self):
         current_x = self.game.state_dict[c.LEVEL].player.rect.x
@@ -83,9 +86,39 @@ class MarioEnv(gym.Env):
         return self.get_state()
 
     def get_state(self):
-        # TODO - read state
-        return 0
+        x, y = self.game.state_dict[c.LEVEL].player.get_coordinates(self.game.state_dict[c.LEVEL].player)
+        start_x = x - c.OBSERVATION_RADIUS
+        stop_x = x + c.OBSERVATION_RADIUS + 1
+        start_y = y - c.OBSERVATION_RADIUS
+        stop_y = y + c.OBSERVATION_RADIUS + 1
+        offset_x = 0
+        prepend_y = 0
+        append_y = 0
+        observation = []
+        for _ in range(start_x, stop_x):
+            observation.append([c.AIR_ID for _ in range(c.COL_HEIGHT)])
 
-    def render(self, mode='human'):
+        if start_x < 0:
+            offset_x = np.abs(start_x)
+            start_x = 0
+
+        for n, col in enumerate(level_state.state[start_x:stop_x]):
+            observation[n + offset_x] = col
+
+        if start_y < 0:
+            prepend_y = np.abs(start_y)
+            start_y = 0
+        if stop_y >= c.COL_HEIGHT:
+            append_y = stop_y - c.COL_HEIGHT
+
+        for n, _ in enumerate(observation):
+            observation[n] = [c.AIR_ID for _ in range(prepend_y)] + \
+                             observation[n][start_y:stop_y] + \
+                             [c.AIR_ID for _ in range(append_y)]
+
+        return observation
+
+    @staticmethod
+    def render(mode='human'):
         if mode == 'human':
             pg.display.update()

@@ -313,7 +313,7 @@ class Level(tools.State):
         self.setup_solid_tile(tiles['solid'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
 
-        level_state.print_state()
+        # level_state.print_2d(level_state.state)
         # for tile in tmp:
         #     print(tile)
         # self.randomly_clear_tiles([self.solid_group,
@@ -322,7 +322,6 @@ class Level(tools.State):
         #                            self.box_group,
         #                            self.ground_group])
 
-    @staticmethod
     def randomly_clear_tiles(self, groups):
         for group in groups:
             if np.random.random() < 0.02:

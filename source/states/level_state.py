@@ -31,20 +31,18 @@ def update_observation(old_x, old_y, new_x, new_y, id, replacement=c.AIR_ID):
     state[old_x][old_y] = replacement
     state[new_x][new_y] = id
 
-    print_state()
+    # print_2d(state)
+
     return placeholder
 
 
-def delete_observation(x, y):
-    # print("deleting (", x, y, ")")
-    # print("state[" + str(x) + "][" + str(y) + "]:", state[x][y])
-    # print_state()
-    state[x][y] = c.AIR_ID
+def delete_observation(x, y, replacement=c.AIR_ID):
+    state[x][y] = replacement
 
 
-def print_state():
+def print_2d(_list):
     output = "[\n"
-    for col in state:
+    for col in _list:
         output += "  [ "
         for tile in col:
             output += str(tile) + ", "

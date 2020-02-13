@@ -129,6 +129,12 @@ class Player(pg.sprite.Sprite):
         self.right_frames = self.small_normal_frames[0]
         self.left_frames = self.small_normal_frames[1]
 
+    @staticmethod
+    def get_coordinates(self):
+        x = int(self.rect.x // c.TILE_SIZE)
+        y = int(c.COL_HEIGHT - ((self.rect.y - c.Y_OFFSET) // c.TILE_SIZE) - 1)
+        return x, y
+
     def update(self, keys, game_info, fire_group):
         self.current_time = game_info[c.CURRENT_TIME]
         self.handle_state(keys, fire_group)
