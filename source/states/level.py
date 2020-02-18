@@ -361,6 +361,7 @@ class Level(tools.State):
                 self.game_info[c.LIVES] += 1
             if powerup.type != c.TYPE_FIREBALL:
                 powerup.kill()
+                powerup.update_level_state()
         elif enemy:
             if self.player.invincible:
                 self.update_score(100, enemy, 0)

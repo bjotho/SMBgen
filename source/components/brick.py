@@ -32,7 +32,7 @@ def create_brick(brick_group, item, level):
             
 def create_brick_list(brick_group, num, x, y, type, color, direction):
     # direction:horizontal, create brick from left to right, direction:vertical, create brick from up to bottom
-    size = 43 # 16 * c.BRICK_SIZE_MULTIPLIER is 43
+    size = 43  # 16 * c.BRICK_SIZE_MULTIPLIER is 43
     tmp_x, tmp_y = x, y
     for i in range(num):
         if direction == c.VERTICAL:
@@ -108,8 +108,8 @@ class Brick(stuff.Stuff):
                     self.frame_index = 1
                     self.image = self.frames[self.frame_index]
         elif (self.type == c.TYPE_STAR or 
-            self.type == c.TYPE_FIREFLOWER or 
-            self.type == c.TYPE_LIFEMUSHROOM):
+              self.type == c.TYPE_FIREFLOWER or
+              self.type == c.TYPE_LIFEMUSHROOM):
             self.frame_index = 1
             self.image = self.frames[self.frame_index]
         
@@ -126,11 +126,12 @@ class Brick(stuff.Stuff):
         x, y = level_state.get_coordinates(self.rect.x, self.rect.y)
         level_state.delete_observation(x, y)
         self.kill()
-        
+
+
 class BrickPiece(stuff.Stuff):
     def __init__(self, x, y, x_vel, y_vel):
         stuff.Stuff.__init__(self, x, y, setup.GFX['tile_set'],
-            [(68, 20, 8, 8)], c.BRICK_SIZE_MULTIPLIER)
+                             [(68, 20, 8, 8)], c.BRICK_SIZE_MULTIPLIER)
         self.x_vel = x_vel
         self.y_vel = y_vel
         self.gravity = .8
@@ -141,4 +142,3 @@ class BrickPiece(stuff.Stuff):
         self.y_vel += self.gravity
         if self.rect.y > c.SCREEN_HEIGHT:
             self.kill()
-    

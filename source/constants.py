@@ -1,7 +1,7 @@
 __author__ = 'marble_xu'
 
 DEBUG = True
-DEBUG_START_X = 110
+DEBUG_START_X = 7000
 DEBUG_START_Y = 536
 
 SCREEN_HEIGHT = 600

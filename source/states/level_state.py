@@ -18,7 +18,7 @@ def insert_observation(x_px, y_px, id):
 
 
 def update_observation(old_x, old_y, new_x, new_y, id, replacement=c.AIR_ID):
-    if old_x == new_x and old_y == new_y and id in [c.GOOMBA_ID, c.KOOPA_ID, c.FLY_KOOPA_ID]:
+    if old_x == new_x and old_y == new_y:
         return replacement
 
     if old_y >= c.COL_HEIGHT:
