@@ -70,6 +70,9 @@ class Brick(stuff.Stuff):
     def update(self):
         if self.state == c.BUMPED:
             self.bumped()
+        elif self.state == c.OPENED:
+            x, y = level_state.get_coordinates(self.rect.x, self.rect.y)
+            level_state.update_observation(x, y, x, y, c.SOLID_ID, c.SOLID_ID)
     
     def bumped(self):
         self.rect.y += self.y_vel
@@ -120,6 +123,8 @@ class Brick(stuff.Stuff):
         
         for arg in arg_list:
             group.add(BrickPiece(*arg))
+        x, y = level_state.get_coordinates(self.rect.x, self.rect.y)
+        level_state.delete_observation(x, y)
         self.kill()
         
 class BrickPiece(stuff.Stuff):

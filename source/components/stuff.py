@@ -3,6 +3,7 @@ __author__ = 'marble_xu'
 import pygame as pg
 from .. import setup, tools
 from .. import constants as c
+from ..states import level_state
 
 
 class Collider(pg.sprite.Sprite):
@@ -16,6 +17,9 @@ class Collider(pg.sprite.Sprite):
         if c.DEBUG:
             self.image.fill(c.RED)
 
+        for i in range(x, x + width, c.TILE_SIZE):
+            for j in range(y, y + height, c.TILE_SIZE):
+                level_state.insert_observation(i, j, c.SOLID_ID)
 
 class Checkpoint(pg.sprite.Sprite):
     def __init__(self, x, y, width, height, type, enemy_groupid=0, map_index=0, name=c.MAP_CHECKPOINT):
@@ -52,12 +56,14 @@ class Pole(Stuff):
     def __init__(self, x, y):
         Stuff.__init__(self, x, y, setup.GFX['tile_set'],
                        [(263, 144, 2, 16)], c.BRICK_SIZE_MULTIPLIER)
+        level_state.insert_observation(x, y, c.FLAG_ID)
 
 
 class PoleTop(Stuff):
     def __init__(self, x, y):
         Stuff.__init__(self, x, y, setup.GFX['tile_set'],
                        [(228, 120, 8, 8)], c.BRICK_SIZE_MULTIPLIER)
+        level_state.insert_observation(x, y, c.FLAG_ID)
 
 
 class Flag(Stuff):
@@ -150,6 +156,10 @@ class Pipe(Stuff):
         self.type = type
         if type != c.PIPE_TYPE_HORIZONTAL:
             self.create_image(x, y, height)
+
+        for i in range(x, x + width, c.TILE_SIZE):
+            for j in range(y, y + height, c.TILE_SIZE):
+                level_state.insert_observation(i, j, c.SOLID_ID)
 
     def create_image(self, x, y, pipe_height):
         img = self.image

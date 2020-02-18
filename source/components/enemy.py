@@ -74,19 +74,7 @@ class Enemy(pg.sprite.Sprite):
         self.death_timer = 0
         self.id = id
         self.replacement = c.AIR_ID
-        self.prev_x, self.prev_y = self.get_coordinates()
-
-    def get_coordinates(self):
-        x = int(self.rect.x // c.TILE_SIZE)
-        y = int(c.COL_HEIGHT - ((self.rect.y - c.Y_OFFSET) // c.TILE_SIZE) - 1)
-        if x < 0:
-            x = 0
-        if y < 0:
-            y = 0
-        elif y >= c.COL_HEIGHT:
-            y = c.COL_HEIGHT - 1
-
-        return x, y
+        self.prev_x, self.prev_y = level_state.get_coordinates(self.rect.x, self.rect.y)
 
 
     def load_frames(self, sheet, frame_rect_list):
@@ -108,7 +96,7 @@ class Enemy(pg.sprite.Sprite):
         self.animation()
         self.update_position(level)
 
-        new_x, new_y = self.get_coordinates()
+        new_x, new_y = level_state.get_coordinates(self.rect.x, self.rect.y)
         self.replacement = level_state.update_observation(self.prev_x, self.prev_y,
                                                           new_x, new_y, self.id, self.replacement)
         self.prev_x = new_x

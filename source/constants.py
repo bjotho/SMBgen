@@ -1,8 +1,8 @@
 __author__ = 'marble_xu'
 
-DEBUG = False
+DEBUG = True
 DEBUG_START_X = 110
-DEBUG_START_y = 536
+DEBUG_START_Y = 536
 
 SCREEN_HEIGHT = 600
 SCREEN_WIDTH = 800
@@ -63,7 +63,7 @@ PLAYER_MARIO = 'mario'
 PLAYER_LUIGI = 'luigi'
 
 # MAP GENERATION
-GENERATE_MAP = True
+GENERATE_MAP = False
 ONLY_GROUND = False
 READ = True
 WRITE = False
@@ -84,8 +84,15 @@ AIR_ID = '_'
 GROUND_ID = 'g'
 BRICK_ID = 'b'
 BOX_ID = 'q'
-STEP_ID = 'x'
+STEP_ID = 't'
 SOLID_ID = 's'
+PIPE_ID = 'p'
+FLAG_ID = 'f'
+MUSHROOM_ID = 'm'
+FIREFLOWER_ID = 'i'
+FIREBALL_ID = 'o'
+STAR_ID = 'x'
+LIFE_ID = 'u'
 GOOMBA_ID = '0'
 KOOPA_ID = '1'
 FLY_KOOPA_ID = '2'
@@ -93,7 +100,7 @@ FLY_KOOPA_ID = '2'
 # GYM COMPONENTS
 ACTION_KEYS = 323
 HUMAN_PLAYER = True
-OBSERVATION_RADIUS = 4
+OBSERVATION_RADIUS = 5
 
 # MAP COMPONENTS
 MAP_IMAGE = 'image_name'

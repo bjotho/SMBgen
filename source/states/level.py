@@ -9,9 +9,9 @@ from . import level_state
 from ..components import info, stuff, brick, box, enemy, powerup, coin
 
 if c.HUMAN_PLAYER:
-    from ..components import fast_player as player
-else:
     from ..components import player
+else:
+    from ..components import fast_player as player
 
 
 class Level(tools.State):
@@ -42,6 +42,10 @@ class Level(tools.State):
         self.setup_checkpoints()
         self.setup_flagpole()
         self.setup_sprite_groups()
+
+        self.observation = None
+
+        level_state.print_2d(level_state.state)
 
     def load_map(self):
         map_file = 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json'
@@ -146,7 +150,7 @@ class Level(tools.State):
         self.player.rect.bottom = self.player_y
         if c.DEBUG:
             self.player.rect.x = self.viewport.x + c.DEBUG_START_X
-            self.player.rect.bottom = c.DEBUG_START_y
+            self.player.rect.bottom = c.DEBUG_START_Y
         self.viewport.x = self.player.rect.x - 110
 
     def setup_enemies(self):
@@ -202,6 +206,13 @@ class Level(tools.State):
         if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
             self.done = True
             return
+
+        self.new_observation = level_state.get_observation(self.player)
+        if self.observation != self.new_observation:
+            level_state.print_2d(self.new_observation)
+
+        self.observation = self.new_observation
+
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
         self.handle_states(keys)
         self.draw(surface)

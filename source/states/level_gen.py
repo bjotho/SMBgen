@@ -14,9 +14,9 @@ from . import level_state
 from ..components import info, stuff, brick, solid_tile, box, enemy, powerup, coin
 
 if c.HUMAN_PLAYER:
-    from ..components import fast_player as player
-else:
     from ..components import player
+else:
+    from ..components import fast_player as player
 
 if c.PRINT_REWARD:
     import matplotlib.pyplot as plt
@@ -75,6 +75,7 @@ class Level(tools.State):
         self.reward_list = []
         self.dx_list = []
         self.optimal_mario_speed = 3
+        self.observation = None
 
         level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
 
@@ -183,7 +184,7 @@ class Level(tools.State):
         self.player.rect.bottom = self.player_y
         if c.DEBUG:
             self.player.rect.x = self.viewport.x + c.DEBUG_START_X
-            self.player.rect.bottom = c.DEBUG_START_y
+            self.player.rect.bottom = c.DEBUG_START_Y
         self.viewport.x = self.player.rect.x - 110
 
     def setup_enemies(self, enemies=None):
@@ -245,6 +246,13 @@ class Level(tools.State):
         if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
             self.done = True
             return
+
+        self.new_observation = level_state.get_observation(self.player)
+        if self.observation != self.new_observation:
+            level_state.print_2d(self.new_observation)
+
+        self.observation = self.new_observation
+
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
         self.handle_states(keys)
         self.draw(surface)

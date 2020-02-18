@@ -36,20 +36,16 @@ class MarioEnv(gym.Env):
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
+        observation = None
+        reward = 0
         if self.game.state == self.game.state_dict[c.LEVEL]:
-            if self.game.state_dict[c.LEVEL].done:
-                self.done = True
-            elif self.game.state_dict[c.LEVEL].player.dead:
+            observation = self.get_observation()
+            reward = self._reward()
+            if self.game.state_dict[c.LEVEL].done or self.game.state_dict[c.LEVEL].player.dead:
                 self.done = True
 
         info = self.game.state.persist
         info['x_btn'] = self.game.x_btn
-
-        observation = None
-        reward = 0
-        if self.game.state == self.game.state_dict[c.LEVEL]:
-            observation = self.get_state()
-            reward = self._reward()
 
         # returns observation, reward, done, info
         return observation, reward, self.done, info
@@ -76,47 +72,16 @@ class MarioEnv(gym.Env):
     def _did_reset(self):
         """Handle any hacking after a reset occurs."""
         self.mario_x_last = c.DEBUG_START_X
-        level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
 
     def reset(self):
         self._will_reset()
         self.game.flip_state(force=c.LEVEL)
         self._did_reset()
         self.done = False
-        return self.get_state()
+        return self.get_observation()
 
-    def get_state(self):
-        x, y = self.game.state_dict[c.LEVEL].player.get_coordinates(self.game.state_dict[c.LEVEL].player)
-        start_x = x - c.OBSERVATION_RADIUS
-        stop_x = x + c.OBSERVATION_RADIUS + 1
-        start_y = y - c.OBSERVATION_RADIUS
-        stop_y = y + c.OBSERVATION_RADIUS + 1
-        offset_x = 0
-        prepend_y = 0
-        append_y = 0
-        observation = []
-        for _ in range(start_x, stop_x):
-            observation.append([c.AIR_ID for _ in range(c.COL_HEIGHT)])
-
-        if start_x < 0:
-            offset_x = np.abs(start_x)
-            start_x = 0
-
-        for n, col in enumerate(level_state.state[start_x:stop_x]):
-            observation[n + offset_x] = col
-
-        if start_y < 0:
-            prepend_y = np.abs(start_y)
-            start_y = 0
-        if stop_y >= c.COL_HEIGHT:
-            append_y = stop_y - c.COL_HEIGHT
-
-        for n, _ in enumerate(observation):
-            observation[n] = [c.AIR_ID for _ in range(prepend_y)] + \
-                             observation[n][start_y:stop_y] + \
-                             [c.AIR_ID for _ in range(append_y)]
-
-        return observation
+    def get_observation(self):
+        return level_state.get_observation(self.game.state_dict[c.LEVEL].player)
 
     @staticmethod
     def render(mode='human'):

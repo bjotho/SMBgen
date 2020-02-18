@@ -69,6 +69,8 @@ class Box(pg.sprite.Sprite):
                 self.group.add(powerup.FireFlower(self.rect.centerx, self.rect.y))
             elif self.type == c.TYPE_LIFEMUSHROOM:
                 self.group.add(powerup.LifeMushroom(self.rect.centerx, self.rect.y))
+            x, y = level_state.get_coordinates(self.rect.x, self.rect.y)
+            level_state.update_observation(x, y, x, y, c.SOLID_ID, c.SOLID_ID)
         self.frame_index = 4
         self.image = self.frames[self.frame_index]
     
