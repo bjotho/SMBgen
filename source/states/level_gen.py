@@ -247,11 +247,12 @@ class Level(tools.State):
             self.done = True
             return
 
-        self.new_observation = level_state.get_observation(self.player)
-        if self.observation != self.new_observation:
-            level_state.print_2d(self.new_observation)
+        if c.PRINT_OBSERVATION:
+            self.new_observation = level_state.get_observation(self.player)
+            if self.observation != self.new_observation:
+                level_state.print_2d(self.new_observation)
 
-        self.observation = self.new_observation
+            self.observation = self.new_observation
 
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
         self.handle_states(keys)

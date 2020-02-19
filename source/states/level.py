@@ -45,8 +45,6 @@ class Level(tools.State):
 
         self.observation = None
 
-        level_state.print_2d(level_state.state)
-
     def load_map(self):
         map_file = 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json'
         file_path = os.path.join('source', 'data', 'maps', map_file)
@@ -209,11 +207,12 @@ class Level(tools.State):
             self.done = True
             return
 
-        self.new_observation = level_state.get_observation(self.player)
-        if self.observation != self.new_observation:
-            level_state.print_2d(self.new_observation)
+        if c.PRINT_OBSERVATION:
+            self.new_observation = level_state.get_observation(self.player)
+            if self.observation != self.new_observation:
+                level_state.print_2d(self.new_observation)
 
-        self.observation = self.new_observation
+            self.observation = self.new_observation
 
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
         self.handle_states(keys)
