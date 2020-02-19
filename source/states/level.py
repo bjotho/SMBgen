@@ -200,7 +200,9 @@ class Level(tools.State):
         self.player_group = pg.sprite.Group(self.player)
 
     def get_collide_groups(self):
-        return self.ground_step_pipe_group
+        return pg.sprite.Group(self.ground_step_pipe_group,
+                               self.brick_group,
+                               self.box_group)
 
     def update(self, surface, keys, current_time):
         if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
