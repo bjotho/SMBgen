@@ -14,6 +14,7 @@ keybinding = {
     'down':pg.K_DOWN
 }
 
+
 class State():
     def __init__(self):
         self.start_time = 0.0
@@ -34,6 +35,7 @@ class State():
     def update(sefl, surface, keys, current_time):
         '''abstract method'''
 
+
 class Control():
     def __init__(self):
         self.screen = pg.display.get_surface()
@@ -45,6 +47,7 @@ class Control():
         self.state_dict = {}
         self.state_name = None
         self.state = None
+        self.x_btn = False
     
     def setup_states(self, state_dict, start_state):
         self.state_dict = state_dict
@@ -57,7 +60,9 @@ class Control():
             self.flip_state()
         self.state.update(self.screen, self.keys, self.current_time)
 
-    def flip_state(self):
+    def flip_state(self, force=None):
+        if force is not None:
+            self.state.next = force
         previous, self.state_name = self.state_name, self.state.next
         persist = self.state.cleanup()
         self.state = self.state_dict[self.state_name]
@@ -67,6 +72,7 @@ class Control():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.done = True
+                self.x_btn = True
             elif event.type == pg.KEYDOWN:
                 self.keys = pg.key.get_pressed()
             elif event.type == pg.KEYUP:
@@ -79,16 +85,18 @@ class Control():
             pg.display.update()
             self.clock.tick(self.fps)
 
-def get_image(sheet, x, y, width, height, colorkey, scale):
-        image = pg.Surface([width, height])
-        rect = image.get_rect()
 
-        image.blit(sheet, (0, 0), (x, y, width, height))
-        image.set_colorkey(colorkey)
-        image = pg.transform.scale(image,
-                                   (int(rect.width*scale),
-                                    int(rect.height*scale)))
-        return image
+def get_image(sheet, x, y, width, height, colorkey, scale):
+    image = pg.Surface([width, height])
+    rect = image.get_rect()
+
+    image.blit(sheet, (0, 0), (x, y, width, height))
+    image.set_colorkey(colorkey)
+    image = pg.transform.scale(image,
+                               (int(rect.width*scale),
+                                int(rect.height*scale)))
+    return image
+
 
 def load_all_gfx(directory, colorkey=(255,0,255), accept=('.png', '.jpg', '.bmp', '.gif')):
     graphics = {}

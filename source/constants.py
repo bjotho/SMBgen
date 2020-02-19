@@ -2,15 +2,15 @@ __author__ = 'marble_xu'
 
 DEBUG = False
 DEBUG_START_X = 110
-DEBUG_START_y = 536
+DEBUG_START_Y = 536
 
 SCREEN_HEIGHT = 600
 SCREEN_WIDTH = 800
-SCREEN_SIZE = (SCREEN_WIDTH,SCREEN_HEIGHT)
+SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
 
 ORIGINAL_CAPTION = "Super Mario Bros"
 
-## COLORS ##
+# COLORS
 #                R    G    B
 GRAY         = (100, 100, 100)
 NAVYBLUE     = ( 60,  60, 100)
@@ -34,24 +34,24 @@ BGCOLOR = WHITE
 
 SIZE_MULTIPLIER = 2.5
 BRICK_SIZE_MULTIPLIER = 2.69
-SOLID_TILE_SIZE_MULTIPLIER = 2.69
+SOLID_SIZE_MULTIPLIER = 2.69
 BACKGROUND_MULTIPLER = 2.679
 GROUND_HEIGHT = SCREEN_HEIGHT - 62
 
 GAME_TIME_OUT = 301
 
-#STATES FOR ENTIRE GAME
+# STATES FOR ENTIRE GAME
 MAIN_MENU = 'main menu'
 LOAD_SCREEN = 'load screen'
 TIME_OUT = 'time out'
 GAME_OVER = 'game over'
 LEVEL = 'level'
 
-#MAIN MENU CURSOR STATES
+# MAIN MENU CURSOR STATES
 PLAYER1 = '1 PLAYER GAME'
 PLAYER2 = '2 PLAYER GAME'
 
-#GAME INFO DICTIONARY KEYS
+# GAME INFO DICTIONARY KEYS
 COIN_TOTAL = 'coin total'
 SCORE = 'score'
 TOP_SCORE = 'top score'
@@ -62,20 +62,48 @@ PLAYER_NAME = 'player name'
 PLAYER_MARIO = 'mario'
 PLAYER_LUIGI = 'luigi'
 
-#MAP GENERATION
+# MAP GENERATION
+GENERATE_MAP = False
+ONLY_GROUND = False
 READ = True
-WRITE = True
+WRITE = False
 SAVE_LEVEL = False
 PRINT_REWARD = False
+SNAKING = True
 GEN_BORDER = 'gen_border'
 GEN_HEIGHT = 580
 GEN_DISTANCE = 440
 GEN_LENGTH = 5
+Y_OFFSET = 64
 COL_HEIGHT = 13
-BLOCK_SIZE = 43
+TILE_SIZE = 43
 COL_MEMORY = 10
 
-#MAP COMPONENTS
+# GENERATION IDENTIFIERS
+AIR_ID = '_'
+GROUND_ID = 'g'
+BRICK_ID = 'b'
+BOX_ID = 'q'
+STEP_ID = 't'
+SOLID_ID = 's'
+PIPE_ID = 'p'
+FLAG_ID = 'f'
+MUSHROOM_ID = 'm'
+FIREFLOWER_ID = 'i'
+FIREBALL_ID = 'o'
+STAR_ID = 'x'
+LIFE_ID = 'u'
+GOOMBA_ID = '0'
+KOOPA_ID = '1'
+FLY_KOOPA_ID = '2'
+
+# GYM COMPONENTS
+ACTION_KEYS = 323
+HUMAN_PLAYER = True
+PRINT_OBSERVATION = False
+OBSERVATION_RADIUS = 5
+
+# MAP COMPONENTS
 MAP_IMAGE = 'image_name'
 MAP_MAPS = 'maps'
 SUB_MAP = 'sub_map'
@@ -125,28 +153,28 @@ VERTICAL = 1
 VELOCITY = 'velocity'
 MAP_COIN = 'coin'
 
-#COMPONENT COLOR
+# COMPONENT COLOR
 COLOR = 'color'
 COLOR_TYPE_ORANGE = 0
 COLOR_TYPE_GREEN = 1
 COLOR_TYPE_RED = 2
 
-#BRICK STATES
+# BRICK STATES
 RESTING = 'resting'
 BUMPED = 'bumped'
 OPENED = 'opened'
 
-#MUSHROOM STATES
+# MUSHROOM STATES
 REVEAL = 'reveal'
 SLIDE = 'slide'
 
-#Player FRAMES
+# Player FRAMES
 PLAYER_FRAMES = 'image_frames'
 RIGHT_SMALL_NORMAL = 'right_small_normal'
 RIGHT_BIG_NORMAL = 'right_big_normal'
 RIGHT_BIG_FIRE = 'right_big_fire'
 
-#PLAYER States
+# PLAYER States
 STAND = 'standing'
 WALK = 'walk'
 JUMP = 'jump'
@@ -162,7 +190,7 @@ IN_CASTLE = 'in castle'
 DOWN_TO_PIPE = 'down to pipe'
 UP_OUT_PIPE = 'up out of pipe'
 
-#PLAYER FORCES
+# PLAYER FORCES
 PLAYER_SPEED = 'speed'
 WALK_ACCEL = 'walk_accel'
 RUN_ACCEL = 'run_accel'
@@ -174,7 +202,7 @@ SMALL_TURNAROUND = .35
 JUMP_GRAVITY = .31
 GRAVITY = 1.01
 
-#LIST of ENEMIES
+# LIST of ENEMIES
 GOOMBA = 'goomba'
 KOOPA = 'koopa'
 FLY_KOOPA = 'fly koopa'
@@ -183,25 +211,25 @@ FIRE = 'fire'
 PIRANHA = 'piranha'
 FIRESTICK = 'firestick'
 
-#GOOMBA Stuff
+# GOOMBA Stuff
 LEFT = 'left'
 RIGHT = 'right'
 JUMPED_ON = 'jumped on'
 DEATH_JUMP = 'death jump'
 
-#KOOPA STUFF
+# KOOPA STUFF
 SHELL_SLIDE = 'shell slide'
 
-#FLAG STATE
+# FLAG STATE
 TOP_OF_POLE = 'top of pole'
 SLIDE_DOWN = 'slide down'
 BOTTOM_OF_POLE = 'bottom of pole'
 
-#FIREBALL STATE
+# FIREBALL STATE
 FLYING = 'flying'
 BOUNCING = 'bouncing'
 EXPLODING = 'exploding'
 
-#IMAGE SHEET
+# IMAGE SHEET
 ENEMY_SHEET = 'smb_enemies_sheet'
 ITEM_SHEET = 'item_objects'

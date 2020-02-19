@@ -1,16 +1,24 @@
-__author__ = 'marble_xu'
+from source.mario_gym.joypad_space import JoypadSpace
+from source.mario_gym.mario_env import MarioEnv
+from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
 
-import pygame as pg
-from . import setup, tools
-from . import constants as c
-from .states import main_menu, load_screen, level
 
 def main():
-    game = tools.Control()
-    state_dict = {c.MAIN_MENU: main_menu.Menu(),
-                  c.LOAD_SCREEN: load_screen.LoadScreen(),
-                  c.LEVEL: level.Level(),
-                  c.GAME_OVER: load_screen.GameOver(),
-                  c.TIME_OUT: load_screen.TimeOut()}
-    game.setup_states(state_dict, c.MAIN_MENU)
-    game.main()
+    # Use mode='human' as argument to enable keyboard input
+    env = MarioEnv()
+    env = JoypadSpace(env, SIMPLE_MOVEMENT)
+    EPISODES = 100
+
+    for ep in range(EPISODES):
+
+        print("Episode:", ep)
+        current_state = env.reset()
+        done = False
+
+        while not done:
+            action = env.action_space.sample()
+            new_state, reward, done, info = env.step(action)
+            env.render()
+            current_state = new_state
+            if info['x_btn']:
+                return

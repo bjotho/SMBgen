@@ -4,6 +4,8 @@ import pygame as pg
 from .. import setup, tools
 from .. import constants as c
 from . import coin, stuff, powerup
+from ..states import level_state
+
 
 def create_brick(brick_group, item, level):
     if c.COLOR in item:
@@ -14,23 +16,23 @@ def create_brick(brick_group, item, level):
     x, y, type = item['x'], item['y'], item['type']
     if type == c.TYPE_COIN:
         brick_group.add(Brick(x, y, type, 
-                    color, level.coin_group))
+                        color, level.coin_group))
     elif (type == c.TYPE_STAR or
-        type == c.TYPE_FIREFLOWER or
-        type == c.TYPE_LIFEMUSHROOM):
+          type == c.TYPE_FIREFLOWER or
+          type == c.TYPE_LIFEMUSHROOM):
         brick_group.add(Brick(x, y, type,
-                    color, level.powerup_group))
+                        color, level.powerup_group))
     else:
         if c.BRICK_NUM in item:
             create_brick_list(brick_group, item[c.BRICK_NUM], x, y, type,
-                        color, item['direction'])
+                              color, item['direction'])
         else:
             brick_group.add(Brick(x, y, type, color))
             
             
 def create_brick_list(brick_group, num, x, y, type, color, direction):
-    ''' direction:horizontal, create brick from left to right, direction:vertical, create brick from up to bottom '''
-    size = 43 # 16 * c.BRICK_SIZE_MULTIPLIER is 43
+    # direction:horizontal, create brick from left to right, direction:vertical, create brick from up to bottom
+    size = 43  # 16 * c.BRICK_SIZE_MULTIPLIER is 43
     tmp_x, tmp_y = x, y
     for i in range(num):
         if direction == c.VERTICAL:
@@ -38,7 +40,8 @@ def create_brick_list(brick_group, num, x, y, type, color, direction):
         else:
             tmp_x = x + i * size
         brick_group.add(Brick(tmp_x, tmp_y, type, color))
-        
+
+
 class Brick(stuff.Stuff):
     def __init__(self, x, y, type, color=c.ORANGE, group=None, name=c.MAP_BRICK):
         orange_rect = [(16, 0, 16, 16), (432, 0, 16, 16)]
@@ -48,7 +51,7 @@ class Brick(stuff.Stuff):
         else:
             frame_rect = blue_rect
         stuff.Stuff.__init__(self, x, y, setup.GFX['tile_set'],
-                        frame_rect, c.BRICK_SIZE_MULTIPLIER)
+                             frame_rect, c.BRICK_SIZE_MULTIPLIER)
 
         self.rest_height = y
         self.state = c.RESTING
@@ -61,10 +64,15 @@ class Brick(stuff.Stuff):
             self.coin_num = 0
         self.group = group
         self.name = name
+
+        level_state.insert_observation(x, y, c.BRICK_ID)
     
     def update(self):
         if self.state == c.BUMPED:
             self.bumped()
+        elif self.state == c.OPENED:
+            x, y = level_state.get_coordinates(self.rect.x, self.rect.y)
+            level_state.update_observation(x, y, x, y, c.SOLID_ID, c.SOLID_ID)
     
     def bumped(self):
         self.rect.y += self.y_vel
@@ -100,8 +108,8 @@ class Brick(stuff.Stuff):
                     self.frame_index = 1
                     self.image = self.frames[self.frame_index]
         elif (self.type == c.TYPE_STAR or 
-            self.type == c.TYPE_FIREFLOWER or 
-            self.type == c.TYPE_LIFEMUSHROOM):
+              self.type == c.TYPE_FIREFLOWER or
+              self.type == c.TYPE_LIFEMUSHROOM):
             self.frame_index = 1
             self.image = self.frames[self.frame_index]
         
@@ -115,12 +123,15 @@ class Brick(stuff.Stuff):
         
         for arg in arg_list:
             group.add(BrickPiece(*arg))
+        x, y = level_state.get_coordinates(self.rect.x, self.rect.y)
+        level_state.delete_observation(x, y)
         self.kill()
-        
+
+
 class BrickPiece(stuff.Stuff):
     def __init__(self, x, y, x_vel, y_vel):
         stuff.Stuff.__init__(self, x, y, setup.GFX['tile_set'],
-            [(68, 20, 8, 8)], c.BRICK_SIZE_MULTIPLIER)
+                             [(68, 20, 8, 8)], c.BRICK_SIZE_MULTIPLIER)
         self.x_vel = x_vel
         self.y_vel = y_vel
         self.gravity = .8
@@ -131,4 +142,3 @@ class BrickPiece(stuff.Stuff):
         self.y_vel += self.gravity
         if self.rect.y > c.SCREEN_HEIGHT:
             self.kill()
-    

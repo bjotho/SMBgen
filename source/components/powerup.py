@@ -4,9 +4,11 @@ import pygame as pg
 from .. import setup, tools
 from .. import constants as c
 from . import stuff
+from ..states import level_state
+
 
 class Powerup(stuff.Stuff):
-    def __init__(self, x, y, sheet, image_rect_list, scale):
+    def __init__(self, x, y, sheet, image_rect_list, scale, id=None):
         stuff.Stuff.__init__(self, x, y, sheet, image_rect_list, scale)
         self.rect.centerx = x
         self.state = c.REVEAL
@@ -17,6 +19,12 @@ class Powerup(stuff.Stuff):
         self.gravity = 1
         self.max_y_vel = 8
         self.animate_timer = 0
+        self.id = id
+        if self.id == c.FIREBALL_ID:
+            self.replacement = c.AIR_ID
+        else:
+            self.replacement = c.SOLID_ID
+        self.prev_x, self.prev_y = level_state.get_coordinates(self.rect.x, self.rect.y)
     
     def update_position(self, level):
         self.rect.x += self.x_vel
@@ -27,12 +35,26 @@ class Powerup(stuff.Stuff):
         
         if self.rect.x <= 0:
             self.kill()
-        elif self.rect.y > (level.viewport.bottom):
+        elif self.rect.y > level.viewport.bottom:
             self.kill()
+
+    def update_level_state(self):
+        new_x, new_y = level_state.get_coordinates(self.rect.x, self.rect.y)
+        self.replacement = level_state.update_observation(self.prev_x, self.prev_y,
+                                                          new_x, new_y, self.id, self.replacement)
+        self.prev_x = new_x
+        self.prev_y = new_y
+
+        if len(self._Sprite__g) == 0:
+            # print(self.id, "killed. Prev center: (", self.prev_x, self.prev_y, ")")
+            level_state.delete_observation(self.prev_x, self.prev_y)
+            # print(self.id, "killed. New center: (", new_x, new_y, ")")
+            level_state.delete_observation(new_x, new_y, self.replacement)
+            # level_state.print_2d(level_state.state)
 
     def check_x_collisions(self, level):
         sprite_group = pg.sprite.Group(level.ground_step_pipe_group,
-                            level.brick_group, level.box_group)
+                                       level.brick_group, level.box_group)
         sprite = pg.sprite.spritecollideany(self, sprite_group)
         if sprite:
             if self.direction == c.RIGHT:
@@ -47,7 +69,7 @@ class Powerup(stuff.Stuff):
     
     def check_y_collisions(self, level):
         sprite_group = pg.sprite.Group(level.ground_step_pipe_group,
-                            level.brick_group, level.box_group)
+                                       level.brick_group, level.box_group)
 
         sprite = pg.sprite.spritecollideany(self, sprite_group)
         if sprite:
@@ -59,10 +81,13 @@ class Powerup(stuff.Stuff):
     def animation(self):
         self.image = self.frames[self.frame_index]
 
+        self.update_level_state()
+
+
 class Mushroom(Powerup):
     def __init__(self, x, y):
         Powerup.__init__(self, x, y, setup.GFX[c.ITEM_SHEET],
-                [(0, 0, 16, 16)], c.SIZE_MULTIPLIER)
+                         [(0, 0, 16, 16)], c.SIZE_MULTIPLIER, c.MUSHROOM_ID)
         self.type = c.TYPE_MUSHROOM
         self.speed = 2
 
@@ -83,19 +108,21 @@ class Mushroom(Powerup):
             self.update_position(level)
         self.animation()
 
+
 class LifeMushroom(Mushroom):
     def __init__(self, x, y):
         Powerup.__init__(self, x, y, setup.GFX[c.ITEM_SHEET],
-                [(16, 0, 16, 16)], c.SIZE_MULTIPLIER)
+                         [(16, 0, 16, 16)], c.SIZE_MULTIPLIER, c.LIFE_ID)
         self.type = c.TYPE_LIFEMUSHROOM
         self.speed = 2
+
 
 class FireFlower(Powerup):
     def __init__(self, x, y):
         frame_rect_list = [(0, 32, 16, 16), (16, 32, 16, 16),
-                        (32, 32, 16, 16), (48, 32, 16, 16)]
+                           (32, 32, 16, 16), (48, 32, 16, 16)]
         Powerup.__init__(self, x, y, setup.GFX[c.ITEM_SHEET],
-                    frame_rect_list, c.SIZE_MULTIPLIER)
+                         frame_rect_list, c.SIZE_MULTIPLIER, c.FIREFLOWER_ID)
         self.type = c.TYPE_FIREFLOWER
 
     def update(self, game_info, *args):
@@ -116,12 +143,13 @@ class FireFlower(Powerup):
 
         self.animation()
 
+
 class Star(Powerup):
     def __init__(self, x, y):
         frame_rect_list = [(1, 48, 15, 16), (17, 48, 15, 16),
-                        (33, 48, 15, 16), (49, 48, 15, 16)]
+                           (33, 48, 15, 16), (49, 48, 15, 16)]
         Powerup.__init__(self, x, y, setup.GFX[c.ITEM_SHEET],
-                    frame_rect_list, c.SIZE_MULTIPLIER)
+                         frame_rect_list, c.SIZE_MULTIPLIER, c.STAR_ID)
         self.type = c.TYPE_STAR
         self.gravity = .4
         self.speed = 5
@@ -151,7 +179,7 @@ class Star(Powerup):
     
     def check_y_collisions(self, level):
         sprite_group = pg.sprite.Group(level.ground_step_pipe_group,
-                            level.brick_group, level.box_group)
+                                       level.brick_group, level.box_group)
 
         sprite = pg.sprite.spritecollideany(self, sprite_group)
 
@@ -161,16 +189,17 @@ class Star(Powerup):
             else:
                 self.rect.bottom = sprite.rect.y
                 self.y_vel = -5
-                
+
+
 class FireBall(Powerup):
     def __init__(self, x, y, facing_right):
         # first 3 Frames are flying, last 4 frams are exploding
         frame_rect_list = [(96, 144, 8, 8), (104, 144, 8, 8), 
-                        (96, 152, 8, 8), (104, 152, 8, 8),
-                        (112, 144, 16, 16), (112, 160, 16, 16),
-                        (112, 176, 16, 16)]
+                           (96, 152, 8, 8), (104, 152, 8, 8),
+                           (112, 144, 16, 16), (112, 160, 16, 16),
+                           (112, 176, 16, 16)]
         Powerup.__init__(self, x, y, setup.GFX[c.ITEM_SHEET],
-                    frame_rect_list, c.SIZE_MULTIPLIER)
+                         frame_rect_list, c.SIZE_MULTIPLIER, c.FIREBALL_ID)
         self.type = c.TYPE_FIREBALL
         self.y_vel = 10
         self.gravity = .9
@@ -202,20 +231,19 @@ class FireBall(Powerup):
                 else:
                     self.kill()
                 self.animate_timer = self.current_time
-        
-        
+
         self.animation()
     
     def check_x_collisions(self, level):
         sprite_group = pg.sprite.Group(level.ground_step_pipe_group,
-                            level.brick_group, level.box_group)
+                                       level.brick_group, level.box_group)
         sprite = pg.sprite.spritecollideany(self, sprite_group)
         if sprite:
             self.change_to_explode()
     
     def check_y_collisions(self, level):
         sprite_group = pg.sprite.Group(level.ground_step_pipe_group,
-                            level.brick_group, level.box_group)
+                                       level.brick_group, level.box_group)
 
         sprite = pg.sprite.spritecollideany(self, sprite_group)
         enemy = pg.sprite.spritecollideany(self, level.enemy_group)
@@ -231,7 +259,7 @@ class FireBall(Powerup):
                     self.x_vel = -15
                 self.state = c.BOUNCING
         elif enemy:
-            if (enemy.name != c.FIRESTICK) :
+            if enemy.name != c.FIRESTICK:
                 level.update_score(100, enemy, 0)
                 level.move_to_dying_group(level.enemy_group, enemy)
                 enemy.start_death_jump(self.direction)
@@ -240,4 +268,3 @@ class FireBall(Powerup):
     def change_to_explode(self):
         self.frame_index = 4
         self.state = c.EXPLODING
-
