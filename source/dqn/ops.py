@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
-from tensorflow.contrib.layers import l2_regularizer, xavier_initializer, fully_connected, flatten
+from keras import regularizers, 
+'''l2_regularizer, xavier_initializer, fully_connected, flatten'''
 
 
 # various implementations of this exist, particularly in how the negatives are calculated

@@ -1,7 +1,7 @@
 import gym
 import gym_pull
 import numpy as np
-from .. import dqnagent as MarioDQNAgent
+from source.dqn.dqnagent import MarioDQNAgent
 import tensorflow as tf
 
 with tf.device('/gpu:0'):

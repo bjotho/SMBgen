@@ -1,6 +1,6 @@
 #!/usr/bin/env
 import numpy as np
-from prioritizedsumtree import PrioritizedSumTree
+from source.dqn.prioritizedsumtree import PrioritizedSumTree
 
 
 # TODO - implement Tiered memories similar to cache levels in a processor
@@ -79,8 +79,8 @@ class SarstReplayMemory:
 
         if self.memory_size < batch_size:
             # TODO - might be a better idea to just keep sampling from them anyway and repeat samples
-            raise ValueError, "Cannot read a batch of %d samples when memory only has %d samples stored" % (
-            batch_size, self.memory_size)
+            raise [ValueError, "Cannot read a batch of %d samples when memory only has %d samples stored" % (
+            batch_size, self.memory_size)]
 
         chosen_sarst_indexes = []
 

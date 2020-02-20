@@ -6,8 +6,8 @@ import gym
 from collections import deque
 import matplotlib.pyplot as plot
 import tensorflow as tf
-from .. import ops
-from .. import sarstreplaymemory
+from source.dqn import ops
+from source.dqn.sarstreplaymemory import SarstReplayMemory
 
 
 # TODO - add more rewards to py file
