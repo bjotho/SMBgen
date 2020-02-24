@@ -159,7 +159,7 @@ class Pipe(Stuff):
 
         for i in range(x, x + width, c.TILE_SIZE):
             for j in range(y, y + height, c.TILE_SIZE):
-                level_state.insert_observation(i, j, c.SOLID_ID)
+                level_state.insert_observation(i, j, c.PIPE_ID)
 
     def create_image(self, x, y, pipe_height):
         img = self.image
