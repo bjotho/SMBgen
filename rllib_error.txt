@@ -1,0 +1,76 @@
+/home/bjorninge/PycharmProjects/SMBgen/venv/bin/python /home/bjorninge/PycharmProjects/SMBgen/main.py
+
+pygame 1.9.6
+
+Hello from the pygame community. https://www.pygame.org/contribute.html
+
+random seed: 2285
+
+libpng warning: iCCP: known incorrect sRGB profile
+
+libpng warning: iCCP: known incorrect sRGB profile
+
+lz4 not available, disabling sample compression. This will significantly impact RLlib performance. To install lz4, run `pip install lz4`.
+
+2020-02-25 14:26:52,897	INFO resource_spec.py:212 -- Starting Ray with 2.39 GiB memory available for workers and up to 1.21 GiB for objects. You can adjust these settings with ray.init(memory=<bytes>, object_store_memory=<bytes>).
+
+2020-02-25 14:26:53,451	INFO services.py:1078 -- View the Ray dashboard at localhost:8265
+
+2020-02-25 14:26:54,125	INFO trainer.py:420 -- Tip: set 'eager': true or the --eager flag to enable TensorFlow eager execution
+
+2020-02-25 14:26:54,128	ERROR logger.py:185 -- pip install 'ray[tune]' to see TensorBoard files.
+
+2020-02-25 14:26:54,129	WARNING logger.py:287 -- Could not instantiate TBXLogger: No module named 'tensorboardX'.
+
+2020-02-25 14:26:54,132	INFO trainer.py:580 -- Current log_level is WARN. For more information, set 'log_level': 'INFO' / 'DEBUG' or use the -v and -vv flags.
+
+Traceback (most recent call last):
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/main.py", line 5, in <module>
+    main()
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/source/main.py", line 17, in main
+    trainer = ppo.PPOTrainer(env="MarioEnv", config={'env_config': {}})
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/agents/trainer_template.py", line 86, in __init__
+    Trainer.__init__(self, config, env, logger_creator)
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/agents/trainer.py", line 447, in __init__
+    super().__init__(config, logger_creator)
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/tune/trainable.py", line 172, in __init__
+    self._setup(copy.deepcopy(self.config))
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/agents/trainer.py", line 591, in _setup
+    self._init(self.config, self.env_creator)
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/agents/trainer_template.py", line 105, in _init
+    self.config["num_workers"])
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/agents/trainer.py", line 658, in _make_workers
+    logdir=self.logdir)
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/evaluation/worker_set.py", line 60, in __init__
+    RolloutWorker, env_creator, policy, 0, self._local_config)
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/evaluation/worker_set.py", line 262, in _make_worker
+    _fake_sampler=config.get("_fake_sampler", False))
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/evaluation/rollout_worker.py", line 355, in __init__
+    self._build_policy_map(policy_dict, policy_config)
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/evaluation/rollout_worker.py", line 797, in _build_policy_map
+    obs_space, merged_conf.get("model"))
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/models/catalog.py", line 402, in get_preprocessor_for_space
+    cls = get_preprocessor(observation_space)
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/models/preprocessors.py", line 250, in get_preprocessor
+    legacy_patch_shapes(space)
+
+  File "/home/bjorninge/PycharmProjects/SMBgen/venv/lib/python3.6/site-packages/ray/rllib/models/preprocessors.py", line 286, in legacy_patch_shapes
+    return space.shape
+
+AttributeError: 'NoneType' object has no attribute 'shape'
+
+Process finished with exit code 1

@@ -1,24 +1,36 @@
-from source.mario_gym.joypad_space import JoypadSpace
 from source.mario_gym.mario_env import MarioEnv
 from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
+from . import constants as c
+import ray
+from ray.tune.registry import register_env
+from ray.rllib.agents import ppo
+
+
+def env_creator(env_config):
+    # Use mode='human' as argument to enable keyboard input
+    return MarioEnv(actions=SIMPLE_MOVEMENT)
 
 
 def main():
-    # Use mode='human' as argument to enable keyboard input
-    env = MarioEnv()
-    env = JoypadSpace(env, SIMPLE_MOVEMENT)
-    EPISODES = 100
+    register_env(c.ENV_NAME, env_creator)
 
-    for ep in range(EPISODES):
+    ray.init()
+    trainer = ppo.PPOTrainer(env=c.ENV_NAME)
+    while True:
+        print(trainer.train())
 
-        print("Episode:", ep)
-        current_state = env.reset()
-        done = False
+    # EPISODES = 1000
 
-        while not done:
-            action = env.action_space.sample()
-            new_state, reward, done, info = env.step(action)
-            env.render()
-            current_state = new_state
-            if info['x_btn']:
-                return
+    # for ep in range(EPISODES):
+    #
+    #     print("Episode:", ep)
+    #     current_state = env.reset()
+    #     done = False
+    #
+    #     while not done:
+    #         action = env.action_space.sample()
+    #         new_state, reward, done, info = env.step(action)
+    #         env.render()
+    #         current_state = new_state
+    #         if info['x_btn']:
+    #             return
