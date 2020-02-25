@@ -1,6 +1,7 @@
 import sys
 import gym
 import pygame as pg
+from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_RETURN, K_s, K_a, KMOD_NONE
 import numpy as np
 from .. import tools
 from .. import constants as c
@@ -13,7 +14,7 @@ else:
 
 class MarioEnv(gym.Env):
 
-    def __init__(self, mode='bot'):
+    def __init__(self, actions, mode='bot'):
         if mode == 'human':
             c.HUMAN_PLAYER = True
 
@@ -30,7 +31,66 @@ class MarioEnv(gym.Env):
             self.game.main()
             sys.exit(0)
 
+        # a mapping of buttons to binary values
+        self._button_map = {
+            'right': K_RIGHT,
+            'left': K_LEFT,
+            'down': K_DOWN,
+            'up': K_UP,
+            'start': K_RETURN,
+            'select': K_RETURN,
+            'B': K_s,
+            'A': K_a,
+            'NOOP': KMOD_NONE,
+        }
+
+        self._ACTION_TO_KEYS = {}
+        self.convert_actions(actions)
+
+    def buttons(self) -> list:
+        """Return the buttons that can be used as actions."""
+        return list(self._button_map.keys())
+
+    def convert_actions(self, actions: list):
+        """Setup binary to discrete action space converter."""
+
+        # create the new action space
+        self.action_space = gym.spaces.Discrete(len(actions))
+        # create the action map from the list of discrete actions
+        self._action_map = {}
+        self._action_meanings = {}
+        # iterate over all the actions (as button lists)
+        for action, button_list in enumerate(actions):
+            # the value of this action's bitmap
+            action_list = []
+            # iterate over the buttons in this button list
+            for button in button_list:
+                action_list.append(self._button_map[button])
+            # set this action maps value to the byte action value
+            self._action_map[action] = action_list
+            self._action_meanings[action] = ' '.join(button_list)
+
+        self.setup_action_to_keys()
+
+    def setup_action_to_keys(self):
+        """Map action to keyboard keys"""
+        for action in self._action_map.items():
+            keyboard = [0 for i in range(c.ACTION_KEYS)]
+            for button in action[-1]:
+                keyboard[button] = 1
+
+            self._ACTION_TO_KEYS[action[0]] = tuple(keyboard)
+
+    def get_action_to_keys(self):
+        return self._ACTION_TO_KEYS
+
+    def get_action_meanings(self):
+        """Return a list of actions meanings."""
+        actions = sorted(self._action_meanings.keys())
+        return [self._action_meanings[action] for action in actions]
+
     def step(self, action):
+        action = self._ACTION_TO_KEYS[action]
         self.game.event_loop()
         self.game.keys = action
         self.game.update()
@@ -74,6 +134,7 @@ class MarioEnv(gym.Env):
         self.mario_x_last = c.DEBUG_START_X
 
     def reset(self):
+        """Reset the environment and return the initial observation."""
         self._will_reset()
         self.game.flip_state(force=c.LEVEL)
         self._did_reset()

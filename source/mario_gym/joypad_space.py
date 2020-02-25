@@ -6,8 +6,8 @@ from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_RETURN, K_s, K_a, KMOD_NONE
 from .. import constants as c
 
 
-class JoypadSpace(Wrapper):
-    """An environment wrapper to convert binary to discrete action space."""
+class JoypadSpace(gym.Env):
+    """Convert binary to discrete action space."""
 
     # a mapping of buttons to binary values
     _button_map = {
@@ -69,28 +69,6 @@ class JoypadSpace(Wrapper):
                 keyboard[button] = 1
 
             self._ACTION_TO_KEYS[action[0]] = tuple(keyboard)
-
-    def step(self, action):
-        """
-        Take a step using the given action.
-
-        Args:
-            action (int): the discrete action to perform
-
-        Returns:
-            a tuple of:
-            - (numpy.ndarray) the state as a result of the action
-            - (float) the reward achieved by taking the action
-            - (bool) a flag denoting whether the episode has ended
-            - (dict) a dictionary of extra information
-
-        """
-        # take the step and record the output
-        return self.env.step(self._ACTION_TO_KEYS[action])
-
-    def reset(self):
-        """Reset the environment and return the initial observation."""
-        return self.env.reset()
 
     def get_action_to_keys(self):
         return self._ACTION_TO_KEYS
