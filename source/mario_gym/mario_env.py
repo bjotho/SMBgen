@@ -60,8 +60,8 @@ class MarioEnv(gym.Env):
         # create the new action space
         self.action_space = gym.spaces.Discrete(len(actions))
         # create the new observation space
-        _obs_size = 2 * c.OBSERVATION_RADIUS + 1
-        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(_obs_size, _obs_size))
+        self._obs_size = 2 * c.OBSERVATION_RADIUS + 1
+        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(self._obs_size, self._obs_size))
         # create the action map from the list of discrete actions
         self._action_map = {}
         self._action_meanings = {}
@@ -154,7 +154,13 @@ class MarioEnv(gym.Env):
         return self.get_observation()
 
     def get_observation(self):
-        return np.array(self._TILE_MAP[tile] for tile in level_state.get_observation(self.game.state_dict[c.LEVEL].player))
+        raw_observation = level_state.get_observation(self.game.state_dict[c.LEVEL].player)
+        observation = np.ndarray(shape=(self._obs_size, self._obs_size))
+        for m, i in enumerate(raw_observation):
+            for n, j in enumerate(i):
+                observation[m][n] = self._TILE_MAP[j]
+
+        return observation
 
     @staticmethod
     def render(mode='human'):
