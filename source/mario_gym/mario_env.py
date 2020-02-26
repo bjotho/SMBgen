@@ -45,17 +45,23 @@ class MarioEnv(gym.Env):
         }
 
         self._ACTION_TO_KEYS = {}
-        self.convert_actions(actions)
+        self._TILE_MAP = {}
+        self.setup_spaces(actions)
+        print("observation space in", c.ENV_NAME + ":", self.observation_space)
 
     def buttons(self) -> list:
         """Return the buttons that can be used as actions."""
         return list(self._button_map.keys())
 
-    def convert_actions(self, actions: list):
-        """Setup binary to discrete action space converter."""
+    def setup_spaces(self, actions: list):
+        """Setup binary to discrete action space converter.
+           Setup observation space."""
 
         # create the new action space
         self.action_space = gym.spaces.Discrete(len(actions))
+        # create the new observation space
+        _obs_size = 2 * c.OBSERVATION_RADIUS + 1
+        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(_obs_size, _obs_size))
         # create the action map from the list of discrete actions
         self._action_map = {}
         self._action_meanings = {}
@@ -71,6 +77,12 @@ class MarioEnv(gym.Env):
             self._action_meanings[action] = ' '.join(button_list)
 
         self.setup_action_to_keys()
+        self.tokenize_tiles()
+
+    def tokenize_tiles(self):
+        token_step = 1.0 / (len(c.TILES) - 1)
+        for n, tile in enumerate(c.TILES):
+            self._TILE_MAP[tile] = n * token_step
 
     def setup_action_to_keys(self):
         """Map action to keyboard keys"""
@@ -142,7 +154,7 @@ class MarioEnv(gym.Env):
         return self.get_observation()
 
     def get_observation(self):
-        return level_state.get_observation(self.game.state_dict[c.LEVEL].player)
+        return np.array(self._TILE_MAP[tile] for tile in level_state.get_observation(self.game.state_dict[c.LEVEL].player))
 
     @staticmethod
     def render(mode='human'):
