@@ -97,6 +97,23 @@ GOOMBA_ID = '0'
 KOOPA_ID = '1'
 FLY_KOOPA_ID = '2'
 
+TILES = [
+    STAR_ID,
+    LIFE_ID,
+    MUSHROOM_ID,
+    FIREFLOWER_ID,
+    FIREBALL_ID,
+    FLAG_ID,
+    AIR_ID,
+    BOX_ID,
+    BRICK_ID,
+    SOLID_ID,
+    PIPE_ID,
+    GOOMBA_ID,
+    KOOPA_ID,
+    FLY_KOOPA_ID
+]
+
 # GYM COMPONENTS
 ENV_NAME = 'MarioEnv'
 ACTION_KEYS = 323
