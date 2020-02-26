@@ -13,6 +13,7 @@ def env_creator(env_config):
 
 def main():
     register_env(c.ENV_NAME, env_creator)
+    print("registered", c.ENV_NAME)
 
     ray.init()
     trainer = ppo.PPOTrainer(env=c.ENV_NAME)

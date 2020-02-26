@@ -45,17 +45,21 @@ class MarioEnv(gym.Env):
         }
 
         self._ACTION_TO_KEYS = {}
-        self.convert_actions(actions)
+        self.setup_spaces(actions)
+        print("observation space in", c.ENV_NAME + ":", self.observation_space)
 
     def buttons(self) -> list:
         """Return the buttons that can be used as actions."""
         return list(self._button_map.keys())
 
-    def convert_actions(self, actions: list):
-        """Setup binary to discrete action space converter."""
+    def setup_spaces(self, actions: list):
+        """Setup binary to discrete action space converter.
+           Setup observation space."""
 
         # create the new action space
         self.action_space = gym.spaces.Discrete(len(actions))
+        # create the new observation space
+        self.observation_space = gym.spaces.Box(low=0, high=1)
         # create the action map from the list of discrete actions
         self._action_map = {}
         self._action_meanings = {}
