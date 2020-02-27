@@ -14,7 +14,7 @@ else:
 
 class MarioEnv(gym.Env):
 
-    def __init__(self, actions, mode='bot'):
+    def __init__(self, config, actions, mode='agent'):
         if mode == 'human':
             c.HUMAN_PLAYER = True
 
@@ -47,7 +47,6 @@ class MarioEnv(gym.Env):
         self._ACTION_TO_KEYS = {}
         self._TILE_MAP = {}
         self.setup_spaces(actions)
-        print("observation space in", c.ENV_NAME + ":", self.observation_space)
 
     def buttons(self) -> list:
         """Return the buttons that can be used as actions."""

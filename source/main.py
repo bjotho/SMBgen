@@ -8,15 +8,14 @@ from ray.rllib.agents import ppo
 
 def env_creator(env_config):
     # Use mode='human' as argument to enable keyboard input
-    return MarioEnv(actions=SIMPLE_MOVEMENT)
+    return MarioEnv(env_config, actions=COMPLEX_MOVEMENT)
 
 
 def main():
     register_env(c.ENV_NAME, env_creator)
-    print("registered", c.ENV_NAME)
 
     ray.init()
-    trainer = ppo.PPOTrainer(env=c.ENV_NAME)
+    trainer = ppo.PPOTrainer(env=c.ENV_NAME, config={"monitor": True})
     while True:
         print(trainer.train())
 
