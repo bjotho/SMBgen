@@ -407,6 +407,7 @@ class Level(tools.State):
         elif coin:
             self.update_score(100, coin, 1)
             coin.kill()
+            coin.update_level_state()
 
     def adjust_player_for_x_collisions(self, collider):
         if collider.name == c.MAP_SLIDER:
