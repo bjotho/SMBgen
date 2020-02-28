@@ -1,3 +1,4 @@
+import random
 import sys
 import gym
 
@@ -148,7 +149,7 @@ class MarioEnv(gym.Env):
                 c.LIVES: 3,
                 c.TOP_SCORE: 0,
                 c.CURRENT_TIME: 0.0,
-                c.LEVEL_NUM: 1,
+                c.LEVEL_NUM: random.choice([1, 3, 4]),
                 c.PLAYER_NAME: c.PLAYER_MARIO
             }
 

@@ -1,11 +1,10 @@
 import numpy as np
-from keras.preprocessing.text import Tokenizer
-from keras.preprocessing.sequence import pad_sequences
-from keras.utils import to_categorical
-from keras.utils.vis_utils import plot_model
-from keras.models import Sequential
-from keras.layers import Dense, LSTM, Embedding, RepeatVector, TimeDistributed
-from keras.callbacks import ModelCheckpoint
+from tensorflow.python.keras.preprocessing.text import Tokenizer
+from tensorflow.python.keras.preprocessing.sequence import pad_sequences
+from tensorflow.python.keras.utils.vis_utils import plot_model
+from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.layers import Dense, LSTM, Embedding, RepeatVector, TimeDistributed
+from tensorflow.python.keras.callbacks import ModelCheckpoint
 
 from . import constants as c
 from .states import level_state

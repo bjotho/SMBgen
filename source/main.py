@@ -7,19 +7,31 @@ from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEME
 from source import constants as c
 import ray
 from ray.tune.registry import register_env
-from ray.rllib.agents import ppo, dqn
+from ray.rllib.agents import ppo, dqn, impala
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 def main():
     checkpoint_dir = os.path.join(dir_path, "checkpoints")
     checkpoint_all = os.path.join(dir_path, "checkpoints", "all")
-    checkpoint_latest = os.path.join(checkpoint_dir, "latest.pkl")
+
     os.makedirs(checkpoint_dir, exist_ok=True)
 
-
-
     register_env(c.ENV_NAME, lambda c: MarioEnv(c, actions=COMPLEX_MOVEMENT))
+
+    def find_latest_checkpoint():
+        largest = -1
+        for chkpath in os.listdir(checkpoint_all):
+            checkpoint_id = int(chkpath.split("_")[1])
+
+            if checkpoint_id > largest:
+                largest = checkpoint_id
+
+        if largest == -1:
+            return None
+        else:
+            ret_path = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}" + f"/checkpoint-{str(largest)}")
+            return ret_path
 
     def test(trainer):
         config = dict(
@@ -41,14 +53,16 @@ def main():
                     return
 
     ray.init()
-    trainer = dqn.DQNTrainer(env=c.ENV_NAME, config={
-        "num_workers": 5,
+
+    trainer = impala.ImpalaTrainer(env=c.ENV_NAME, config={
+        "num_gpus": 2,
+        "num_workers": 8,
+        #"train_batch_size": 2048,
         "monitor": False,
     })
-    try:
-        trainer.restore(checkpoint_all)
-    except:
-        pass
+    latest_checkpoint = find_latest_checkpoint()
+    if latest_checkpoint:
+        trainer.restore(latest_checkpoint)
 
     save_interval = 10
     save_counter = 0
@@ -60,10 +74,13 @@ def main():
         trainer.train()
         if save_counter % save_interval == 1:
             checkpoint = trainer.save(checkpoint_all)
+            print(checkpoint)
+            """_chkp_path = os.path.dirname(os.path.abspath(checkpoint))
             try:
                 os.remove(checkpoint_latest)
             except FileNotFoundError:
                 pass
-            shutil.copy(checkpoint, checkpoint_latest)
-            print("checkpoint saved at", checkpoint)
+            os.symlink(_chkp_path, checkpoint_latest)
+            #shutil.copy(checkpoint, checkpoint_latest)
+            print("checkpoint saved at", checkpoint)"""
         save_counter += 1
