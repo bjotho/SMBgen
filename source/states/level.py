@@ -203,6 +203,7 @@ class Level(tools.State):
                                self.box_group)
 
     def update(self, surface, keys, current_time):
+
         if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
             self.done = True
             return

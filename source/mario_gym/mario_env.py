@@ -1,10 +1,11 @@
 import sys
 import gym
-import pygame as pg
+
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_RETURN, K_s, K_a, KMOD_NONE
 import numpy as np
 from .. import tools
 from .. import constants as c
+import os
 from ..states import main_menu, load_screen, level_state
 if c.GENERATE_MAP:
     from ..states import level_gen as level
@@ -18,9 +19,20 @@ class MarioEnv(gym.Env):
         if mode == 'human':
             c.HUMAN_PLAYER = True
 
+        # TODO - Fix so that the window does not show up while training (window=false)
+        has_window = "window" in config and config["window"]
+        fps = 60 if not "fps" in config else config["fps"]
+
+        if has_window:
+            os.environ['SDL_VIDEODRIVER'] = 'dummy'
+        import pygame
+
+        self.pg = pygame
+
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
         self.game = tools.Control()
+        self.game.fps = fps
         state_dict = {c.MAIN_MENU: main_menu.Menu(),
                       c.LOAD_SCREEN: load_screen.LoadScreen(),
                       c.LEVEL: level.Level(),
@@ -161,7 +173,6 @@ class MarioEnv(gym.Env):
 
         return observation
 
-    @staticmethod
-    def render(mode='human'):
+    def render(self, mode='human', close=False):
         if mode == 'human':
-            pg.display.update()
+            self.pg.display.update()

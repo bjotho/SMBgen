@@ -2,7 +2,8 @@ __author__ = 'marble_xu'
 
 import os
 import random
-
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
 import pygame as pg
 from abc import ABC, abstractmethod
 
@@ -18,7 +19,7 @@ keybinding = {
 class State():
     def __init__(self):
         self.start_time = 0.0
-        self.current_time = 0.0
+        self.current_time = 0.1
         self.done = False
         self.next = None
         self.persist = {}
@@ -36,12 +37,12 @@ class State():
         '''abstract method'''
 
 
-class Control():
+class Control:
     def __init__(self):
         self.screen = pg.display.get_surface()
         self.done = False
         self.clock = pg.time.Clock()
-        self.fps = 60
+        self.fps = 9000000
         self.current_time = 0.0
         self.keys = pg.key.get_pressed()
         self.state_dict = {}
@@ -85,7 +86,6 @@ class Control():
             pg.display.update()
             self.clock.tick(self.fps)
 
-
 def get_image(sheet, x, y, width, height, colorkey, scale):
     image = pg.Surface([width, height])
     rect = image.get_rect()
@@ -100,6 +100,7 @@ def get_image(sheet, x, y, width, height, colorkey, scale):
 
 def load_all_gfx(directory, colorkey=(255,0,255), accept=('.png', '.jpg', '.bmp', '.gif')):
     graphics = {}
+    directory = os.path.join(dir_path, "..", directory)
     for pic in os.listdir(directory):
         name, ext = os.path.splitext(pic)
         if ext.lower() in accept:

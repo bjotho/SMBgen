@@ -1,4 +1,9 @@
-ray
+ray[rllib]
 lz4
 tabulate
-pygame=1.9.6
+pygame==1.9.6
+tensorboardX
+tensorflow
+gym
+pandas
+opencv-python
