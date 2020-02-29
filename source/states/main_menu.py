@@ -1,5 +1,7 @@
 __author__ = 'marble_xu'
 
+import random
+
 import pygame as pg
 from .. import tools
 from .. import setup
@@ -14,7 +16,7 @@ class Menu(tools.State):
                    c.LIVES: 3,
                    c.TOP_SCORE: 0,
                    c.CURRENT_TIME: 0.0,
-                   c.LEVEL_NUM: 1,
+                   c.LEVEL_NUM: random.choice([1, 3, 4]),
                    c.PLAYER_NAME: c.PLAYER_MARIO}
         self.startup(0.0, persist)
     

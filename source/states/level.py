@@ -46,6 +46,7 @@ class Level(tools.State):
         self.observation = None
 
     def load_map(self):
+
         map_file = 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json'
         file_path = os.path.join('source', 'data', 'maps', map_file)
         f = open(file_path)
@@ -203,6 +204,7 @@ class Level(tools.State):
                                self.box_group)
 
     def update(self, surface, keys, current_time):
+
         if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
             self.done = True
             return

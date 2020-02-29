@@ -5,6 +5,8 @@ import pygame as pg
 import numpy as np
 from . import constants as c
 from . import tools
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # Fix random seed for reproducibility
 seed = np.random.randint(0,10000)
@@ -20,7 +22,8 @@ SCREEN_RECT = SCREEN.get_rect()
 # Reset level_gen.txt file if SAVE_LEVEL is set to False
 if not c.SAVE_LEVEL:
     map_gen_file = "level_gen.txt"
-    file_path = os.path.join('source', 'data', 'maps', map_gen_file)
+
+    file_path = os.path.join(dir_path, "data", "maps", map_gen_file)
     with open(file_path, 'w') as file:
         file.write((c.GROUND_ID * 2 + c.AIR_ID * 11 + "\n") * 5)
 

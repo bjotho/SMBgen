@@ -1,10 +1,13 @@
+import random
 import sys
 import gym
-import pygame as pg
+
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_RETURN, K_s, K_a, KMOD_NONE
 import numpy as np
 from .. import tools
 from .. import constants as c
+from .actions import COMPLEX_MOVEMENT
+import os
 from ..states import main_menu, load_screen, level_state
 if c.GENERATE_MAP:
     from ..states import level_gen as level
@@ -14,13 +17,25 @@ else:
 
 class MarioEnv(gym.Env):
 
-    def __init__(self, config, actions, mode='agent'):
+    def __init__(self, config, mode='agent'):
         if mode == 'human':
             c.HUMAN_PLAYER = True
+
+        # TODO - Fix so that the window does not show up while training (window=false)
+        has_window = "window" in config and config["window"]
+        fps = 60 if not "fps" in config else config["fps"]
+        actions = COMPLEX_MOVEMENT if not "actions" in config else config["actions"]
+
+        if has_window:
+            os.environ['SDL_VIDEODRIVER'] = 'dummy'
+        import pygame
+
+        self.pg = pygame
 
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
         self.game = tools.Control()
+        self.game.fps = fps
         state_dict = {c.MAIN_MENU: main_menu.Menu(),
                       c.LOAD_SCREEN: load_screen.LoadScreen(),
                       c.LEVEL: level.Level(),
@@ -31,7 +46,7 @@ class MarioEnv(gym.Env):
             self.game.main()
             sys.exit(0)
 
-        # a mapping of buttons to binary values
+        # a mapping of buttons to pygame values
         self._button_map = {
             'right': K_RIGHT,
             'left': K_LEFT,
@@ -136,7 +151,7 @@ class MarioEnv(gym.Env):
                 c.LIVES: 3,
                 c.TOP_SCORE: 0,
                 c.CURRENT_TIME: 0.0,
-                c.LEVEL_NUM: 1,
+                c.LEVEL_NUM: random.choice([1, 3, 4]),
                 c.PLAYER_NAME: c.PLAYER_MARIO
             }
 
@@ -161,5 +176,6 @@ class MarioEnv(gym.Env):
 
         return observation
 
-    def render(self, mode='human'):
-        pg.display.update()
+    def render(self, mode='human', close=False):
+        if mode == 'human':
+            self.pg.display.update()
