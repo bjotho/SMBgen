@@ -161,7 +161,5 @@ class MarioEnv(gym.Env):
 
         return observation
 
-    @staticmethod
-    def render(mode='human'):
-        if mode == 'human':
-            pg.display.update()
+    def render(self, mode='human'):
+        pg.display.update()

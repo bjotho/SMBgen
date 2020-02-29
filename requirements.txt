@@ -2,3 +2,9 @@ ray
 lz4
 tabulate
 pygame=1.9.6
+opencv-python
+tensorflow
+keras
+tensorboardX
+gym
+pandas
