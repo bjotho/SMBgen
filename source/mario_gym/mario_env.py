@@ -1,14 +1,13 @@
 import random
-import sys
 import gym
+import os
+import numpy as np
 
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_RETURN, K_s, K_a, KMOD_NONE
-import numpy as np
-from .. import tools
-from .. import constants as c
-from .actions import COMPLEX_MOVEMENT
-import os
-from ..states import main_menu, load_screen, level_state
+from source import tools
+from source import constants as c
+from source.mario_gym.actions import COMPLEX_MOVEMENT
+from source.states import main_menu, load_screen, level_state
 if c.GENERATE_MAP:
     from ..states import level_gen as level
 else:
@@ -42,9 +41,6 @@ class MarioEnv(gym.Env):
                       c.GAME_OVER: load_screen.GameOver(),
                       c.TIME_OUT: load_screen.TimeOut()}
         self.game.setup_states(state_dict, c.MAIN_MENU)
-        if c.HUMAN_PLAYER:
-            self.game.main()
-            sys.exit(0)
 
         # a mapping of buttons to pygame values
         self._button_map = {
@@ -117,7 +113,7 @@ class MarioEnv(gym.Env):
 
     def step(self, action):
         action = self._ACTION_TO_KEYS[action]
-        self.game.event_loop()
+        # self.game.event_loop()
         self.game.keys = action
         self.game.update()
         self.game.clock.tick(self.game.fps)
@@ -131,7 +127,6 @@ class MarioEnv(gym.Env):
                 self.done = True
 
         info = self.game.state.persist
-        info['x_btn'] = self.game.x_btn
 
         # returns observation, reward, done, info
         return observation, reward, self.done, info

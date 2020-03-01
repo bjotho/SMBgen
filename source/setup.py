@@ -25,6 +25,6 @@ if not c.SAVE_LEVEL:
 
     file_path = os.path.join(dir_path, "data", "maps", map_gen_file)
     with open(file_path, 'w') as file:
-        file.write((c.GROUND_ID * 2 + c.AIR_ID * 11 + "\n") * 5)
+        file.write(str((str(c.GROUND_ID * 2) + str(c.AIR_ID * 11) + "\n") * 5))
 
 GFX = tools.load_all_gfx(os.path.join("resources","graphics"))

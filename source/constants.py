@@ -1,6 +1,6 @@
 __author__ = 'marble_xu'
 
-DEBUG = False
+DEBUG = True
 DEBUG_START_X = 110
 DEBUG_START_Y = 536
 
@@ -88,6 +88,7 @@ STEP_ID = 't'
 SOLID_ID = 's'
 PIPE_ID = 'p'
 FLAG_ID = 'f'
+COIN_ID = 'c'
 MUSHROOM_ID = 'm'
 FIREFLOWER_ID = 'i'
 FIREBALL_ID = 'o'
@@ -104,6 +105,7 @@ TILES = [
     FIREFLOWER_ID,
     FIREBALL_ID,
     FLAG_ID,
+    COIN_ID,
     AIR_ID,
     BOX_ID,
     BRICK_ID,
@@ -117,8 +119,8 @@ TILES = [
 # GYM COMPONENTS
 ENV_NAME = 'MarioEnv'
 ACTION_KEYS = 323
-HUMAN_PLAYER = False
-PRINT_OBSERVATION = False
+HUMAN_PLAYER = True
+PRINT_OBSERVATION = True
 OBSERVATION_RADIUS = 5
 
 # MAP COMPONENTS

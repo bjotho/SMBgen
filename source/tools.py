@@ -1,11 +1,10 @@
 __author__ = 'marble_xu'
 
-import os
 import random
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 import pygame as pg
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 keybinding = {
     'action':pg.K_s,
@@ -42,8 +41,9 @@ class Control:
         self.screen = pg.display.get_surface()
         self.done = False
         self.clock = pg.time.Clock()
-        self.fps = 9000000
-        self.current_time = 0.0
+        self.base_fps = 60
+        self.fps = 60000
+        self.current_time = 0.0122
         self.keys = pg.key.get_pressed()
         self.state_dict = {}
         self.state_name = None
@@ -56,7 +56,11 @@ class Control:
         self.state = self.state_dict[self.state_name]
     
     def update(self):
-        self.current_time = pg.time.get_ticks()
+        try:
+            delta_t = 1000 / self.base_fps
+        except ZeroDivisionError:
+            delta_t = 0
+        self.current_time += delta_t
         if self.state.done:
             self.flip_state()
         self.state.update(self.screen, self.keys, self.current_time)

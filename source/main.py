@@ -1,4 +1,3 @@
-import shutil
 from threading import Thread
 
 from source.mario_gym.mario_env import MarioEnv
@@ -11,13 +10,30 @@ from ray.rllib.agents import ppo, dqn, impala
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+
 def main():
+    if c.HUMAN_PLAYER:
+        from source import tools
+        from source.states import main_menu, load_screen, level
+        import sys
+        game = tools.Control()
+        game.fps = 60
+        state_dict = {c.MAIN_MENU: main_menu.Menu(),
+                      c.LOAD_SCREEN: load_screen.LoadScreen(),
+                      c.LEVEL: level.Level(),
+                      c.GAME_OVER: load_screen.GameOver(),
+                      c.TIME_OUT: load_screen.TimeOut()}
+        game.setup_states(state_dict, c.MAIN_MENU)
+        game.main()
+        sys.exit(0)
+
     checkpoint_dir = os.path.join(dir_path, "checkpoints")
     checkpoint_all = os.path.join(dir_path, "checkpoints", "all")
 
     os.makedirs(checkpoint_dir, exist_ok=True)
+    os.makedirs(checkpoint_all, exist_ok=True)
 
-    register_env(c.ENV_NAME, lambda c: MarioEnv(c))
+    register_env(c.ENV_NAME, lambda config: MarioEnv(config))
 
     def find_latest_checkpoint():
         largest = -1
@@ -39,7 +55,7 @@ def main():
             window=False,
             fps=60000
         )
-        env = MarioEnv(config, actions=COMPLEX_MOVEMENT)
+        env = MarioEnv(config)
 
         while True:
             current_state = env.reset()
@@ -50,16 +66,13 @@ def main():
                 new_state, reward, done, info = env.step(action)
                 env.render()
                 current_state = new_state
-                if info['x_btn']:
-                    return
 
     ray.init()
 
     trainer = impala.ImpalaTrainer(env=c.ENV_NAME, config={
         "num_gpus": 2,
-        "num_workers": 8,
-        #"train_batch_size": 2048,
-        "monitor": False,
+        "num_workers": 8
+        #"train_batch_size": 2048
     })
     latest_checkpoint = find_latest_checkpoint()
     if latest_checkpoint:

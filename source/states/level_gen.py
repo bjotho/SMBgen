@@ -28,6 +28,7 @@ class Level(tools.State):
         self.player = None
 
     def startup(self, current_time, persist):
+        level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
         self.game_info = persist
         self.persist = self.game_info
         self.game_info[c.CURRENT_TIME] = current_time
@@ -76,8 +77,6 @@ class Level(tools.State):
         self.dx_list = []
         self.optimal_mario_speed = 3
         self.observation = None
-
-        level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
 
     def load_map(self):
         map_file = 'level_gen.json'
@@ -542,6 +541,7 @@ class Level(tools.State):
                 self.game_info[c.LIVES] += 1
             if powerup.type != c.TYPE_FIREBALL:
                 powerup.kill()
+                powerup.update_level_state()
         elif enemy:
             if self.player.invincible:
                 self.update_score(100, enemy, 0)
@@ -586,6 +586,7 @@ class Level(tools.State):
         elif coin:
             self.update_score(100, coin, 1)
             coin.kill()
+            coin.update_level_state()
 
     def adjust_player_for_x_collisions(self, collider):
         if collider.name == c.MAP_SLIDER:
@@ -720,12 +721,12 @@ class Level(tools.State):
         brick.rect.y += 5
 
     def in_frozen_state(self):
-        if (self.player.state == c.SMALL_TO_BIG or
-            self.player.state == c.BIG_TO_SMALL or
-            self.player.state == c.BIG_TO_FIRE or
-            self.player.state == c.DEATH_JUMP or
-            self.player.state == c.DOWN_TO_PIPE or
-            self.player.state == c.UP_OUT_PIPE):
+        if (self.player.state in [c.SMALL_TO_BIG,
+                                  c.BIG_TO_SMALL,
+                                  c.BIG_TO_FIRE,
+                                  c.DEATH_JUMP,
+                                  c.DOWN_TO_PIPE,
+                                  c.UP_OUT_PIPE]):
             return True
         else:
             return False

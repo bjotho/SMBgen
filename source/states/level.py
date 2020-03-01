@@ -20,6 +20,7 @@ class Level(tools.State):
         self.player = None
 
     def startup(self, current_time, persist):
+        level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
         self.game_info = persist
         self.persist = self.game_info
         self.game_info[c.CURRENT_TIME] = current_time
@@ -46,7 +47,6 @@ class Level(tools.State):
         self.observation = None
 
     def load_map(self):
-
         map_file = 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json'
         file_path = os.path.join('source', 'data', 'maps', map_file)
         f = open(file_path)
@@ -204,7 +204,6 @@ class Level(tools.State):
                                self.box_group)
 
     def update(self, surface, keys, current_time):
-
         if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
             self.done = True
             return
@@ -409,6 +408,7 @@ class Level(tools.State):
         elif coin:
             self.update_score(100, coin, 1)
             coin.kill()
+            coin.update_level_state()
 
     def adjust_player_for_x_collisions(self, collider):
         if collider.name == c.MAP_SLIDER:
@@ -586,7 +586,7 @@ class Level(tools.State):
         elif self.player.dead:
             self.next = c.LOAD_SCREEN
         else:
-            self.game_info[c.LEVEL_NUM] += 1
+            self.game_info[c.LEVEL_NUM] = (self.game_info[c.LEVEL_NUM] % 4) + 1
             self.next = c.LOAD_SCREEN
 
     def update_viewport(self):

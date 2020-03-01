@@ -1,8 +1,10 @@
 __author__ = 'marble_xu'
 
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
+from source import setup, tools
+from source import constants as c
+from source.states import level_state
+
 
 class Coin(pg.sprite.Sprite):
     def __init__(self, x, y, score_group):
@@ -24,10 +26,10 @@ class Coin(pg.sprite.Sprite):
     def load_frames(self):
         sheet = setup.GFX[c.ITEM_SHEET]
         frame_rect_list = [(52, 113, 8, 14), (4, 113, 8, 14), 
-                        (20, 113, 8, 14), (36, 113, 8, 14)]
+                           (20, 113, 8, 14), (36, 113, 8, 14)]
         for frame_rect in frame_rect_list:
             self.frames.append(tools.get_image(sheet, *frame_rect, 
-                            c.BLACK, c.BRICK_SIZE_MULTIPLIER))
+                               c.BLACK, c.BRICK_SIZE_MULTIPLIER))
     
     def update(self, game_info):
         self.current_time = game_info[c.CURRENT_TIME]
@@ -47,7 +49,8 @@ class Coin(pg.sprite.Sprite):
         
         if self.rect.bottom > self.initial_height:
             self.kill()
-            
+
+
 class FlashCoin(pg.sprite.Sprite):
     def __init__(self, x, y):
         pg.sprite.Sprite.__init__(self)
@@ -63,10 +66,10 @@ class FlashCoin(pg.sprite.Sprite):
     def load_frames(self):
         sheet = setup.GFX[c.ITEM_SHEET]
         frame_rect_list = [(1, 160, 5, 8), (9, 160, 5, 8),
-                        (17, 160, 5, 8), (9, 160, 5, 8)]
+                           (17, 160, 5, 8), (9, 160, 5, 8)]
         for frame_rect in frame_rect_list:
             self.frames.append(tools.get_image(sheet, *frame_rect, 
-                            c.BLACK, c.BRICK_SIZE_MULTIPLIER))
+                               c.BLACK, c.BRICK_SIZE_MULTIPLIER))
 
     def update(self, current_time):
         time_list = [375, 125, 125, 125]
@@ -80,6 +83,7 @@ class FlashCoin(pg.sprite.Sprite):
         
         self.image = self.frames[self.frame_index]
 
+
 class StaticCoin(pg.sprite.Sprite):
     def __init__(self, x, y):
         pg.sprite.Sprite.__init__(self)
@@ -91,14 +95,21 @@ class StaticCoin(pg.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.animation_timer = 0
+        level_state.insert_observation(x, y, c.COIN_ID)
 
     def load_frames(self):
         sheet = setup.GFX[c.ITEM_SHEET]
         frame_rect_list = [(3, 98, 9, 13), (19, 98, 9, 13),
-                        (35, 98, 9, 13), (51, 98, 9, 13)]
+                           (35, 98, 9, 13), (51, 98, 9, 13)]
         for frame_rect in frame_rect_list:
             self.frames.append(tools.get_image(sheet, *frame_rect, 
-                            c.BLACK, c.BRICK_SIZE_MULTIPLIER))
+                               c.BLACK, c.BRICK_SIZE_MULTIPLIER))
+
+    def update_level_state(self):
+        if len(self._Sprite__g) == 0:
+            x, y = level_state.get_coordinates(self.rect.x, self.rect.y)
+            level_state.delete_observation(x, y)
+            # level_state.print_2d(level_state.state)
 
     def update(self, game_info):
         self.current_time = game_info[c.CURRENT_TIME]
