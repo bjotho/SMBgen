@@ -3,15 +3,15 @@ __author__ = 'marble_xu'
 import os
 import json
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from . import level_state
-from ..components import info, stuff, brick, box, enemy, powerup, coin
+from source import setup, tools
+from source import constants as c
+from source.states import level_state
+from source.components import info, stuff, brick, box, enemy, coin
 
 if c.HUMAN_PLAYER:
-    from ..components import player
+    from source.components import player
 else:
-    from ..components import fast_player as player
+    from source.components import fast_player as player
 
 
 class Level(tools.State):

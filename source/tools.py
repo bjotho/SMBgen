@@ -1,10 +1,10 @@
 __author__ = 'marble_xu'
 
-import random
 import os
-dir_path = os.path.dirname(os.path.realpath(__file__))
 import pygame as pg
 from abc import abstractmethod
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 keybinding = {
     'action':pg.K_s,
@@ -90,6 +90,7 @@ class Control:
             pg.display.update()
             self.clock.tick(self.fps)
 
+
 def get_image(sheet, x, y, width, height, colorkey, scale):
     image = pg.Surface([width, height])
     rect = image.get_rect()
@@ -102,7 +103,7 @@ def get_image(sheet, x, y, width, height, colorkey, scale):
     return image
 
 
-def load_all_gfx(directory, colorkey=(255,0,255), accept=('.png', '.jpg', '.bmp', '.gif')):
+def load_all_gfx(directory, colorkey=(255, 0, 255), accept=('.png', '.jpg', '.bmp', '.gif')):
     graphics = {}
     directory = os.path.join(dir_path, "..", directory)
     for pic in os.listdir(directory):

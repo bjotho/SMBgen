@@ -1,8 +1,9 @@
 __author__ = 'marble_xu'
 
-from .. import setup, tools
-from .. import constants as c
-from ..components import info
+from source import tools
+from source import constants as c
+from source.components import info
+
 
 class LoadScreen(tools.State):
     def __init__(self):
@@ -35,7 +36,8 @@ class LoadScreen(tools.State):
             surface.fill((106, 150, 252))
         else:
             self.done = True
-            
+
+
 class GameOver(LoadScreen):
     def __init__(self):
         LoadScreen.__init__(self)
@@ -46,6 +48,7 @@ class GameOver(LoadScreen):
     
     def set_info_state(self):
         return c.GAME_OVER
+
 
 class TimeOut(LoadScreen):
     def __init__(self):

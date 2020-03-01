@@ -5,18 +5,17 @@ import os
 import json
 import math
 import numpy as np
-import random
 
 import pygame as pg
-from .. import setup, tools, generation
-from .. import constants as c
-from . import level_state
-from ..components import info, stuff, brick, solid_tile, box, enemy, powerup, coin
+from source import setup, tools, generation
+from source import constants as c
+from source.states import level_state
+from source.components import info, stuff, brick, solid_tile, box, enemy, coin
 
 if c.HUMAN_PLAYER:
-    from ..components import player
+    from source.components import player
 else:
-    from ..components import fast_player as player
+    from source.components import fast_player as player
 
 if c.PRINT_REWARD:
     import matplotlib.pyplot as plt
@@ -191,7 +190,7 @@ class Level(tools.State):
         for enemy_data in enemies:
             item = {'x': enemy_data[0], 'y': enemy_data[1], 'direction': 0, 'type': enemy_data[2], 'color': 0}
             if item['type'] == c.ENEMY_TYPE_FLY_KOOPA:
-                item['is_vertical'] = random.randint(0, 1)
+                item['is_vertical'] = np.random.randint(0, 1)
             group = pg.sprite.Group()
             group.add(enemy.create_enemy(item, self))
             self.enemy_group_list.append(group)

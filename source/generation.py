@@ -1,13 +1,12 @@
 import numpy as np
-from tensorflow.python.keras.preprocessing.text import Tokenizer
-from tensorflow.python.keras.preprocessing.sequence import pad_sequences
-from tensorflow.python.keras.utils.vis_utils import plot_model
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, LSTM, Embedding, RepeatVector, TimeDistributed
-from tensorflow.python.keras.callbacks import ModelCheckpoint
+# from tensorflow.python.keras.preprocessing.sequence import pad_sequences
+# from tensorflow.python.keras.utils.vis_utils import plot_model
+# from tensorflow.python.keras.models import Sequential
+# from tensorflow.python.keras.layers import Dense, LSTM, Embedding, RepeatVector, TimeDistributed
+# from tensorflow.python.keras.callbacks import ModelCheckpoint
 
-from . import constants as c
-from .states import level_state
+from source import constants as c
+from source.states import level_state
 
 
 class Generator:
@@ -18,12 +17,10 @@ class Generator:
 
         self.step = 1
 
-        self.tiles = ["0", "1", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "g", "b", "x", "s", "q"]
-        # self.tiles = ["a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "g", "b", "x", "s", "q"]
-        # self.tiles = ["0", "1", "2", "a", "g", "b", "x", "s", "q"]
+        self.tiles = [c.GOOMBA_ID, c.FLY_KOOPA, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.AIR_ID, c.COIN_ID, c.SOLID_ID, c.BRICK_ID, c.BOX_ID]
+        # self.tiles = [c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.AIR_ID", c.SOLID_ID, c.BRICK_ID, c.BOX_ID]
+        # self.tiles = c.GENERATOR_TILES
 
-        self.tokenizer = Tokenizer()
-        self.tokenizer.fit_on_texts(self.tiles)
         # self.generator = self.create_generator()
 
     def generate(self, file_path):
@@ -39,7 +36,6 @@ class Generator:
                 self.update_memory(map_col_list[-1])
 
             output.append(map_col)
-            self.tokenize_input()
 
             if c.WRITE:
                 with open(file_path, 'a') as file:
@@ -49,27 +45,6 @@ class Generator:
 
     def create_generator(self):
         pass
-        # model = Sequential()
-        # model.add(Embedding())
-
-    def tokenize_input(self):
-        token_list_sequence = []
-        for column in self.memory:
-            for i in column[::self.step]:
-                token_list_sequence.append(self.tokenizer.texts_to_sequences([i])[0][0])
-            if c.SNAKING:
-                self.step *= -1
-
-        # for col in self.memory:
-        #     print(col)
-        # print("[ ", end="", flush=True)
-        # for n, i in enumerate(token_list_sequence):
-        #     if not (n+1) % c.COL_HEIGHT and n != 0 and n != len(token_list_sequence)-1:
-        #         print(str(i) + ",\n  ", end="", flush=True)
-        #     elif n == len(token_list_sequence)-1:
-        #         print(str(i) + " ]", flush=True)
-        #     else:
-        #         print(str(i) + ", ", end="", flush=True)
 
     def update_memory(self, update):
         # if column is full, shift all columns left and insert new empty column

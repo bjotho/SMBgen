@@ -1,10 +1,10 @@
 __author__ = 'marble_xu'
 
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from . import stuff
-from ..states import level_state
+from source import setup
+from source import constants as c
+from source.components import stuff
+from source.states import level_state
 
 
 class Powerup(stuff.Stuff):

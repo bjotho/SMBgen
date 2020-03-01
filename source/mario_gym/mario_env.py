@@ -9,9 +9,9 @@ from source import constants as c
 from source.mario_gym.actions import COMPLEX_MOVEMENT
 from source.states import main_menu, load_screen, level_state
 if c.GENERATE_MAP:
-    from ..states import level_gen as level
+    from source.states import level_gen as level
 else:
-    from ..states import level
+    from source.states import level
 
 
 class MarioEnv(gym.Env):

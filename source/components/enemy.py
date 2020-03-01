@@ -2,9 +2,9 @@ __author__ = 'marble_xu'
 
 import math
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from ..states import level_state
+from source import setup, tools
+from source import constants as c
+from source.states import level_state
 
 ENEMY_SPEED = 1
 

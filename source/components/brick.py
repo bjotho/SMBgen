@@ -1,10 +1,9 @@
 __author__ = 'marble_xu'
 
-import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from . import coin, stuff, powerup
-from ..states import level_state
+from source import setup
+from source import constants as c
+from source.components import coin, stuff, powerup
+from source.states import level_state
 
 
 def create_brick(brick_group, item, level):

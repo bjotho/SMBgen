@@ -1,9 +1,11 @@
+matplotlib
 ray[rllib]
 lz4
 gym
 tabulate
-pygame=1.9.6
+pygame
 opencv-python
 tensorflow
 tensorboardX
 pandas
+numpy

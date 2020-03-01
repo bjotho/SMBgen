@@ -1,5 +1,5 @@
 import numpy as np
-from .. import constants as c
+from source import constants as c
 
 
 state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]

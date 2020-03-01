@@ -3,10 +3,11 @@ __author__ = 'marble_xu'
 import random
 
 import pygame as pg
-from .. import tools
-from .. import setup
-from .. import constants as c
-from .. components import info
+from source import tools
+from source import setup
+from source import constants as c
+from source.components import info
+
 
 class Menu(tools.State):
     def __init__(self):
@@ -16,8 +17,8 @@ class Menu(tools.State):
                    c.LIVES: 3,
                    c.TOP_SCORE: 0,
                    c.CURRENT_TIME: 0.0,
-                   # c.LEVEL_NUM: random.choice([1, 3, 4]),
-                   c.LEVEL_NUM: 1,
+                   c.LEVEL_NUM: random.choice([1, 3, 4]),
+                   # c.LEVEL_NUM: 1,
                    c.PLAYER_NAME: c.PLAYER_MARIO}
         self.startup(0.0, persist)
     
@@ -35,13 +36,13 @@ class Menu(tools.State):
         self.background = setup.GFX['level_1']
         self.background_rect = self.background.get_rect()
         self.background = pg.transform.scale(self.background,
-                                    (int(self.background_rect.width*c.BACKGROUND_MULTIPLER),
-                                    int(self.background_rect.height*c.BACKGROUND_MULTIPLER)))
+                                             (int(self.background_rect.width*c.BACKGROUND_MULTIPLER),
+                                              int(self.background_rect.height*c.BACKGROUND_MULTIPLER)))
 
         self.viewport = setup.SCREEN.get_rect(bottom=setup.SCREEN_RECT.bottom)
         self.image_dict = {}
         image = tools.get_image(setup.GFX['title_screen'], 1, 60, 176, 88,
-                            (255, 0, 220), c.SIZE_MULTIPLIER)
+                                (255, 0, 220), c.SIZE_MULTIPLIER)
         rect = image.get_rect()
         rect.x, rect.y = (170, 100)
         self.image_dict['GAME_NAME_BOX'] = (image, rect)
@@ -51,7 +52,7 @@ class Menu(tools.State):
         player_rect_info = [(178, 32, 12, 16), (178, 128, 12, 16)]
         for rect in player_rect_info:
             image = tools.get_image(setup.GFX['mario_bros'],
-                                *rect, c.BLACK, 2.9)
+                                    *rect, c.BLACK, 2.9)
             rect = image.get_rect()
             rect.x, rect.bottom = 110, c.GROUND_HEIGHT
             self.player_list.append((image, rect))

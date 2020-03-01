@@ -1,9 +1,8 @@
 """An environment wrapper to convert binary to discrete action space."""
 import gym
 from gym import Env
-from gym import Wrapper
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_RETURN, K_s, K_a, KMOD_NONE
-from .. import constants as c
+from source import constants as c
 
 
 class JoypadSpace(gym.Env):

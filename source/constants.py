@@ -118,6 +118,17 @@ TILES = [
     FLY_KOOPA_ID
 ]
 
+GENERATOR_TILES = [
+    COIN_ID,
+    AIR_ID,
+    BOX_ID,
+    BRICK_ID,
+    SOLID_ID,
+    GOOMBA_ID,
+    KOOPA_ID,
+    FLY_KOOPA_ID
+]
+
 # GYM COMPONENTS
 ENV_NAME = 'MarioEnv'
 ACTION_KEYS = 323

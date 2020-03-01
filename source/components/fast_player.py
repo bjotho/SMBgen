@@ -3,9 +3,9 @@ __author__ = 'marble_xu'
 import os
 import json
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from ..components import powerup
+from source import setup, tools
+from source import constants as c
+from source.components import powerup
 
 
 class Player(pg.sprite.Sprite):

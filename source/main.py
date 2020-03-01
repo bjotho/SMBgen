@@ -1,13 +1,14 @@
-from threading import Thread
-
 from source.mario_gym.mario_env import MarioEnv
 from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
-
 from source import constants as c
-import ray
+
+from ray import init as ray_init
 from ray.tune.registry import register_env
-from ray.rllib.agents import ppo, dqn, impala
+from ray.rllib.agents import impala
+
+from threading import Thread
 import os
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -67,12 +68,12 @@ def main():
                 env.render()
                 current_state = new_state
 
-    ray.init()
+    ray_init()
 
     trainer = impala.ImpalaTrainer(env=c.ENV_NAME, config={
         "num_gpus": 2,
         "num_workers": 8
-        #"train_batch_size": 2048
+        # "train_batch_size": 2048
     })
     latest_checkpoint = find_latest_checkpoint()
     if latest_checkpoint:
