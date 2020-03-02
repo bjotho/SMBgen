@@ -60,10 +60,10 @@ def get_coordinates(x_px, y_px):
 
 def get_observation(player):
     x, y = player.get_coordinates(player)
-    start_x = x - c.OBSERVATION_RADIUS
-    stop_x = x + c.OBSERVATION_RADIUS + 1
-    start_y = y - c.OBSERVATION_RADIUS
-    stop_y = y + c.OBSERVATION_RADIUS + 1
+    start_x = x - c.OBS_RADIUS
+    stop_x = x + c.OBS_RADIUS + 1
+    start_y = y - c.OBS_RADIUS
+    stop_y = y + c.OBS_RADIUS + 1
     offset_x = 0
     prepend_y = 0
     append_y = 0

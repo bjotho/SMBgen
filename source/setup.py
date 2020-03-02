@@ -9,7 +9,7 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # Fix random seed for reproducibility
-seed = np.random.randint(0, 10000)
+seed = np.random.randint(0, 10_000)
 np.random.seed(seed)
 print("random seed:", seed)
 

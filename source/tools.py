@@ -42,7 +42,7 @@ class Control:
         self.done = False
         self.clock = pg.time.Clock()
         self.base_fps = 60
-        self.fps = 60000
+        self.fps = 60_000
         self.current_time = 0.0
         self.keys = pg.key.get_pressed()
         self.state_dict = {}
@@ -57,7 +57,7 @@ class Control:
     
     def update(self):
         try:
-            delta_t = 1000 / self.base_fps
+            delta_t = 1_000 / self.base_fps
         except ZeroDivisionError:
             delta_t = 0
         self.current_time += delta_t
