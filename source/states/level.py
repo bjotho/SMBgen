@@ -48,6 +48,9 @@ class Level(tools.State):
 
         self.observation = None
 
+        if c.PRINT_LEVEL:
+            level_state.print_2d(level_state.state)
+
     def load_map(self):
         map_file = os.path.join(maps_path, 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json')
         f = open(map_file)
@@ -213,6 +216,7 @@ class Level(tools.State):
             self.new_observation = level_state.get_observation(self.player)
             if self.observation != self.new_observation:
                 level_state.print_2d(self.new_observation)
+                print("Mario X: ", self.player.rect.x)
 
             self.observation = self.new_observation
 
