@@ -1,9 +1,9 @@
 __author__ = 'marble_xu'
 
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from ..states import level_state
+from source import setup, tools
+from source import constants as c
+from source.states import level_state
 
 
 class Collider(pg.sprite.Sprite):
@@ -56,14 +56,14 @@ class Pole(Stuff):
     def __init__(self, x, y):
         Stuff.__init__(self, x, y, setup.GFX['tile_set'],
                        [(263, 144, 2, 16)], c.BRICK_SIZE_MULTIPLIER)
-        level_state.insert_observation(x, y+c.TILE_SIZE, c.FLAG_ID)
+        level_state.insert_observation(x, y + c.TILE_SIZE, c.FLAG_ID)
 
 
 class PoleTop(Stuff):
     def __init__(self, x, y):
         Stuff.__init__(self, x, y, setup.GFX['tile_set'],
                        [(228, 120, 8, 8)], c.BRICK_SIZE_MULTIPLIER)
-        level_state.insert_observation(x, y+c.TILE_SIZE, c.FLAG_ID)
+        level_state.insert_observation(x, y + c.TILE_SIZE, c.FLAG_ID)
 
 
 class Flag(Stuff):

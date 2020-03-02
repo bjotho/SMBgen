@@ -1,17 +1,19 @@
 __author__ = 'marble_xu'
 
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from . import coin
+from source import setup, tools
+from source import constants as c
+from source.components import coin
+
 
 class Character(pg.sprite.Sprite):
     def __init__(self, image):
         pg.sprite.Sprite.__init__(self)
         self.image = image
         self.rect = self.image.get_rect()
-        
-class Info():
+
+
+class Info:
     def __init__(self, game_info, state):
         self.coin_total = game_info[c.COIN_TOTAL]
         self.total_lives = game_info[c.LIVES]
@@ -27,7 +29,7 @@ class Info():
         self.image_dict = {}
         image_list = []
         
-        image_rect_list = [# 0 - 9
+        image_rect_list = [  # 0 - 9
                            (3, 230, 7, 7), (12, 230, 7, 7), (19, 230, 7, 7),
                            (27, 230, 7, 7), (35, 230, 7, 7), (43, 230, 7, 7),
                            (51, 230, 7, 7), (59, 230, 7, 7), (67, 230, 7, 7),

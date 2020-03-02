@@ -1,9 +1,9 @@
 __author__ = 'marble_xu'
 
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from ..states import level_state
+from source import setup, tools
+from source import constants as c
+from source.states import level_state
 
 
 class Coin(pg.sprite.Sprite):
@@ -95,8 +95,7 @@ class StaticCoin(pg.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.animation_timer = 0
-
-        level_state.insert_observation(x, y, c.COIN_ID)
+        # level_state.insert_observation(x, y, c.COIN_ID)
 
     def load_frames(self):
         sheet = setup.GFX[c.ITEM_SHEET]

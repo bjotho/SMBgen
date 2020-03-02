@@ -1,7 +1,7 @@
-from .. import setup
-from .. import constants as c
-from . import stuff
-from ..states import level_state
+from source import setup
+from source import constants as c
+from source.components import stuff
+from source.states import level_state
 
 
 def create_solid_tile(group, item, level):

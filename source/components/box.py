@@ -1,10 +1,10 @@
 __author__ = 'marble_xu'
 
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from . import coin, powerup
-from ..states import level_state
+from source import setup, tools
+from source import constants as c
+from source.components import coin, powerup
+from source.states import level_state
 
 
 class Box(pg.sprite.Sprite):

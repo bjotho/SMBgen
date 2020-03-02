@@ -2,9 +2,9 @@ __author__ = 'marble_xu'
 
 import math
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from ..states import level_state
+from source import setup, tools
+from source import constants as c
+from source.states import level_state
 
 ENEMY_SPEED = 1
 
@@ -103,10 +103,8 @@ class Enemy(pg.sprite.Sprite):
         self.prev_y = new_y
 
         if len(self._Sprite__g) == 0:
-            # print(self.id, "killed. Prev center: (", self.prev_x, self.prev_y, ")")
-            level_state.delete_observation(self.prev_x, self.prev_y)
-            # print(self.id, "killed. New center: (", new_x, new_y, ")")
-            level_state.delete_observation(new_x, new_y, self.replacement)
+            # print(self.id, "killed. New coordinates: (", new_x, new_y, ")")
+            level_state.delete_observation(new_x, new_y)
             # level_state.print_2d(level_state.state)
 
     def handle_state(self):
@@ -346,7 +344,7 @@ class FireKoopa(Enemy):
         frame_rect_list = [(2, 210, 32, 32), (42, 210, 32, 32),
                             (82, 210, 32, 32), (122, 210, 32, 32)]
         self.setup_enemy(x, y, direction, name, setup.GFX[c.ENEMY_SHEET], 
-                    frame_rect_list, in_range, range_start, range_end)
+                    frame_rect_list, in_range, range_start, range_end, id=c.FIRE_KOOPA_ID)
         # right walk images
         self.frames.append(pg.transform.flip(self.frames[0], True, False))
         self.frames.append(pg.transform.flip(self.frames[1], True, False))
@@ -403,7 +401,7 @@ class Fire(Enemy):
         frame_rect_list = [(101, 253, 23, 8), (131, 253, 23, 8)]
         in_range, range_start, range_end = False, 0, 0
         self.setup_enemy(x, y, direction, name, setup.GFX[c.ENEMY_SHEET], 
-                    frame_rect_list, in_range, range_start, range_end)
+                    frame_rect_list, in_range, range_start, range_end, id=c.FIRE_ID)
         # right images
         self.frames.append(pg.transform.flip(self.frames[0], True, False))
         self.frames.append(pg.transform.flip(self.frames[1], True, False))
