@@ -216,7 +216,6 @@ class Level(tools.State):
             self.new_observation = level_state.get_observation(self.player)
             if self.observation != self.new_observation:
                 level_state.print_2d(self.new_observation)
-                print("Mario X: ", self.player.rect.x)
 
             self.observation = self.new_observation
 
