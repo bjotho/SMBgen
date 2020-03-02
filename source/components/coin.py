@@ -95,7 +95,7 @@ class StaticCoin(pg.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
         self.animation_timer = 0
-        level_state.insert_observation(x, y, c.COIN_ID)
+        #level_state.insert_observation(x, y, c.COIN_ID)
 
     def load_frames(self):
         sheet = setup.GFX[c.ITEM_SHEET]

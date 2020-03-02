@@ -25,6 +25,7 @@ def main():
                       c.GAME_OVER: load_screen.GameOver(),
                       c.TIME_OUT: load_screen.TimeOut()}
         game.setup_states(state_dict, c.MAIN_MENU)
+        #game.flip_state(force=c.LEVEL)
         game.main()
         sys.exit(0)
 
@@ -71,8 +72,8 @@ def main():
     ray_init()
 
     trainer = impala.ImpalaTrainer(env=c.ENV_NAME, config={
-        "num_gpus": 2,
-        "num_workers": 8
+        "num_gpus": 1,
+        "num_workers": 4
         # "train_batch_size": 2048
     })
     latest_checkpoint = find_latest_checkpoint()
