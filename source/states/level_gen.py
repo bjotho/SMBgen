@@ -5,21 +5,22 @@ import os
 import json
 import math
 import numpy as np
-import random
 
 import pygame as pg
-from .. import setup, tools, generation
-from .. import constants as c
-from . import level_state
-from ..components import info, stuff, brick, solid_tile, box, enemy, powerup, coin
+from source import setup, tools, generation
+from source import constants as c
+from source.states import level_state
+from source.components import info, stuff, brick, solid_tile, box, enemy, coin
 
 if c.HUMAN_PLAYER:
-    from ..components import player
+    from source.components import player
 else:
-    from ..components import fast_player as player
+    from source.components import fast_player as player
 
 if c.PRINT_REWARD:
     import matplotlib.pyplot as plt
+
+maps_path = os.path.join(os.path.dirname(os.path.realpath(__file__).replace('/states', '')), 'data', 'maps')
 
 
 class Level(tools.State):
@@ -28,6 +29,7 @@ class Level(tools.State):
         self.player = None
 
     def startup(self, current_time, persist):
+        level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
         self.game_info = persist
         self.persist = self.game_info
         self.game_info[c.CURRENT_TIME] = current_time
@@ -68,21 +70,17 @@ class Level(tools.State):
         self.generations = 0
         self.gen_line = 0
         self.enemies = 0
-        self.map_gen_file = 'level_gen.txt'
-        self.file_path = os.path.join('source', 'data', 'maps', self.map_gen_file)
-        self.gen_file_length = sum(1 for line in open(self.file_path))
-        self.gan = generation.Generator()
+        self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
+        self.gen_file_length = sum(1 for line in open(self.map_gen_file))
+        self.gan = generation.Generator(self.map_gen_file)
         self.reward_list = []
         self.dx_list = []
         self.optimal_mario_speed = 3
         self.observation = None
 
-        level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
-
     def load_map(self):
-        map_file = 'level_gen.json'
-        file_path = os.path.join('source', 'data', 'maps', map_file)
-        f = open(file_path)
+        map_file = os.path.join(maps_path, 'level_gen.json')
+        f = open(map_file)
         self.map_data = json.load(f)
         f.close()
 
@@ -192,7 +190,7 @@ class Level(tools.State):
         for enemy_data in enemies:
             item = {'x': enemy_data[0], 'y': enemy_data[1], 'direction': 0, 'type': enemy_data[2], 'color': 0}
             if item['type'] == c.ENEMY_TYPE_FLY_KOOPA:
-                item['is_vertical'] = random.randint(0, 1)
+                item['is_vertical'] = np.random.randint(0, 1)
             group = pg.sprite.Group()
             group.add(enemy.create_enemy(item, self))
             self.enemy_group_list.append(group)
@@ -285,7 +283,7 @@ class Level(tools.State):
         if self.read:
             line_num = 0
             limit = self.gen_line + c.GEN_LENGTH
-            with open(self.file_path) as file:
+            with open(self.map_gen_file) as file:
                 for line in file:
                     if line_num >= limit:
                         break
@@ -302,17 +300,17 @@ class Level(tools.State):
                 for _ in range(c.GEN_LENGTH - 1):
                     new_terrain.append(c.GROUND_ID * 2)
             else:
-                new_terrain = self.gan.generate(self.file_path)
+                new_terrain = self.gan.generate()
 
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
 
         '''
         for i in range(c.GEN_LENGTH):
-            line = linecache.getline(self.file_path, self.gen_line)
+            line = linecache.getline(self.map_gen_file, self.gen_line)
             [...]
 
-        linecache.updatecache(self.file_path)
+        linecache.updatecache(self.map_gen_file)
         linecache.clearcache()
         '''
 
@@ -722,12 +720,12 @@ class Level(tools.State):
         brick.rect.y += 5
 
     def in_frozen_state(self):
-        if (self.player.state == c.SMALL_TO_BIG or
-            self.player.state == c.BIG_TO_SMALL or
-            self.player.state == c.BIG_TO_FIRE or
-            self.player.state == c.DEATH_JUMP or
-            self.player.state == c.DOWN_TO_PIPE or
-            self.player.state == c.UP_OUT_PIPE):
+        if (self.player.state in [c.SMALL_TO_BIG,
+                                  c.BIG_TO_SMALL,
+                                  c.BIG_TO_FIRE,
+                                  c.DEATH_JUMP,
+                                  c.DOWN_TO_PIPE,
+                                  c.UP_OUT_PIPE]):
             return True
         else:
             return False

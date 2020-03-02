@@ -1,5 +1,5 @@
 import numpy as np
-from .. import constants as c
+from source import constants as c
 
 
 state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
@@ -18,10 +18,10 @@ def insert_observation(x_px, y_px, id):
 
 
 def update_observation(old_x, old_y, new_x, new_y, id, replacement=c.AIR_ID):
-    if replacement in [c.GOOMBA_ID, c.KOOPA_ID, c.FLY_KOOPA_ID]:
+    if replacement in c.ENEMY_IDS:
         replacement = c.AIR_ID
 
-    if old_x == new_x and old_y == new_y:
+    if old_x == new_x and old_y == new_y and not id == c.SOLID_ID:
         return replacement
 
     if old_y >= c.COL_HEIGHT:
@@ -60,10 +60,10 @@ def get_coordinates(x_px, y_px):
 
 def get_observation(player):
     x, y = player.get_coordinates(player)
-    start_x = x - c.OBSERVATION_RADIUS
-    stop_x = x + c.OBSERVATION_RADIUS + 1
-    start_y = y - c.OBSERVATION_RADIUS
-    stop_y = y + c.OBSERVATION_RADIUS + 1
+    start_x = x - c.OBS_RADIUS
+    stop_x = x + c.OBS_RADIUS + 1
+    start_y = y - c.OBS_RADIUS
+    stop_y = y + c.OBS_RADIUS + 1
     offset_x = 0
     prepend_y = 0
     append_y = 0

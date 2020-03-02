@@ -3,15 +3,17 @@ __author__ = 'marble_xu'
 import os
 import json
 import pygame as pg
-from .. import setup, tools
-from .. import constants as c
-from . import level_state
-from ..components import info, stuff, brick, box, enemy, powerup, coin
+from source import setup, tools
+from source import constants as c
+from source.states import level_state
+from source.components import info, stuff, brick, box, enemy, coin
 
 if c.HUMAN_PLAYER:
-    from ..components import player
+    from source.components import player
 else:
-    from ..components import fast_player as player
+    from source.components import fast_player as player
+
+maps_path = os.path.join(os.path.dirname(os.path.realpath(__file__).replace('/states', '')), 'data', 'maps')
 
 
 class Level(tools.State):
@@ -20,6 +22,7 @@ class Level(tools.State):
         self.player = None
 
     def startup(self, current_time, persist):
+        level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
         self.game_info = persist
         self.persist = self.game_info
         self.game_info[c.CURRENT_TIME] = current_time
@@ -45,10 +48,12 @@ class Level(tools.State):
 
         self.observation = None
 
+        if c.PRINT_LEVEL:
+            level_state.print_2d(level_state.state)
+
     def load_map(self):
-        map_file = 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json'
-        file_path = os.path.join('source', 'data', 'maps', map_file)
-        f = open(file_path)
+        map_file = os.path.join(maps_path, 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json')
+        f = open(map_file)
         self.map_data = json.load(f)
         f.close()
 
@@ -407,7 +412,7 @@ class Level(tools.State):
         elif coin:
             self.update_score(100, coin, 1)
             coin.kill()
-            coin.update_level_state()
+            # coin.update_level_state()
 
     def adjust_player_for_x_collisions(self, collider):
         if collider.name == c.MAP_SLIDER:
@@ -585,7 +590,7 @@ class Level(tools.State):
         elif self.player.dead:
             self.next = c.LOAD_SCREEN
         else:
-            self.game_info[c.LEVEL_NUM] += 1
+            self.game_info[c.LEVEL_NUM] = (self.game_info[c.LEVEL_NUM] % 4) + 1
             self.next = c.LOAD_SCREEN
 
     def update_viewport(self):
