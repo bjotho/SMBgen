@@ -1,22 +1,27 @@
-from source.mario_gym.mario_env import MarioEnv
-from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
 from source import constants as c
-
-from ray import init as ray_init
-from ray.tune.registry import register_env
-from ray.rllib.agents import impala
-
-from threading import Thread
 import os
+
+if not c.HUMAN_PLAYER:
+    from threading import Thread
+    from source.mario_gym.mario_env import MarioEnv
+    from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
+    from ray import init as ray_init
+    from ray.tune.registry import register_env
+    from ray.rllib.agents import impala
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def main():
     if c.HUMAN_PLAYER:
-        from source import tools
-        from source.states import main_menu, load_screen, level
         import sys
+        from source import tools
+        from source.states import main_menu, load_screen
+        if c.GENERATE_MAP:
+            from source.states import level_gen as level
+        else:
+            from source.states import level
+
         game = tools.Control()
         game.fps = 60
         state_dict = {c.MAIN_MENU: main_menu.Menu(),
@@ -25,6 +30,8 @@ def main():
                       c.GAME_OVER: load_screen.GameOver(),
                       c.TIME_OUT: load_screen.TimeOut()}
         game.setup_states(state_dict, c.MAIN_MENU)
+        if c.SKIP_MENU:
+            game.flip_state(force=c.LEVEL)
         game.main()
         sys.exit(0)
 

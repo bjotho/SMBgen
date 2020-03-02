@@ -56,14 +56,14 @@ class Pole(Stuff):
     def __init__(self, x, y):
         Stuff.__init__(self, x, y, setup.GFX['tile_set'],
                        [(263, 144, 2, 16)], c.BRICK_SIZE_MULTIPLIER)
-        level_state.insert_observation(x, y+c.TILE_SIZE, c.FLAG_ID)
+        level_state.insert_observation(x, y + c.TILE_SIZE, c.FLAG_ID)
 
 
 class PoleTop(Stuff):
     def __init__(self, x, y):
         Stuff.__init__(self, x, y, setup.GFX['tile_set'],
                        [(228, 120, 8, 8)], c.BRICK_SIZE_MULTIPLIER)
-        level_state.insert_observation(x, y+c.TILE_SIZE, c.FLAG_ID)
+        level_state.insert_observation(x, y + c.TILE_SIZE, c.FLAG_ID)
 
 
 class Flag(Stuff):

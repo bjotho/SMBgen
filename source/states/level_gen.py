@@ -20,6 +20,8 @@ else:
 if c.PRINT_REWARD:
     import matplotlib.pyplot as plt
 
+maps_path = os.path.join(os.path.dirname(os.path.realpath(__file__).replace('/states', '')), 'data', 'maps')
+
 
 class Level(tools.State):
     def __init__(self):
@@ -68,19 +70,17 @@ class Level(tools.State):
         self.generations = 0
         self.gen_line = 0
         self.enemies = 0
-        self.map_gen_file = 'level_gen.txt'
-        self.file_path = os.path.join('source', 'data', 'maps', self.map_gen_file)
-        self.gen_file_length = sum(1 for line in open(self.file_path))
-        self.gan = generation.Generator()
+        self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
+        self.gen_file_length = sum(1 for line in open(self.map_gen_file))
+        self.gan = generation.Generator(self.map_gen_file)
         self.reward_list = []
         self.dx_list = []
         self.optimal_mario_speed = 3
         self.observation = None
 
     def load_map(self):
-        map_file = 'level_gen.json'
-        file_path = os.path.join('source', 'data', 'maps', map_file)
-        f = open(file_path)
+        map_file = os.path.join(maps_path, 'level_gen.json')
+        f = open(map_file)
         self.map_data = json.load(f)
         f.close()
 
@@ -283,7 +283,7 @@ class Level(tools.State):
         if self.read:
             line_num = 0
             limit = self.gen_line + c.GEN_LENGTH
-            with open(self.file_path) as file:
+            with open(self.map_gen_file) as file:
                 for line in file:
                     if line_num >= limit:
                         break
@@ -300,17 +300,17 @@ class Level(tools.State):
                 for _ in range(c.GEN_LENGTH - 1):
                     new_terrain.append(c.GROUND_ID * 2)
             else:
-                new_terrain = self.gan.generate(self.file_path)
+                new_terrain = self.gan.generate()
 
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
 
         '''
         for i in range(c.GEN_LENGTH):
-            line = linecache.getline(self.file_path, self.gen_line)
+            line = linecache.getline(self.map_gen_file, self.gen_line)
             [...]
 
-        linecache.updatecache(self.file_path)
+        linecache.updatecache(self.map_gen_file)
         linecache.clearcache()
         '''
 

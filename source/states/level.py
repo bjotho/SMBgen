@@ -13,6 +13,8 @@ if c.HUMAN_PLAYER:
 else:
     from source.components import fast_player as player
 
+maps_path = os.path.join(os.path.dirname(os.path.realpath(__file__).replace('/states', '')), 'data', 'maps')
+
 
 class Level(tools.State):
     def __init__(self):
@@ -47,9 +49,8 @@ class Level(tools.State):
         self.observation = None
 
     def load_map(self):
-        map_file = 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json'
-        file_path = os.path.join('source', 'data', 'maps', map_file)
-        f = open(file_path)
+        map_file = os.path.join(maps_path, 'level_' + str(self.game_info[c.LEVEL_NUM]) + '.json')
+        f = open(map_file)
         self.map_data = json.load(f)
         f.close()
 
