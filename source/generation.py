@@ -28,7 +28,7 @@ class Generator:
         output = []
 
         for _ in range(c.GEN_LENGTH - 1):
-            map_col = ""
+            map_col = str(c.GROUND_ID * 2)
             map_col_list = []
             for _ in range(c.COL_HEIGHT - len(map_col)):
                 map_col_list.append(np.random.choice(self.tiles))

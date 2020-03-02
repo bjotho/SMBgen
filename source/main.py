@@ -54,7 +54,7 @@ def main():
         config = dict(
             actions=COMPLEX_MOVEMENT,
             window=False,
-            fps=60000
+            fps=60_000
         )
         env = MarioEnv(config)
 
@@ -73,6 +73,9 @@ def main():
     trainer = impala.ImpalaTrainer(env=c.ENV_NAME, config={
         "num_gpus": 2,
         "num_workers": 8
+        # "model": {
+        #     "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
+        # }
         # "train_batch_size": 2048
     })
     latest_checkpoint = find_latest_checkpoint()
