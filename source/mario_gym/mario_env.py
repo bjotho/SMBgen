@@ -17,9 +17,6 @@ else:
 class MarioEnv(gym.Env):
 
     def __init__(self, config, mode='agent'):
-        if mode == 'human':
-            c.HUMAN_PLAYER = True
-
         # TODO - Fix so that the window does not show up while training (window=false)
         has_window = "window" in config and config["window"]
         fps = 60 if not "fps" in config else config["fps"]

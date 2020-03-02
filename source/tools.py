@@ -43,7 +43,7 @@ class Control:
         self.clock = pg.time.Clock()
         self.base_fps = 60
         self.fps = 60000
-        self.current_time = 0.0122
+        self.current_time = 0.0
         self.keys = pg.key.get_pressed()
         self.state_dict = {}
         self.state_name = None
