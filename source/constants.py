@@ -107,7 +107,6 @@ TILES = [
     FIREFLOWER_ID,
     FIREBALL_ID,
     FLAG_ID,
-    COIN_ID,
     AIR_ID,
     BOX_ID,
     BRICK_ID,
@@ -119,7 +118,6 @@ TILES = [
 ]
 
 GENERATOR_TILES = [
-    COIN_ID,
     AIR_ID,
     BOX_ID,
     BRICK_ID,

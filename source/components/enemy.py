@@ -103,9 +103,7 @@ class Enemy(pg.sprite.Sprite):
         self.prev_y = new_y
 
         if len(self._Sprite__g) == 0:
-            # print(self.id, "killed. Prev center: (", self.prev_x, self.prev_y, ")")
-            level_state.delete_observation(self.prev_x, self.prev_y)
-            # print(self.id, "killed. New center: (", new_x, new_y, ")")
+            # print(self.id, "killed. New coordinates: (", new_x, new_y, ")")
             level_state.delete_observation(new_x, new_y, self.replacement)
             # level_state.print_2d(level_state.state)
 
