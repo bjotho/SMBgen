@@ -92,7 +92,13 @@ def get_observation(player):
     return observation
 
 
-def print_2d(_list):
+def print_2d(_list, chop=None):
+    if chop:
+        tmp = []
+        for i in range(len(_list) // chop):
+            tmp.append(_list[i * chop:(i + 1) * chop])
+        _list = tmp
+
     output = "[\n"
     for col in _list:
         output += "  [ "
