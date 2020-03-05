@@ -17,7 +17,8 @@ class Generator:
         self.step = -1
         self.memory = []
         self.tiles_per_col = c.COL_HEIGHT - 2 if c.INSERT_GROUND else c.COL_HEIGHT
-        self.tiles = c.GENERATOR_TILES
+        self.tiles = c.GENERATOR_TILES + [c.AIR_ID for _ in range(50)]
+        # self.tiles = c.GENERATOR_TILES
 
         self.tokenize_tiles()
         self.populate_memory()

@@ -17,7 +17,7 @@ if c.HUMAN_PLAYER:
 else:
     from source.components import fast_player as player
 
-if c.PRINT_REWARD:
+if c.PRINT_GEN_REWARD:
     import matplotlib.pyplot as plt
 
 maps_path = os.path.join(os.path.dirname(os.path.realpath(__file__).replace('/states', '')), 'data', 'maps')
@@ -70,6 +70,8 @@ class Level(tools.State):
         self.generations = 0
         self.gen_line = 0
         self.enemies = 0
+        self.timestep = 0
+        self.gen_list = []
         self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
         self.gen_file_length = sum(1 for line in open(self.map_gen_file))
         self.gan = generation.Generator(self.map_gen_file)
@@ -255,6 +257,8 @@ class Level(tools.State):
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
         self.handle_states(keys)
         self.draw(surface)
+        self.check_gen_reward()
+        self.timestep += 1
 
     def handle_states(self, keys):
         if self.map_data[c.GEN_BORDER] - self.player.rect.x < c.GEN_DISTANCE:
@@ -301,6 +305,8 @@ class Level(tools.State):
                     new_terrain.append(str(c.SOLID_ID * 2))
             else:
                 new_terrain = self.gan.generate()
+                self.gen_list.append({self.gen_line: {c.TIMESTEP: self.timestep,
+                                                      c.PLAYER_X: self.player.rect.x}})
 
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
@@ -406,8 +412,6 @@ class Level(tools.State):
             for score in self.moving_score_list:
                 score.update(self.moving_score_list)
 
-            self.generator_reward()
-
     def check_checkpoints(self):
         for checkpoint in self.checkpoint_group:
             if checkpoint.type == c.CHECKPOINT_TYPE_ENEMY:
@@ -481,13 +485,26 @@ class Level(tools.State):
             self.player.rect.y += round(self.player.y_vel)
             self.check_player_y_collisions()
 
+    def check_gen_reward(self):
+        mario_x = level_state.get_coordinates(self.player.rect.x, 0)[0]
+        for gen in self.gen_list:
+            line = list(gen.keys())[0]
+            if mario_x >= line:
+                dx = self.player.rect.x - gen[line][c.PLAYER_X]
+                dt = self.timestep - gen[line][c.TIMESTEP]
+                v = float(dx/dt)
+                reward = math.e ** (-(0.5) * ((v - self.optimal_mario_speed) ** 2))
+                print("Generator reward:", reward)
+                print("Gen list:", self.gen_list)
+                self.gen_list.remove(gen)
+
     def generator_reward(self):
         if self.player.state in [c.STAND, c.WALK, c.JUMP, c.FALL, c.FLY]:
             # Reward is defined as a gaussian distribution with symmetry around dx=3
             dx = self.player.rect.x - self.old_player_x
             reward = math.e**(-(1/2) * ((dx-self.optimal_mario_speed)**2))
 
-            if c.PRINT_REWARD:
+            if c.PRINT_GEN_REWARD:
                 if dx not in self.dx_list:
                     self.reward_list.append(reward)
                     self.dx_list.append(dx)
@@ -783,7 +800,7 @@ class Level(tools.State):
         self.read = c.READ
         self.gen_line = 0
 
-        if c.PRINT_REWARD:
+        if c.PRINT_GEN_REWARD:
             x = np.linspace(0.2, 10, 100)
             plt.plot(x, math.e**(-(1/2) * ((x-3)**2)))
             plt.plot(self.dx_list, self.reward_list, 'ro')

@@ -69,7 +69,7 @@ ONLY_GROUND = False
 READ = True
 WRITE = False
 SAVE_LEVEL = False
-PRINT_REWARD = False
+PRINT_GEN_REWARD = False
 SNAKING = True
 GEN_BORDER = 'gen_border'
 GEN_HEIGHT = 580
@@ -80,6 +80,8 @@ Y_OFFSET = 64
 COL_HEIGHT = 13
 TILE_SIZE = 43
 MEMORY_LENGTH = 128
+TIMESTEP = 'timestep'
+PLAYER_X = 'player_x'
 
 # GEN NETWORK PARAMS
 
