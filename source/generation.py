@@ -47,7 +47,7 @@ class Generator:
         pass
 
     def update_memory(self, update):
-        # if column is full, shift all columns left and insert new empty column
+        # if memory is full, remove oldest tile
         if len(self.memory) >= c.GEN_MEMORY:
             self.memory = self.memory[1:]
 

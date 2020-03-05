@@ -23,6 +23,6 @@ SCREEN_RECT = SCREEN.get_rect()
 if not c.SAVE_LEVEL:
     file_path = os.path.join(dir_path, "data", "maps", "level_gen.txt")
     with open(file_path, 'w') as file:
-        file.write(str((str(c.GROUND_ID * 2) + str(c.AIR_ID * 11) + "\n") * 5))
+        file.write(str((str(c.SOLID_ID * 2) + str(c.AIR_ID * 11) + "\n") * 5))
 
 GFX = tools.load_all_gfx(os.path.join("resources", "graphics"))
