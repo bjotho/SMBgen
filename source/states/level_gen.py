@@ -298,7 +298,7 @@ class Level(tools.State):
 
             if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or c.ONLY_GROUND:
                 for _ in range(c.GEN_LENGTH - 1):
-                    new_terrain.append(c.GROUND_ID * 2)
+                    new_terrain.append(str(c.SOLID_ID * 2))
             else:
                 new_terrain = self.gan.generate()
 
