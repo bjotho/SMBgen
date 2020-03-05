@@ -7,7 +7,7 @@ if not c.HUMAN_PLAYER:
     from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
     from ray import init as ray_init
     from ray.tune.registry import register_env
-    from ray.rllib.agents import impala
+    from ray.rllib.agents import dqn
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -81,9 +81,9 @@ def main():
 
     ray_init()
 
-    trainer = impala.ImpalaTrainer(env=c.ENV_NAME, config={
+    trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
         "num_gpus": 2,
-        "num_workers": 8,
+        "num_workers": 8
         #"model": {
         #    "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
         #}
