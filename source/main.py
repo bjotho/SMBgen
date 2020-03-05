@@ -46,15 +46,19 @@ def main():
     def find_latest_checkpoint():
         largest = -1
         for chkpath in os.listdir(checkpoint_all):
-            checkpoint_id = int(chkpath.split("_")[1])
+            try:
+                checkpoint_id = int(chkpath.split("_")[1])
+                if checkpoint_id > largest:
+                    largest = checkpoint_id
+            except ValueError:
+                pass
 
-            if checkpoint_id > largest:
-                largest = checkpoint_id
 
         if largest == -1:
             return None
         else:
             ret_path = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}" + f"/checkpoint-{str(largest)}")
+            print("Running on ", ret_path)
             return ret_path
 
     def test(trainer):

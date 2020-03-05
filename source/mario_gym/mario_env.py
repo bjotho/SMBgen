@@ -19,8 +19,8 @@ class MarioEnv(gym.Env):
     def __init__(self, config, mode='agent'):
         # TODO - Fix so that the window does not show up while training (window=false)
         has_window = "window" in config and config["window"]
-        fps = 60 if not "fps" in config else config["fps"]
-        actions = COMPLEX_MOVEMENT if not "actions" in config else config["actions"]
+        fps = 60 if "fps" not in config else config["fps"]
+        actions = COMPLEX_MOVEMENT if "actions" not in config else config["actions"]
 
         if has_window:
             os.environ['SDL_VIDEODRIVER'] = 'dummy'
