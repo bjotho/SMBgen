@@ -104,12 +104,5 @@ def main():
         if save_counter % save_interval == 1:
             checkpoint = trainer.save(checkpoint_all)
             print(checkpoint)
-            """_chkp_path = os.path.dirname(os.path.abspath(checkpoint))
-            try:
-                os.remove(checkpoint_latest)
-            except FileNotFoundError:
-                pass
-            os.symlink(_chkp_path, checkpoint_latest)
-            #shutil.copy(checkpoint, checkpoint_latest)
-            print("checkpoint saved at", checkpoint)"""
+
         save_counter += 1
