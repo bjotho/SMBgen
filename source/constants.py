@@ -121,6 +121,7 @@ TILES = [
     SOLID_ID,
     GOOMBA_ID,
     KOOPA_ID,
+    FLY_KOOPA_ID,
     FIRE_KOOPA_ID,
     FIRE_ID
 ]
