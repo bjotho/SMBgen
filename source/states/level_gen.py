@@ -50,11 +50,12 @@ class Level(tools.State):
         self.checkpoint_group = pg.sprite.Group()
         self.draw_group_list = [self.brick_group,
                                 self.box_group,
-                                self.ground_group,
-                                self.step_group,
                                 self.solid_group,
                                 self.enemy_group,
                                 self.shell_group]
+        self.collide_group = pg.sprite.Group(self.brick_group,
+                                             self.box_group,
+                                             self.solid_group)
 
         self.enemy_group_list = []
         self.moving_score_list = []
@@ -203,11 +204,7 @@ class Level(tools.State):
         self.draw_group = pg.sprite.Group(pg.sprite.Group() for _ in range(len(self.draw_group_list)))
 
     def get_collide_groups(self):
-        return pg.sprite.Group(self.brick_group,
-                               self.box_group,
-                               self.step_group,
-                               self.ground_group,
-                               self.solid_group)
+        return self.collide_group
 
     def update(self, surface, keys, current_time):
         if self.player.state == c.FLAGPOLE and not c.HUMAN_PLAYER:
@@ -725,7 +722,7 @@ class Level(tools.State):
                 not self.in_frozen_state()):
                 sprite.state = c.FALL
         sprite.rect.y -= 1
-        del check_group
+        check_group.empty()
 
     def check_for_player_death(self):
         if (self.player.rect.y > c.SCREEN_HEIGHT or
@@ -804,8 +801,12 @@ class Level(tools.State):
                 in_range = np.abs(self.player.rect.x - sprite.rect.x) <= c.UPDATE_RADIUS
                 if in_range and sprite not in self.draw_group:
                     self.draw_group.add(sprite)
+                    if sprite not in self.enemy_group and sprite not in self.shell_group:
+                        self.collide_group.add(sprite)
                 elif not in_range and sprite in self.draw_group:
                     self.draw_group.remove(sprite)
+                    if sprite in self.collide_group:
+                        self.collide_group.remove(sprite)
 
     def draw(self, surface):
         self.update_draw_sprite_group()
