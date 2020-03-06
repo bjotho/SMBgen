@@ -48,6 +48,13 @@ class Level(tools.State):
         self.enemy_group = pg.sprite.Group()
         self.shell_group = pg.sprite.Group()
         self.checkpoint_group = pg.sprite.Group()
+        self.draw_group_list = [self.brick_group,
+                                self.box_group,
+                                self.ground_group,
+                                self.step_group,
+                                self.solid_group,
+                                self.enemy_group,
+                                self.shell_group]
 
         self.enemy_group_list = []
         self.moving_score_list = []
@@ -234,6 +241,7 @@ class Level(tools.State):
         self.ground_step_pipe_group = pg.sprite.Group(self.start_ground_group,
                         self.pipe_group, self.step_group, self.slider_group)
         self.player_group = pg.sprite.Group(self.player)
+        self.draw_group = pg.sprite.Group(pg.sprite.Group() for _ in range(len(self.draw_group_list)))
 
     def get_collide_groups(self):
         return pg.sprite.Group(self.brick_group,
@@ -836,22 +844,26 @@ class Level(tools.State):
         y = sprite.rect.y - 10
         self.moving_score_list.append(stuff.Score(x, y, score))
 
+    def update_draw_sprite_group(self):
+        for n, group in enumerate(self.draw_group_list):
+            for sprite in group:
+                in_range = np.abs(self.player.rect.x - sprite.rect.x) <= c.UPDATE_RADIUS
+                if in_range and sprite not in self.draw_group:
+                    self.draw_group.add(sprite)
+                elif not in_range and sprite in self.draw_group:
+                    self.draw_group.remove(sprite)
+
     def draw(self, surface):
+        self.update_draw_sprite_group()
         self.level.blit(self.background, self.viewport, self.viewport)
         self.powerup_group.draw(self.level)
 
-        self.brick_group.draw(self.level)
-        self.box_group.draw(self.level)
-        self.ground_group.draw(self.level)
-        self.step_group.draw(self.level)
-        self.solid_group.draw(self.level)
+        self.draw_group.draw(self.level)
 
         self.coin_group.draw(self.level)
         self.dying_group.draw(self.level)
         self.brickpiece_group.draw(self.level)
         self.flagpole_group.draw(self.level)
-        self.shell_group.draw(self.level)
-        self.enemy_group.draw(self.level)
         self.player_group.draw(self.level)
         self.static_coin_group.draw(self.level)
         self.slider_group.draw(self.level)
