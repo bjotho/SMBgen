@@ -2,6 +2,7 @@ __author__ = 'marble_xu'
 
 import math
 import pygame as pg
+import numpy as np
 from source import setup, tools
 from source import constants as c
 from source.states import level_state
@@ -90,17 +91,18 @@ class Enemy(pg.sprite.Sprite):
             self.x_vel = ENEMY_SPEED *-1 if self.direction == c.LEFT else ENEMY_SPEED
             self.y_vel = 0
     
-    def update(self, game_info, level):
-        self.current_time = game_info[c.CURRENT_TIME]
-        self.handle_state()
-        self.animation()
-        self.update_position(level)
+    def update(self, game_info, player_x, level):
+        if np.abs(player_x-self.rect.x) < c.UPDATE_RADIUS:
+            self.current_time = game_info[c.CURRENT_TIME]
+            self.handle_state()
+            self.animation()
+            self.update_position(level)
 
-        new_x, new_y = level_state.get_coordinates(self.rect.x, self.rect.y)
-        self.replacement = level_state.update_observation(self.prev_x, self.prev_y,
-                                                          new_x, new_y, self.id, self.replacement)
-        self.prev_x = new_x
-        self.prev_y = new_y
+            new_x, new_y = level_state.get_coordinates(self.rect.x, self.rect.y)
+            self.replacement = level_state.update_observation(self.prev_x, self.prev_y,
+                                                              new_x, new_y, self.id, self.replacement)
+            self.prev_x = new_x
+            self.prev_y = new_y
 
         if len(self._Sprite__g) == 0:
             # print(self.id, "killed. New coordinates: (", new_x, new_y, ")")
