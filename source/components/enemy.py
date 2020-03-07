@@ -77,22 +77,21 @@ class Enemy(pg.sprite.Sprite):
         self.replacement = c.AIR_ID
         self.prev_x, self.prev_y = level_state.get_coordinates(self.rect.x, self.rect.y)
 
-
     def load_frames(self, sheet, frame_rect_list):
         for frame_rect in frame_rect_list:
             self.frames.append(tools.get_image(sheet, *frame_rect, 
-                            c.BLACK, c.SIZE_MULTIPLIER))
+                               c.BLACK, c.SIZE_MULTIPLIER))
 
     def set_velocity(self):
         if self.isVertical:
             self.x_vel = 0
             self.y_vel = ENEMY_SPEED
         else:
-            self.x_vel = ENEMY_SPEED *-1 if self.direction == c.LEFT else ENEMY_SPEED
+            self.x_vel = ENEMY_SPEED * -1 if self.direction == c.LEFT else ENEMY_SPEED
             self.y_vel = 0
     
     def update(self, game_info, player_x, level):
-        if np.abs(player_x-self.rect.x) < c.UPDATE_RADIUS:
+        if np.abs(player_x - self.rect.x) <= c.UPDATE_RADIUS:
             self.current_time = game_info[c.CURRENT_TIME]
             self.handle_state()
             self.animation()
@@ -106,7 +105,7 @@ class Enemy(pg.sprite.Sprite):
 
         if len(self._Sprite__g) == 0:
             # print(self.id, "killed. New coordinates: (", new_x, new_y, ")")
-            level_state.delete_observation(new_x, new_y)
+            level_state.delete_observation(self.prev_x, self.prev_y)
             # level_state.print_2d(level_state.state)
 
     def handle_state(self):

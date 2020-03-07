@@ -8,7 +8,7 @@ SCREEN_HEIGHT = 600
 SCREEN_WIDTH = 800
 SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
 
-ORIGINAL_CAPTION = "Super Mario Bros"
+ORIGINAL_CAPTION = 'Super Mario Bros.'
 
 # COLORS
 #                R    G    B
@@ -71,22 +71,20 @@ WRITE = False
 SAVE_LEVEL = False
 PRINT_GEN_REWARD = False
 SNAKING = True
-GEN_BORDER = 'gen_border'
 GEN_HEIGHT = 580
-GEN_DISTANCE = 440
+GEN_DISTANCE = 2 * SCREEN_WIDTH
 GEN_LENGTH = 5
 PLATFORM_LENGTH = 5
 Y_OFFSET = 64
 COL_HEIGHT = 13
 TILE_SIZE = 43
-GEN_MEMORY = 100
 MEMORY_LENGTH = 128
+GEN_BORDER = 'gen_border'
+GEN_LINE = 'gen_line'
 TIMESTEP = 'timestep'
 PLAYER_X = 'player_x'
-UPDATE_RADIUS = 2 * SCREEN_WIDTH
-
-# GEN NETWORK PARAMS
-
+REWARD = 'reward'
+UPDATE_RADIUS = 1 * SCREEN_WIDTH
 
 # GENERATION IDENTIFIERS
 AIR_ID = '_'
@@ -231,7 +229,7 @@ SMALL_TO_BIG = 'small to big'
 BIG_TO_FIRE = 'big to fire'
 BIG_TO_SMALL = 'big to small'
 FLAGPOLE = 'flag pole'
-WALK_AUTO = 'walk auto'     # not handle key input in this state
+WALK_AUTO = 'walk auto'     # ignoring key input in this state
 END_OF_LEVEL_FALL = 'end of level fall'
 IN_CASTLE = 'in castle'
 DOWN_TO_PIPE = 'down to pipe'

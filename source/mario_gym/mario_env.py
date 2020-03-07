@@ -30,6 +30,7 @@ class MarioEnv(gym.Env):
 
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
+        self.clock_last = c.GAME_TIME_OUT
         self.game = tools.Control()
         self.game.fps = fps
         state_dict = {c.MAIN_MENU: main_menu.Menu(),
@@ -53,7 +54,7 @@ class MarioEnv(gym.Env):
         }
 
         self._ACTION_TO_KEYS = {}
-        self._TILE_MAP = {}
+        self._TILE_MAP = level_state.tokenize_tiles(c.TILES)
         self.setup_spaces(actions)
 
     def buttons(self) -> list:
@@ -85,12 +86,6 @@ class MarioEnv(gym.Env):
             self._action_meanings[action] = ' '.join(button_list)
 
         self.setup_action_to_keys()
-        self.tokenize_tiles()
-
-    def tokenize_tiles(self):
-        token_step = 1.0 / (len(c.TILES) - 1)
-        for n, tile in enumerate(c.TILES):
-            self._TILE_MAP[tile] = n * token_step
 
     def setup_action_to_keys(self):
         """Map action to keyboard keys"""
@@ -134,6 +129,9 @@ class MarioEnv(gym.Env):
         current_x = self.game.state_dict[c.LEVEL].player.rect.x
         reward = current_x - self.mario_x_last
         self.mario_x_last = current_x
+        clock_now = self.game.state_dict[c.LEVEL].overhead_info.time
+        reward += self.clock_last - clock_now
+        self.clock_last = clock_now
         return reward
 
     def _will_reset(self):
@@ -152,6 +150,7 @@ class MarioEnv(gym.Env):
     def _did_reset(self):
         """Handle any hacking after a reset occurs."""
         self.mario_x_last = c.DEBUG_START_X
+        self.clock_last = c.GAME_TIME_OUT
 
     def reset(self):
         """Reset the environment and return the initial observation."""

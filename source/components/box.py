@@ -41,7 +41,7 @@ class Box(pg.sprite.Sprite):
                             c.BLACK, c.BRICK_SIZE_MULTIPLIER))
     
     def update(self, game_info, player_x):
-        if np.abs(player_x-self.rect.x) < c.UPDATE_RADIUS:
+        if np.abs(player_x - self.rect.x) <= c.UPDATE_RADIUS:
             self.current_time = game_info[c.CURRENT_TIME]
             if self.state == c.RESTING:
                 self.resting()

@@ -21,6 +21,7 @@ class Collider(pg.sprite.Sprite):
             for j in range(y, y + height, c.TILE_SIZE):
                 level_state.insert_observation(i, j, c.SOLID_ID)
 
+
 class Checkpoint(pg.sprite.Sprite):
     def __init__(self, x, y, width, height, type, enemy_groupid=0, map_index=0, name=c.MAP_CHECKPOINT):
         pg.sprite.Sprite.__init__(self)

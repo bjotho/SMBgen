@@ -45,6 +45,16 @@ def delete_observation(x, y, replacement=c.AIR_ID):
     state[x][y] = replacement
 
 
+def tokenize_tiles(tiles: list):
+    # Tokenize tiles and populate tile_map dict with (tile_id: token) pairs
+    tile_map = {}
+    token_step = 1.0 / (len(tiles) - 1)
+    for n, tile in enumerate(tiles):
+        tile_map[tile] = n * token_step
+
+    return tile_map
+
+
 def get_coordinates(x_px, y_px):
     x = int(x_px // c.TILE_SIZE)
     y = int(c.COL_HEIGHT - ((y_px - c.Y_OFFSET) // c.TILE_SIZE) - 1)

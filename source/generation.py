@@ -13,23 +13,16 @@ from source.states import level_state
 class Generator:
     def __init__(self, gen_file_path):
         self.map_gen_file = gen_file_path
-        self._TILE_MAP = {}
         self.step = -1
         self.memory = []
         self.tiles_per_col = c.COL_HEIGHT - 2 if c.INSERT_GROUND else c.COL_HEIGHT
-        self.tiles = c.GENERATOR_TILES + [c.AIR_ID for _ in range(100)]
+        self.tiles = c.GENERATOR_TILES + [c.AIR_ID for _ in range(50)]
+        self._TILE_MAP = level_state.tokenize_tiles(self.tiles)
 
-        self.tokenize_tiles()
         self.populate_memory()
         self.generator = self.create_generator()
 
         level_state.print_2d(self.memory, chop=self.tiles_per_col)
-
-    def tokenize_tiles(self):
-        # Tokenize tiles in self.tiles and populate _TILE_MAP dict with (tile_id: token) pairs
-        token_step = 1.0 / (len(self.tiles) - 1)
-        for n, tile in enumerate(self.tiles):
-            self._TILE_MAP[tile] = n * token_step
 
     def populate_memory(self):
         if c.INSERT_GROUND:
@@ -49,10 +42,10 @@ class Generator:
     def generate(self):
         output = []
 
-        for _ in range(c.GEN_LENGTH - 1):
+        for _ in range(c.GEN_LENGTH):
             map_col = ""
             if c.INSERT_GROUND:
-                map_col = c.SOLID_ID + str(2 * c.AIR_ID) + c.SOLID_ID
+                map_col = str(2 * c.SOLID_ID)
             map_col_list = []
             for _ in range(c.COL_HEIGHT - len(map_col)):
                 map_col_list.append(np.random.choice(self.tiles))

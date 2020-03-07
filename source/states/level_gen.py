@@ -1,6 +1,5 @@
 __author__ = 'marble_xu'
 
-# import linecache
 import os
 import json
 import math
@@ -48,14 +47,14 @@ class Level(tools.State):
         self.enemy_group = pg.sprite.Group()
         self.shell_group = pg.sprite.Group()
         self.checkpoint_group = pg.sprite.Group()
+        self.collide_group = pg.sprite.Group(self.brick_group,
+                                             self.box_group,
+                                             self.solid_group)
         self.draw_group_list = [self.brick_group,
                                 self.box_group,
                                 self.solid_group,
                                 self.enemy_group,
                                 self.shell_group]
-        self.collide_group = pg.sprite.Group(self.brick_group,
-                                             self.box_group,
-                                             self.solid_group)
 
         self.enemy_group_list = []
         self.moving_score_list = []
@@ -75,7 +74,6 @@ class Level(tools.State):
         self.setup_sprite_groups()
 
         self.read = c.READ
-        self.generations = 0
         self.gen_line = 0
         self.enemies = 0
         self.timestep = 0
@@ -83,8 +81,6 @@ class Level(tools.State):
         self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
         self.gen_file_length = sum(1 for line in open(self.map_gen_file))
         self.gan = generation.Generator(self.map_gen_file)
-        self.reward_list = []
-        self.dx_list = []
         self.optimal_mario_speed = 3
         self.observation = None
 
@@ -277,10 +273,6 @@ class Level(tools.State):
                                                    'y': tile_coordinates[1], 'type': 0}, self)
 
     def generate(self):
-        self.generations += 1
-        # print("Generation", self.generations)
-        # print(self.player.rect.x)
-
         tiles = {'ground': [],
                  'bricks': [],
                  'boxes': [],
@@ -306,24 +298,14 @@ class Level(tools.State):
             new_terrain = []
 
             if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or c.ONLY_GROUND:
-                for _ in range(c.GEN_LENGTH - 1):
+                for _ in range(c.GEN_LENGTH):
                     new_terrain.append(str(c.SOLID_ID * 2))
             else:
                 new_terrain = self.gan.generate()
-                self.gen_list.append({self.gen_line: {c.TIMESTEP: self.timestep,
-                                                      c.PLAYER_X: self.player.rect.x}})
+                self.gen_list.append({c.GEN_LINE: self.gen_line})
 
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
-
-        '''
-        for i in range(c.GEN_LENGTH):
-            line = linecache.getline(self.map_gen_file, self.gen_line)
-            [...]
-
-        linecache.updatecache(self.map_gen_file)
-        linecache.clearcache()
-        '''
 
         self.setup_brick_and_box(tiles['bricks'], tiles['boxes'])
         self.setup_solid_tile(tiles['steps'], self.step_group, 0, 16)
@@ -493,55 +475,47 @@ class Level(tools.State):
     def check_gen_reward(self):
         mario_x = level_state.get_coordinates(self.player.rect.x, 0)[0]
         for gen in self.gen_list:
-            line = list(gen.keys())[0]
-            if mario_x >= line:
-                dx = self.player.rect.x - gen[line][c.PLAYER_X]
-                dt = self.timestep - gen[line][c.TIMESTEP]
-                v = float(dx/dt)
-                reward = math.e ** (-(0.5) * ((v - self.optimal_mario_speed) ** 2))
-                print("Generator reward:", reward)
-                print("Gen list:", self.gen_list)
-                self.gen_list.remove(gen)
-
-    def generator_reward(self):
-        if self.player.state in [c.STAND, c.WALK, c.JUMP, c.FALL, c.FLY]:
-            # Reward is defined as a gaussian distribution with symmetry around dx=3
-            dx = self.player.rect.x - self.old_player_x
-            reward = math.e**(-(1/2) * ((dx-self.optimal_mario_speed)**2))
-
-            if c.PRINT_GEN_REWARD:
-                if dx not in self.dx_list:
-                    self.reward_list.append(reward)
-                    self.dx_list.append(dx)
+            if c.REWARD in gen:
+                continue
+            if mario_x >= gen[c.GEN_LINE] and len(gen) == 1:
+                gen[c.PLAYER_X] = self.player.rect.x
+                gen[c.TIMESTEP] = self.timestep
+                print("new gen:", gen)
+            elif mario_x >= gen[c.GEN_LINE] + c.GEN_LENGTH:
+                dx = self.player.rect.x - gen[c.PLAYER_X]
+                dt = self.timestep - gen[c.TIMESTEP]
+                v = float(dx / dt)
+                gen[c.REWARD] = math.e ** (-0.5 * ((v - self.optimal_mario_speed) ** 2))
+                print("reward:", gen[c.REWARD])
 
     def check_player_x_collisions(self):
-        ground_step_pipe = pg.sprite.spritecollideany(self.player, self.ground_step_pipe_group)
+        # ground_step_pipe = pg.sprite.spritecollideany(self.player, self.ground_step_pipe_group)
         brick = pg.sprite.spritecollideany(self.player, self.brick_group)
         box = pg.sprite.spritecollideany(self.player, self.box_group)
-        ground = pg.sprite.spritecollideany(self.player, self.ground_group)
-        step = pg.sprite.spritecollideany(self.player, self.step_group)
+        # ground = pg.sprite.spritecollideany(self.player, self.ground_group)
+        # step = pg.sprite.spritecollideany(self.player, self.step_group)
         solid = pg.sprite.spritecollideany(self.player, self.solid_group)
 
         enemy = pg.sprite.spritecollideany(self.player, self.enemy_group)
         shell = pg.sprite.spritecollideany(self.player, self.shell_group)
         powerup = pg.sprite.spritecollideany(self.player, self.powerup_group)
-        coin = pg.sprite.spritecollideany(self.player, self.static_coin_group)
+        # coin = pg.sprite.spritecollideany(self.player, self.static_coin_group)
 
-        if ground:
-            self.adjust_player_for_x_collisions(ground)
-        elif box:
+        # if ground:
+        #     self.adjust_player_for_x_collisions(ground)
+        if box:
             self.adjust_player_for_x_collisions(box)
-        elif step:
-            self.adjust_player_for_x_collisions(step)
+        # elif step:
+        #     self.adjust_player_for_x_collisions(step)
         elif solid:
             self.adjust_player_for_x_collisions(solid)
         elif brick:
             self.adjust_player_for_x_collisions(brick)
-        elif ground_step_pipe:
-            if (ground_step_pipe.name == c.MAP_PIPE and
-                ground_step_pipe.type == c.PIPE_TYPE_HORIZONTAL):
-                return
-            self.adjust_player_for_x_collisions(ground_step_pipe)
+        # elif ground_step_pipe:
+        #     if (ground_step_pipe.name == c.MAP_PIPE and
+        #         ground_step_pipe.type == c.PIPE_TYPE_HORIZONTAL):
+        #         return
+        #     self.adjust_player_for_x_collisions(ground_step_pipe)
         elif powerup:
             if powerup.type == c.TYPE_MUSHROOM:
                 self.update_score(1000, powerup, 0)
@@ -604,10 +578,10 @@ class Level(tools.State):
                     shell.x_vel = -10
                 shell.rect.x += shell.x_vel * 4
                 shell.state = c.SHELL_SLIDE
-        elif coin:
-            self.update_score(100, coin, 1)
-            coin.kill()
-            coin.update_level_state()
+        # elif coin:
+        #     self.update_score(100, coin, 1)
+        #     coin.kill()
+        #     coin.update_level_state()
 
     def adjust_player_for_x_collisions(self, collider):
         if collider.name == c.MAP_SLIDER:
@@ -800,28 +774,29 @@ class Level(tools.State):
         elif self.player.dead:
             self.next = c.LOAD_SCREEN
         else:
-            self.game_info[c.LEVEL_NUM] += 1
+            # self.game_info[c.LEVEL_NUM] += 1
             self.next = c.LOAD_SCREEN
 
+        print(self.gen_list)
         self.read = c.READ
         self.gen_line = 0
 
-        if c.PRINT_GEN_REWARD:
-            x = np.linspace(0.2, 10, 100)
-            plt.plot(x, math.e**(-(1/2) * ((x-3)**2)))
-            plt.plot(self.dx_list, self.reward_list, 'ro')
-            plt.grid(True, which='both')
-            plt.axis([-5, 10, 0, 2])
-            plt.axvline(x=0, color='black')
-            plt.xlabel('dx')
-            plt.ylabel('Reward')
-            plt.show()
-
-            self.dx_list.clear()
-            self.reward_list.clear()
+        # if c.PRINT_GEN_REWARD:
+        #     x = np.linspace(0.2, 10, 100)
+        #     plt.plot(x, math.e**(-(1/2) * ((x-3)**2)))
+        #     plt.plot(self.dx_list, self.reward_list, 'ro')
+        #     plt.grid(True, which='both')
+        #     plt.axis([-5, 10, 0, 2])
+        #     plt.axvline(x=0, color='black')
+        #     plt.xlabel('dx')
+        #     plt.ylabel('Reward')
+        #     plt.show()
+        #
+        #     self.dx_list.clear()
+        #     self.reward_list.clear()
 
     def update_viewport(self):
-        third = self.viewport.x + self.viewport.w//3
+        third = self.viewport.x + self.viewport.w // 3
         player_center = self.player.rect.centerx
 
         if (self.player.x_vel > 0 and
@@ -842,7 +817,7 @@ class Level(tools.State):
         y = sprite.rect.y - 10
         self.moving_score_list.append(stuff.Score(x, y, score))
 
-    def update_draw_sprite_group(self):
+    def update_draw_group(self):
         for n, group in enumerate(self.draw_group_list):
             for sprite in group:
                 in_range = np.abs(self.player.rect.x - sprite.rect.x) <= c.UPDATE_RADIUS
@@ -856,7 +831,7 @@ class Level(tools.State):
                         self.collide_group.remove(sprite)
 
     def draw(self, surface):
-        self.update_draw_sprite_group()
+        self.update_draw_group()
         self.level.blit(self.background, self.viewport, self.viewport)
         self.powerup_group.draw(self.level)
 
@@ -867,13 +842,13 @@ class Level(tools.State):
         self.brickpiece_group.draw(self.level)
         self.flagpole_group.draw(self.level)
         self.player_group.draw(self.level)
-        self.static_coin_group.draw(self.level)
-        self.slider_group.draw(self.level)
-        self.pipe_group.draw(self.level)
+        # self.static_coin_group.draw(self.level)
+        # self.slider_group.draw(self.level)
+        # self.pipe_group.draw(self.level)
         for score in self.moving_score_list:
             score.draw(self.level)
         if c.DEBUG:
-            self.ground_step_pipe_group.draw(self.level)
+            # self.ground_step_pipe_group.draw(self.level)
             self.checkpoint_group.draw(self.level)
 
         surface.blit(self.level, (0,0), self.viewport)
