@@ -1,4 +1,5 @@
 import numpy as np
+from collections import deque
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Embedding, LSTM, Dense
 # from tensorflow.python.keras.preprocessing.sequence import pad_sequences
@@ -21,6 +22,8 @@ class Generator:
 
         self.populate_memory()
         self.generator = self.create_generator()
+
+        self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
 
         level_state.print_2d(self.memory, chop=self.tiles_per_col)
 
@@ -71,10 +74,13 @@ class Generator:
         print(model.summary())
         return model
 
-    def update_memory(self, update):
+    def update_replay_memory(self, generation):
+        pass
+
+    def update_memory(self, new_tile):
         # Remove oldest tile from memory if memory length limit is exceeded
         if len(self.memory) >= c.MEMORY_LENGTH:
             self.memory = self.memory[1:]
 
         # Insert new tile
-        self.memory.append(update)
+        self.memory.append(new_tile)

@@ -64,6 +64,7 @@ class Level(tools.State):
         self.setup_maps()
         self.start_ground_group = self.setup_collide(c.MAP_GROUND)
         self.setup_player()
+        self.setup_checkpoints(initial=True)
         self.setup_flagpole()
         self.setup_sprite_groups()
 
@@ -74,7 +75,7 @@ class Level(tools.State):
         self.gen_list = []
         self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
         self.gen_file_length = sum(1 for line in open(self.map_gen_file))
-        self.gan = generation.Generator(self.map_gen_file)
+        self.generator = generation.Generator(self.map_gen_file)
         self.optimal_mario_speed = 3
         self.observation = None
 
@@ -254,11 +255,11 @@ class Level(tools.State):
         else:
             new_terrain = []
 
-            if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] or c.ONLY_GROUND:
+            if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] - (c.TILE_SIZE * c.GEN_LENGTH) or c.ONLY_GROUND:
                 for _ in range(c.GEN_LENGTH):
                     new_terrain.append(str(c.SOLID_ID * 2))
             else:
-                new_terrain = self.gan.generate()
+                new_terrain = self.generator.generate()
                 self.gen_list.append({c.GEN_LINE: self.gen_line})
 
             for line in new_terrain:
@@ -275,9 +276,7 @@ class Level(tools.State):
         #     print(tile)
         # self.randomly_clear_tiles([self.solid_group,
         #                            self.brick_group,
-        #                            self.step_group,
-        #                            self.box_group,
-        #                            self.ground_group])
+        #                            self.box_group])
 
     def randomly_clear_tiles(self, groups):
         for group in groups:
@@ -440,6 +439,7 @@ class Level(tools.State):
                 dt = self.timestep - gen[c.TIMESTEP]
                 v = float(dx / dt)
                 gen[c.REWARD] = math.e ** (-0.5 * ((v - self.optimal_mario_speed) ** 2))
+                # self.generator.update_replay_memory(gen)
                 print("reward:", gen[c.REWARD])
 
     def check_player_x_collisions(self):
@@ -690,7 +690,7 @@ class Level(tools.State):
                 not self.in_frozen_state()):
                 sprite.state = c.FALL
         sprite.rect.y -= 1
-        check_group.empty()
+        del check_group
 
     def check_for_player_death(self):
         if (self.player.rect.y > c.SCREEN_HEIGHT or
@@ -783,5 +783,5 @@ class Level(tools.State):
             # self.ground_step_pipe_group.draw(self.level)
             self.checkpoint_group.draw(self.level)
 
-        surface.blit(self.level, (0,0), self.viewport)
+        surface.blit(self.level, (0, 0), self.viewport)
         self.overhead_info.draw(surface)
