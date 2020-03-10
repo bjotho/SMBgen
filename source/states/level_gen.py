@@ -260,7 +260,9 @@ class Level(tools.State):
                     new_terrain.append(str(c.SOLID_ID * 2))
             else:
                 new_terrain = self.generator.generate()
-                self.gen_list.append({c.GEN_LINE: self.gen_line})
+                done = self.map_data[c.GEN_BORDER] + c.GEN_LENGTH >= self.map_data[c.MAP_FLAGPOLE][0]['x'] - (c.TILE_SIZE * c.GEN_LENGTH)
+                self.gen_list.append({c.GEN_LINE: self.gen_line,
+                                      c.DONE: done})
 
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
@@ -430,7 +432,7 @@ class Level(tools.State):
         for gen in self.gen_list:
             if c.REWARD in gen:
                 continue
-            if mario_x >= gen[c.GEN_LINE] and len(gen) == 1:
+            if mario_x >= gen[c.GEN_LINE] and len(gen) == 2:
                 gen[c.PLAYER_X] = self.player.rect.x
                 gen[c.TIMESTEP] = self.timestep
                 print("new gen:", gen)
@@ -439,7 +441,7 @@ class Level(tools.State):
                 dt = self.timestep - gen[c.TIMESTEP]
                 v = float(dx / dt)
                 gen[c.REWARD] = math.e ** (-0.5 * ((v - self.optimal_mario_speed) ** 2))
-                # self.generator.update_replay_memory(gen)
+                self.generator.update_replay_memory(gen)
                 print("reward:", gen[c.REWARD])
 
     def check_player_x_collisions(self):
