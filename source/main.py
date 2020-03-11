@@ -14,26 +14,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 def main():
     if c.HUMAN_PLAYER:
-        import sys
-        from source import tools
-        from source.states import main_menu, load_screen
-        if c.GENERATE_MAP:
-            from source.states import level_gen as level
-        else:
-            from source.states import level
-
-        game = tools.Control()
-        game.fps = 60
-        state_dict = {c.MAIN_MENU: main_menu.Menu(),
-                      c.LOAD_SCREEN: load_screen.LoadScreen(),
-                      c.LEVEL: level.Level(),
-                      c.GAME_OVER: load_screen.GameOver(),
-                      c.TIME_OUT: load_screen.TimeOut()}
-        game.setup_states(state_dict, c.MAIN_MENU)
-        if c.SKIP_MENU:
-            game.flip_state(force=c.LEVEL)
-        game.main()
-        sys.exit(0)
+        run_game_main_and_exit()
 
     checkpoint_dir = os.path.join(dir_path, "checkpoints")
     checkpoint_all = os.path.join(dir_path, "checkpoints", "all")
@@ -52,7 +33,6 @@ def main():
                     largest = checkpoint_id
             except ValueError:
                 pass
-
 
         if largest == -1:
             return None
@@ -106,3 +86,26 @@ def main():
             print(checkpoint)
 
         save_counter += 1
+
+
+def run_game_main_and_exit():
+    import sys
+    from source import tools
+    from source.states import main_menu, load_screen
+    if c.GENERATE_MAP:
+        from source.states import level_gen as level
+    else:
+        from source.states import level
+
+    game = tools.Control()
+    game.fps = 60
+    state_dict = {c.MAIN_MENU: main_menu.Menu(),
+                  c.LOAD_SCREEN: load_screen.LoadScreen(),
+                  c.LEVEL: level.Level(),
+                  c.GAME_OVER: load_screen.GameOver(),
+                  c.TIME_OUT: load_screen.TimeOut()}
+    game.setup_states(state_dict, c.MAIN_MENU)
+    if c.SKIP_MENU:
+        game.flip_state(force=c.LEVEL)
+    game.main()
+    sys.exit(0)

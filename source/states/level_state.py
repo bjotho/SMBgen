@@ -103,10 +103,14 @@ def get_observation(player):
 
 
 def print_2d(_list, chop=None):
+    # Print a 1d or 2d list row by row in console, chopping 1d lists after each element specified by chop
     if chop:
         tmp = []
         for i in range(len(_list) // chop):
             tmp.append(_list[i * chop:(i + 1) * chop])
+        remaining = len(_list) - (len(_list) // chop) * chop
+        if remaining > 0:
+            tmp.append(_list[len(_list) - (remaining + 1):-1])
         _list = tmp
 
     output = "[\n"

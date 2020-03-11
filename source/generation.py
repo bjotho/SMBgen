@@ -13,19 +13,17 @@ from source.states import level_state
 class Generator:
     def __init__(self, gen_file_path):
         self.map_gen_file = gen_file_path
-        self.step = -1
+        self.step = -1 if c.SNAKING else 1
         self.memory = []
         self.tiles_per_col = c.COL_HEIGHT - 2 if c.INSERT_GROUND else c.COL_HEIGHT
         self.tiles = c.GENERATOR_TILES + [c.AIR_ID for _ in range(50)]
-        self._TILE_MAP = level_state.tokenize_tiles(self.tiles)
+        self._TILE_MAP = level_state.tokenize_tiles(c.GENERATOR_TILES)
 
         self.populate_memory()
         self.train, self.inference_encoder, self.inference_decoder = self.create_generator(c.N_FEATURES,
                                                                                            c.N_FEATURES, 100)
 
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
-
-        level_state.print_2d(self.memory, chop=self.tiles_per_col)
 
     def populate_memory(self):
         if c.INSERT_GROUND:
@@ -34,7 +32,8 @@ class Generator:
         else:
             with open(self.map_gen_file, 'r') as f:
                 for line in f:
-                    self.step *= -1
+                    if c.SNAKING:
+                        self.step *= -1
                     clean_line = line.rstrip()
                     for char in clean_line[::self.step]:
                         self.memory.append(self._TILE_MAP[char])
@@ -76,12 +75,13 @@ class Generator:
         output = []
 
         for _ in range(c.GEN_LENGTH):
-            self.step *= -1
+            if c.SNAKING:
+                self.step *= -1
             map_col = ""
             if c.INSERT_GROUND:
                 map_col = str(2 * c.SOLID_ID)
             map_col_list = []
-            for _ in range(self.tiles_per_col):
+            for _ in range(self.tiles_per_col - 1):
                 map_col_list.append(np.random.choice(self.tiles))
                 map_col += map_col_list[-1]
                 self.update_memory(self._TILE_MAP[map_col_list[-1][::self.step]])
@@ -128,28 +128,33 @@ class Generator:
     def one_hot_decode(self, encoded_seq):
         return [np.argmax(vector) for vector in encoded_seq]
 
+    # Insert a transition as a tuple of
+    # (state, action, reward, new_state, done)
     def update_replay_memory(self, generation):
-        state_size = c.GEN_LENGTH * self.tiles_per_col
-        start = (c.PLATFORM_LENGTH * self.tiles_per_col) + (generation[c.GEN_LINE] * self.tiles_per_col) - 1
-        end = start + state_size
-        state = self.memory[start:end]
-        start += state_size
-        end += state_size
-        action = self.memory[start:end]
-        transition = (state, action, generation[c.REWARD], action, generation[c.DONE])
-
+        gen_size = c.GEN_LENGTH * self.tiles_per_col
+        start = (generation[c.GEN_LINE] * self.tiles_per_col) - c.MEMORY_LENGTH
+        memory = self.get_padded_memory(start)
+        if start < 0:
+            start = 0
+        end = start + c.MEMORY_LENGTH
+        state = memory[start:end]
+        start += gen_size
+        end += gen_size
+        new_state = memory[start:end]
+        start = end - gen_size
+        action = memory[start:end]
+        transition = (np.array(state), np.array(action), generation[c.REWARD], np.array(new_state), generation[c.DONE])
         self.replay_memory.append(transition)
 
     def update_memory(self, new_tile):
         # Insert new tile
         self.memory.append(new_tile)
 
-    def get_memory_portion(self):
-        if c.MEMORY_LENGTH >= len(self.memory):
+    def get_padded_memory(self, pos):
+        if pos < 0:
             # Prepend padding to memory list
-            padding_size = c.MEMORY_LENGTH - (len(self.memory) + 1)
-            padding = [c.AIR_ID for _ in range(padding_size)]
+            padding_size = -pos
+            padding = [self._TILE_MAP[c.AIR_ID] for _ in range(padding_size)]
             return padding + self.memory
 
-        # Extract the latest c.MEMORY_LENGTH tiles from the memory
-        return self.memory[:c.MEMORY_LENGTH]
+        return self.memory
