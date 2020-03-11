@@ -3,7 +3,7 @@ from collections import deque
 
 from tensorflow.python.keras.layers import Input, LSTM, Dense
 from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
 from tensorflow.python.keras.utils.np_utils import to_categorical
 # from tensorflow.python.keras.layers import Dense, LSTM, Embedding, RepeatVector, TimeDistributed
 
