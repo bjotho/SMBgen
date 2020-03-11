@@ -3,6 +3,7 @@ from collections import deque
 
 from tensorflow.python.keras.layers import Input, LSTM, Dense
 from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.keras.utils.np_utils import to_categorical
 # from tensorflow.python.keras.layers import Dense, LSTM, Embedding, RepeatVector, TimeDistributed
 
@@ -16,13 +17,15 @@ class Generator:
         self.step = -1 if c.SNAKING else 1
         self.memory = []
         self.tiles_per_col = c.COL_HEIGHT - 2 if c.INSERT_GROUND else c.COL_HEIGHT
+        self.gen_size = c.GEN_LENGTH * self.tiles_per_col
         self.tiles = c.GENERATOR_TILES + [c.AIR_ID for _ in range(50)]
         self._TILE_MAP = level_state.tokenize_tiles(c.GENERATOR_TILES)
 
         self.populate_memory()
-        self.train, self.inference_encoder, self.inference_decoder = self.create_generator(c.N_FEATURES,
+        self.generator, self.inference_encoder, self.inference_decoder = self.create_generator(c.N_FEATURES,
                                                                                            c.N_FEATURES, 100)
-
+        self.generator.compile(optimizer=Adam(lr=c.LEARNING_RATE),
+                               loss='categorical_crossentropy', metrics=['accuracy'])
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
 
     def populate_memory(self):
@@ -70,6 +73,36 @@ class Generator:
         decoder_model = Model([decoder_inputs] + decoder_states_inputs, [decoder_outputs] + decoder_states)
         # return all models
         return model, encoder_model, decoder_model
+
+    def train(self):
+        # Only start training if we have enough transitions in replay memory
+        # if len(self.replay_memory) < c.MIN_REPLAY_MEMORY_SIZE:
+        #     return
+
+        # Get a minibatch of random samples from replay memory
+        minibatch = np.random.sample(self.replay_memory, c.MINIBATCH_SIZE)
+
+        # Get current states from minibatch and create list of predicted sequences
+        current_states = [self.one_hot_encode(transition[0], len(self._TILE_MAP)) for transition in minibatch]
+        current_predicted_sequences = []
+        for state in current_states:
+            current_predicted_sequences.append(self.predict_sequence(self.inference_encoder, self.inference_decoder,
+                                                                     state, self.gen_size, len(self._TILE_MAP)))
+
+        # Get future states from minibatch, and create new list of sequece predictions
+        new_current_states = [self.one_hot_encode(transition[3], len(self._TILE_MAP)) for transition in minibatch]
+        future_predicted_sequences = []
+        for state in new_current_states:
+            future_predicted_sequences.append(self.predict_sequence(self.inference_encoder, self.inference_decoder,
+                                                                    state, self.gen_size, len(self._TILE_MAP)))
+
+        X = []
+        y = []
+
+        # Enumerate transitions
+        for n, (current_state, action, reward, new_current_states, done) in enumerate(minibatch):
+            # If not a terminal state, get new predicted sequence from future states, otherwise set it to 0
+            break
 
     def generate(self):
         output = []
@@ -131,17 +164,16 @@ class Generator:
     # Insert a transition as a tuple of
     # (state, action, reward, new_state, done)
     def update_replay_memory(self, generation):
-        gen_size = c.GEN_LENGTH * self.tiles_per_col
         start = (generation[c.GEN_LINE] * self.tiles_per_col) - c.MEMORY_LENGTH
         memory = self.get_padded_memory(start)
         if start < 0:
             start = 0
         end = start + c.MEMORY_LENGTH
         state = memory[start:end]
-        start += gen_size
-        end += gen_size
+        start += self.gen_size
+        end += self.gen_size
         new_state = memory[start:end]
-        start = end - gen_size
+        start = end - self.gen_size
         action = memory[start:end]
         transition = (np.array(state), np.array(action), generation[c.REWARD], np.array(new_state), generation[c.DONE])
         self.replay_memory.append(transition)
