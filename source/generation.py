@@ -20,11 +20,20 @@ class Generator:
         self.tiles_per_col = c.COL_HEIGHT - 2 if c.INSERT_GROUND else c.COL_HEIGHT
         self.gen_size = c.GEN_LENGTH * self.tiles_per_col
         self.tiles = c.GENERATOR_TILES + [c.AIR_ID for _ in range(50)]
-        self._TILE_MAP = level_state.tokenize_tiles(c.GENERATOR_TILES)
+        self._TILE_MAP = self.tokenize_tiles(c.GENERATOR_TILES)
+        print("self._TILE_MAP:", self._TILE_MAP)
 
         self.populate_memory()
         self.generator = self.create_generator()
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
+
+    def tokenize_tiles(self, tiles: list):
+        # Tokenize tiles and populate tile_map dict with (tile_id: token) pairs
+        tile_map = {}
+        for n, tile in enumerate(tiles):
+            tile_map[tile] = n
+
+        return tile_map
 
     def populate_memory(self):
         if c.INSERT_GROUND:
@@ -43,10 +52,10 @@ class Generator:
     def create_generator(self):
         # https://github.com/golsun/deep-RL-trading/blob/master/src/agents.py#L161 # <-- TODO - Look here :D
         model = Sequential()
-        model.add(Input(shape=(c.MEMORY_LENGTH, len(self._TILE_MAP))))#model.add(Input(shape=(1, 128, 5))) #model.add(Embedding(len(self._TILE_MAP), 5, input_length=1))
-        model.add(LSTM(c.MEMORY_LENGTH, return_sequences=5))
-        #model.add(LSTM(20, return_sequences=False, activation="relu"))
-        model.add(Dense(20, activation='linear'))
+        model.add(Input(shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))  # model.add(Embedding(len(c.GENERATOR_TILES), 5, input_length=1))
+        model.add(LSTM(c.MEMORY_LENGTH, return_sequences=True))
+        # model.add(LSTM(self.gen_size, return_sequences=False, activation="relu"))
+        model.add(Dense(self.gen_size, activation='linear'))
         model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
         print(model.summary())
         return model
@@ -63,7 +72,8 @@ class Generator:
         current_states = np.array([transition[0] for transition in minibatch])
         current_predicted_sequences = []
         for state in current_states:
-            current_predicted_sequences.append(self.generator.predict(state))
+            print("state:", state)
+            current_predicted_sequences.append(self.generator.predict(self.one_hot_encode(state, len(c.GENERATOR_TILES))))
         current_predicted_sequences = np.array(current_predicted_sequences)
 
         greedy_mode = True
@@ -78,15 +88,16 @@ class Generator:
                 tile = np.random.choice(np.arange(len(seq[0])), p=seq[0])
             preds[i] = tile
 
-        print(preds)
+        print("preds:", preds)
 
         # Get future states from minibatch, and create new list of sequece predictions
         new_current_states = [transition[3] for transition in minibatch]
         future_predicted_sequences = []
         for new_state in new_current_states:
-            future_predicted_sequences.append(self.generator.predict(new_state))
+            future_predicted_sequences.append(self.generator.predict(self.one_hot_encode(new_state,
+                                                                                         len(c.GENERATOR_TILES))))
 
-        print("current_predicted_sequences:", len(current_predicted_sequences[0]), current_predicted_sequences[0])
+        # print("current_predicted_sequences:", len(current_predicted_sequences[0]), current_predicted_sequences[0])
 
         X = []
         y = []

@@ -5,7 +5,7 @@ gym
 tabulate
 pygame
 opencv-python
-tensorflow==2.0.0b1
+tensorflow>=2.0.0b1
 tensorboardX
 pandas
 numpy
