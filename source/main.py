@@ -83,10 +83,13 @@ def main():
 
     trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
         "num_gpus": 2,
-        "num_workers": 8
-        #"model": {
-        #    "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
-        #}
+        "num_workers": 8,
+        # Whether to prefer RLlib preprocessors ("rllib") or deepmind ("deepmind") when applicable.
+        #"preprocessor_pref": "deepmind",
+        "model": {
+            "dim": 4,
+            "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
+        }
         # "train_batch_size": 2048
     })
     latest_checkpoint = find_latest_checkpoint()
@@ -113,3 +116,4 @@ def main():
             #shutil.copy(checkpoint, checkpoint_latest)
             print("checkpoint saved at", checkpoint)"""
         save_counter += 1
+        print("save counter:",save_counter*10,"%")
