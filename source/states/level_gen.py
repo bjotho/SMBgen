@@ -273,6 +273,8 @@ class Level(tools.State):
         self.setup_solid_tile(tiles['solid'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
 
+        self.generator.train()
+
         # level_state.print_2d(level_state.state)
         # for tile in tmp:
         #     print(tile)
@@ -432,7 +434,7 @@ class Level(tools.State):
         for gen in self.gen_list:
             if c.REWARD in gen:
                 continue
-            if mario_x >= gen[c.GEN_LINE] and len(gen) == 2:
+            if mario_x >= gen[c.GEN_LINE] and c.TIMESTEP not in gen:
                 gen[c.PLAYER_X] = self.player.rect.x
                 gen[c.TIMESTEP] = self.timestep
                 print("new gen:", gen)
@@ -440,7 +442,9 @@ class Level(tools.State):
                 dx = self.player.rect.x - gen[c.PLAYER_X]
                 dt = self.timestep - gen[c.TIMESTEP]
                 v = float(dx / dt)
+                v_avg = self.player.rect.x / self.timestep
                 gen[c.REWARD] = math.e ** (-0.5 * ((v - self.optimal_mario_speed) ** 2))
+                gen[c.STATE_VALUE] = math.e ** (-0.5 * ((v_avg - self.optimal_mario_speed) ** 2))
                 self.generator.update_replay_memory(gen)
                 print("reward:", gen[c.REWARD])
 
