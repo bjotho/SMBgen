@@ -122,6 +122,8 @@ venv.bak/
 **/.idea/workspace.xml
 **/.idea/tasks.xml
 
+.idea
+
 # mkdocs documentation
 /site
 

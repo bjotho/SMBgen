@@ -1,6 +1,8 @@
 import numpy as np
 import random
 from collections import deque
+
+from tensorflow.python.keras import Input
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Embedding, LSTM, Dense
 from tensorflow.keras.optimizers import Adam
@@ -39,11 +41,13 @@ class Generator:
 
     # returns train, inference_encoder and inference_decoder models
     def create_generator(self):
+        # https://github.com/golsun/deep-RL-trading/blob/master/src/agents.py#L161 # <-- TODO - Look here :D
         model = Sequential()
-        model.add(Embedding(len(self._TILE_MAP), 5, input_length=1))
-        model.add(LSTM(c.MEMORY_LENGTH, return_sequences=True))
-        model.add(Dense(len(self._TILE_MAP), activation='softmax'))
-        model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
+        model.add(Input(shape=(c.MEMORY_LENGTH, len(self._TILE_MAP))))#model.add(Input(shape=(1, 128, 5))) #model.add(Embedding(len(self._TILE_MAP), 5, input_length=1))
+        model.add(LSTM(c.MEMORY_LENGTH, return_sequences=5))
+        #model.add(LSTM(20, return_sequences=False, activation="relu"))
+        model.add(Dense(20, activation='linear'))
+        model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
         print(model.summary())
         return model
 
@@ -56,10 +60,25 @@ class Generator:
         minibatch = random.sample(self.replay_memory, c.MINIBATCH_SIZE)
 
         # Get current states from minibatch and create list of predicted sequences
-        current_states = [transition[0] for transition in minibatch]
+        current_states = np.array([transition[0] for transition in minibatch])
         current_predicted_sequences = []
         for state in current_states:
             current_predicted_sequences.append(self.generator.predict(state))
+        current_predicted_sequences = np.array(current_predicted_sequences)
+
+        greedy_mode = True
+        preds = np.zeros_like(np.asarray(current_states))
+        for i, seq in enumerate(current_predicted_sequences):
+
+            if greedy_mode:
+                # Greedy-variant
+                tile = np.argmax(seq[0])
+            else:
+                # Not-greedy-variant
+                tile = np.random.choice(np.arange(len(seq[0])), p=seq[0])
+            preds[i] = tile
+
+        print(preds)
 
         # Get future states from minibatch, and create new list of sequece predictions
         new_current_states = [transition[3] for transition in minibatch]
@@ -120,7 +139,9 @@ class Generator:
         new_state = memory[start:end]
         start = end - self.gen_size
         action = memory[start:end]
-        transition = (np.array(state), np.array(action), generation[c.REWARD], np.array(new_state), generation[c.STATE_VALUE], generation[c.DONE])
+        transition = (
+        np.array(state), np.array(action), generation[c.REWARD], np.array(new_state), generation[c.STATE_VALUE],
+        generation[c.DONE])
         self.replay_memory.append(transition)
 
     def update_memory(self, new_tile):
