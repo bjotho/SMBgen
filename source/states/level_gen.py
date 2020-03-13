@@ -442,9 +442,7 @@ class Level(tools.State):
                 dx = self.player.rect.x - gen[c.PLAYER_X]
                 dt = self.timestep - gen[c.TIMESTEP]
                 v = float(dx / dt)
-                v_avg = self.player.rect.x / self.timestep
                 gen[c.REWARD] = math.e ** (-0.5 * ((v - self.optimal_mario_speed) ** 2))
-                gen[c.STATE_VALUE] = math.e ** (-0.5 * ((v_avg - self.optimal_mario_speed) ** 2))
                 self.generator.update_replay_memory(gen)
                 print("reward:", gen[c.REWARD])
 
