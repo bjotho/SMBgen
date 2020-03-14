@@ -275,6 +275,11 @@ class Level(tools.State):
 
         self.generator.train()
 
+        # Decay epsilon
+        if self.generator.epsilon > c.MIN_EPSILON:
+            self.generator.epsilon *= c.EPSILON_DECAY
+            self.generator.epsilon = max(c.MIN_EPSILON, self.generator.epsilon)
+
         # level_state.print_2d(level_state.state)
         # for tile in tmp:
         #     print(tile)

@@ -70,37 +70,46 @@ class Generator:
         # Get a minibatch of random samples from replay memory
         minibatch = random.sample(self.replay_memory, c.MINIBATCH_SIZE)
 
+        # Randomly set tile choice to greedy or not greedy variant
+        greedy = np.random.random() < self.epsilon
+
         # Get current states from minibatch and create list of predicted sequences
         current_states = np.array([transition[0] for transition in minibatch])
-        current_predicted_sequences = []
-        for state in current_states:
-            current_predicted_sequences.append([])
-            greedy = np.random.random() < self.epsilon
-            for i in range(self.gen_size):
-                tmp_state = np.concatenate((state[i:], current_predicted_sequences[-1]))
-                generator_input = self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES))
-                tile_qs = self.generator.predict(generator_input)[0]
-                new_tile = self.choose_new_tile(tile_qs, greedy)
-                current_predicted_sequences[-1].append(new_tile)
-
+        current_predicted_sequences = self.predict_new_states(current_states, greedy, return_qs=False)
         current_predicted_sequences = np.array(current_predicted_sequences)
         print("current_predicted_sequences:", current_predicted_sequences)
 
         # Get future states from minibatch, and create new list of sequece predictions
         new_current_states = [transition[3] for transition in minibatch]
-        future_predicted_sequences = []
-        for new_state in new_current_states:
-            future_predicted_sequences.append(self.generator.predict(self.one_hot_encode(new_state,
-                                                                                         len(c.GENERATOR_TILES))))
-
-        # print("current_predicted_sequences:", len(current_predicted_sequences[0]), current_predicted_sequences[0])
+        future_predicted_sequences = self.predict_new_states(new_current_states, greedy, return_qs=True)
+        future_predicted_sequences = np.array(future_predicted_sequences)
 
         X = []
         y = []
 
         # Enumerate transitions
         # for n, (current_state, action, reward, new_current_states, done) in enumerate(minibatch):
-        #     new_state_value = reward + c.DISCOUNT * state_value
+        #     if not done:
+        #         max_future_Q =
+
+    def predict_new_states(self, states, greedy, return_qs=False):
+        # Loop through states and make predictions for new_states for each state
+        predicted_states = []
+        output = [] if return_qs else predicted_states
+        for state in states:
+            predicted_states.append([])
+            if return_qs:
+                output.append([])
+            for i in range(self.gen_size):
+                tmp_state = np.concatenate((state[i:], predicted_states[-1]))
+                generator_input = self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES))
+                tile_qs = self.generator.predict(generator_input)[0]
+                if return_qs:
+                    output[-1].append(tile_qs)
+                new_tile = self.choose_new_tile(tile_qs, greedy)
+                predicted_states[-1].append(new_tile)
+
+        return output
 
     def choose_new_tile(self, qs, greedy):
         if greedy:
@@ -123,7 +132,6 @@ class Generator:
 
     def weighted_tile_choice(self, p):
         choice = np.random.random()
-        print("choice:", choice)
         p_i = 0
         i = 0
         while p_i <= choice:
@@ -167,7 +175,7 @@ class Generator:
         return [np.argmax(vector) for vector in encoded_seq]
 
     # Insert a transition as a tuple of
-    # (state, action, reward, new_state, state_value, done)
+    # (state, action, reward, new_state, done)
     def update_replay_memory(self, generation):
         start = (generation[c.GEN_LINE] * self.tiles_per_col) - c.MEMORY_LENGTH
         memory = self.get_padded_memory(start)
