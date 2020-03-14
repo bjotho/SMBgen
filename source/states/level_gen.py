@@ -75,7 +75,7 @@ class Level(tools.State):
         self.gen_list = []
         self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
         self.gen_file_length = sum(1 for line in open(self.map_gen_file))
-        self.generator = generation.Generator(self.map_gen_file)
+        self.generator = generation.Generator(self.map_gen_file, epsilon=0.5)
         self.optimal_mario_speed = 3
         self.observation = None
 

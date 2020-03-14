@@ -2,19 +2,22 @@ import numpy as np
 import random
 from collections import deque
 
+import tensorflow as tf
 from tensorflow.python.keras import Input
 from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Embedding, LSTM, Dense
+from tensorflow.python.keras.layers import LSTM, Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.python.keras.utils.np_utils import to_categorical
+from tensorflow_probability.python.distributions import Categorical
 
 from source import constants as c
-from source.states import level_state
+# from source.states import level_state
 
 
 class Generator:
-    def __init__(self, gen_file_path):
+    def __init__(self, gen_file_path, epsilon=1.0):
         self.map_gen_file = gen_file_path
+        self.epsilon = epsilon
         self.step = -1 if c.SNAKING else 1
         self.memory = []
         self.tiles_per_col = c.COL_HEIGHT - 2 if c.INSERT_GROUND else c.COL_HEIGHT
@@ -71,24 +74,17 @@ class Generator:
         current_states = np.array([transition[0] for transition in minibatch])
         current_predicted_sequences = []
         for state in current_states:
-            generator_input = self.one_hot_encode(state, len(c.GENERATOR_TILES))
-            current_predicted_sequences.append(self.generator.predict(generator_input))
+            current_predicted_sequences.append([])
+            greedy = np.random.random() < self.epsilon
+            for i in range(self.gen_size):
+                tmp_state = np.concatenate((state[i:], current_predicted_sequences[-1]))
+                generator_input = self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES))
+                tile_qs = self.generator.predict(generator_input)[0]
+                new_tile = self.choose_new_tile(tile_qs, greedy)
+                current_predicted_sequences[-1].append(new_tile)
+
         current_predicted_sequences = np.array(current_predicted_sequences)
-
-        greedy_mode = True
-        preds = np.zeros_like(np.asarray(current_states))
-        for i, seqs in enumerate(current_predicted_sequences):
-            for j, seq in enumerate(seqs):
-
-                if greedy_mode:
-                    # Greedy-variant
-                    tile = np.argmax(seq[0])
-                else:
-                    # Not-greedy-variant
-                    tile = np.random.choice(np.arange(len(seq[0])), p=seq[0])
-                preds[i] = tile
-
-            # print("preds:", preds)
+        print("current_predicted_sequences:", current_predicted_sequences)
 
         # Get future states from minibatch, and create new list of sequece predictions
         new_current_states = [transition[3] for transition in minibatch]
@@ -105,6 +101,40 @@ class Generator:
         # Enumerate transitions
         # for n, (current_state, action, reward, new_current_states, done) in enumerate(minibatch):
         #     new_state_value = reward + c.DISCOUNT * state_value
+
+    def choose_new_tile(self, qs, greedy):
+        if greedy:
+            # Greedy-variant
+            new_tile = np.argmax(qs)
+        else:
+            # Semi-random-variant
+            dist = Categorical(probs=qs)
+            n = 1e4
+            empirical_prob = tf.cast(
+                tf.histogram_fixed_width(
+                    dist.sample(int(n)),
+                    [0, len(c.GENERATOR_TILES)],
+                    nbins=len(c.GENERATOR_TILES)),
+                dtype=tf.float32) / n
+            empirical_prob /= np.sum(empirical_prob)
+            new_tile = self.weighted_tile_choice(p=empirical_prob)
+
+        return new_tile
+
+    def weighted_tile_choice(self, p):
+        choice = np.random.random()
+        print("choice:", choice)
+        p_i = 0
+        i = 0
+        while p_i <= choice:
+            try:
+                p_i += p[i]
+            except IndexError:
+                break
+
+            i += 1
+
+        return i - 1
 
     def generate(self):
         output = []
