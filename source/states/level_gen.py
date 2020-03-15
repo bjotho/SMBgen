@@ -3,6 +3,7 @@ __author__ = 'marble_xu'
 import os
 import json
 import math
+import time
 import numpy as np
 
 import pygame as pg
@@ -274,6 +275,10 @@ class Level(tools.State):
         self.setup_enemies(tiles['enemies'])
 
         self.generator.train()
+
+        if self.player.rect.x > c.DEBUG_START_X:
+            print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
+            time.sleep(1)
 
         # Decay epsilon
         if self.generator.epsilon > c.MIN_EPSILON:

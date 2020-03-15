@@ -22,9 +22,9 @@ class Generator:
         self.memory = []
         self.tiles_per_col = c.COL_HEIGHT - 2 if c.INSERT_GROUND else c.COL_HEIGHT
         self.gen_size = c.GEN_LENGTH * self.tiles_per_col
-        self.tiles = c.GENERATOR_TILES + [c.AIR_ID for _ in range(50)]
-        self._TILE_MAP = self.tokenize_tiles(c.GENERATOR_TILES)
+        self._TILE_MAP, self._CHAR_MAP = self.tokenize_tiles(c.GENERATOR_TILES)
         print("self._TILE_MAP:", self._TILE_MAP)
+        print("self._CHAR_MAP:", self._CHAR_MAP)
 
         self.populate_memory()
         self.generator = self.create_generator()
@@ -32,11 +32,14 @@ class Generator:
 
     def tokenize_tiles(self, tiles: list):
         # Tokenize tiles and populate tile_map dict with (tile_id: token) pairs
+        # char_map dict is translation in opposite direction (token: tile_id)
         tile_map = {}
+        char_map = {}
         for n, tile in enumerate(tiles):
             tile_map[tile] = n
+            char_map[n] = tile
 
-        return tile_map
+        return tile_map, char_map
 
     def populate_memory(self):
         if c.INSERT_GROUND:
@@ -75,22 +78,40 @@ class Generator:
 
         # Get current states from minibatch and create list of predicted sequences
         current_states = np.array([transition[0] for transition in minibatch])
-        current_predicted_sequences = self.predict_new_states(current_states, greedy, return_qs=False)
+        current_predicted_sequences = self.predict_new_states(current_states, greedy, return_qs=True)
         current_predicted_sequences = np.array(current_predicted_sequences)
-        print("current_predicted_sequences:", current_predicted_sequences)
+        # print("current_predicted_sequences:", current_predicted_sequences)
 
         # Get future states from minibatch, and create new list of sequece predictions
         new_current_states = [transition[3] for transition in minibatch]
         future_predicted_sequences = self.predict_new_states(new_current_states, greedy, return_qs=True)
         future_predicted_sequences = np.array(future_predicted_sequences)
+        # print("future_predicted_sequences:", future_predicted_sequences)
 
         X = []
         y = []
 
         # Enumerate transitions
-        # for n, (current_state, action, reward, new_current_states, done) in enumerate(minibatch):
-        #     if not done:
-        #         max_future_Q =
+        for index, (current_state, action, reward, new_current_states, done) in enumerate(minibatch):
+            # If not a terminal state, get new qs from future states, otherwise set it to reward
+            if not done:
+                max_future_Qs = [np.max(qs) for qs in future_predicted_sequences[index]]
+                new_Qs = [reward + c.DISCOUNT * fqs for fqs in max_future_Qs]
+            else:
+                new_Qs = [reward for _ in range(len(future_predicted_sequences[index]))]
+
+            # Update Q values for given state
+            current_qs = current_predicted_sequences[index]
+            enc_action = self.one_hot_encode(action, len(c.GENERATOR_TILES))
+            for n, action_n in enumerate(enc_action):
+                current_qs[self.choose_new_tile(action_n, greedy)] = new_Qs[n]
+
+            # Append updated Q values to training data
+            X.append(current_state)
+            y.append(current_qs)
+
+        # Fit on all transitions in minibatch, as a single batch
+        self.generator.fit(np.array(X), np.array(y), batch_size=c.MINIBATCH_SIZE, verbose=False, shuffle=False)
 
     def predict_new_states(self, states, greedy, return_qs=False):
         # Loop through states and make predictions for new_states for each state
@@ -147,6 +168,9 @@ class Generator:
     def generate(self):
         output = []
 
+        # Randomly set tile choice to greedy or not greedy variant
+        greedy = np.random.random() < self.epsilon
+
         for _ in range(c.GEN_LENGTH):
             if c.SNAKING:
                 self.step *= -1
@@ -155,10 +179,16 @@ class Generator:
                 map_col = str(2 * c.SOLID_ID)
             map_col_list = []
             for _ in range(self.tiles_per_col - 1):
-                map_col_list.append(np.random.choice(self.tiles))
-                map_col += map_col_list[-1]
-                self.update_memory(self._TILE_MAP[map_col_list[-1][::self.step]])
+                start = len(self.memory) - c.MEMORY_LENGTH
+                state = self.get_padded_memory(start, slice=True)
+                prediction = self.generator.predict(self.one_hot_encode(state, len(c.GENERATOR_TILES)))
+                new_tile = self.choose_new_tile(prediction, greedy)
+                map_col_list.append(self._CHAR_MAP[new_tile])
+                self.update_memory(new_tile)
 
+            map_col_list = map_col_list[::self.step]
+            for tile in map_col_list:
+                map_col += tile
             output.append(map_col)
             # level_state.print_2d(self.memory, chop=self.tiles_per_col)
 
@@ -199,11 +229,14 @@ class Generator:
         # Insert new tile
         self.memory.append(new_tile)
 
-    def get_padded_memory(self, pos):
+    def get_padded_memory(self, pos, slice=False):
         if pos < 0:
             # Prepend padding to memory list
             padding_size = -pos
             padding = [self._TILE_MAP[c.AIR_ID] for _ in range(padding_size)]
             return padding + self.memory
 
-        return self.memory
+        if slice:
+            return self.memory[pos:]
+        else:
+            return self.memory
