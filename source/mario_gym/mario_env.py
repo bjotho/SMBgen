@@ -28,6 +28,9 @@ class MarioEnv(gym.Env):
 
         self.pg = pygame
 
+        self.last_observation = None
+        self.observation = None
+
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
         self.clock_last = c.GAME_TIME_OUT
@@ -113,23 +116,23 @@ class MarioEnv(gym.Env):
 
     def step(self, action):
         action = self._ACTION_TO_KEYS[action]
+        # self.game.event_loop()
         self.game.keys = action
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
         reward = 0
-        observation = None
         if self.game.state == self.game.state_dict[c.LEVEL]:
-            observation = self.get_observation()
+            self.observation = self.get_observation()
             reward = self._reward()
             if self.game.state_dict[c.LEVEL].done or self.game.state_dict[c.LEVEL].player.dead:
                 reward = -15
                 self.done = True
 
         info = self.game.state.persist
-
+        self.last_observation = self.observation
         # returns observation, reward, done, info
-        return observation, reward, self.done, info
+        return self.observation, self.last_observation, reward, self.done, info
 
     def _reward(self):
         current_x = self.game.state_dict[c.LEVEL].player.rect.x
