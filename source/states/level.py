@@ -12,6 +12,7 @@ if c.HUMAN_PLAYER:
     from source.components import player
 else:
     from source.components import fast_player as player
+    from ray.rllib.env import atari_wrappers as wrappers
 
 maps_path = os.path.join(os.path.dirname(os.path.realpath(__file__).replace('/states', '')), 'data', 'maps')
 
@@ -212,6 +213,8 @@ class Level(tools.State):
             self.done = True
             return
 
+
+
         if c.PRINT_OBSERVATION:
             self.new_observation = level_state.get_observation(self.player)
             if self.observation != self.new_observation:
@@ -251,14 +254,14 @@ class Level(tools.State):
             self.check_checkpoints()
             self.slider_group.update()
             self.static_coin_group.update(self.game_info)
-            self.enemy_group.update(self.game_info, self)
-            self.shell_group.update(self.game_info, self)
+            self.enemy_group.update(self.game_info, self.player.rect.x, self)
+            self.shell_group.update(self.game_info, self.player.rect.x, self)
             self.brick_group.update()
-            self.box_group.update(self.game_info)
+            self.box_group.update(self.game_info, self.player.rect.x)
             self.powerup_group.update(self.game_info, self)
             self.coin_group.update(self.game_info)
             self.brickpiece_group.update()
-            self.dying_group.update(self.game_info, self)
+            self.dying_group.update(self.game_info, self.player.rect.x, self)
             self.update_player_position()
             self.check_for_player_death()
             self.update_viewport()
@@ -430,7 +433,8 @@ class Level(tools.State):
         shell = pg.sprite.spritecollideany(self.player, self.shell_group)
 
         # decrease runtime delay: when player is on the ground, don't check brick and box
-        if self.player.rect.bottom < c.GROUND_HEIGHT:
+        # +2 because the ground is at 540 in level 2
+        if self.player.rect.bottom < c.GROUND_HEIGHT+2:
             brick = pg.sprite.spritecollideany(self.player, self.brick_group)
             box = pg.sprite.spritecollideany(self.player, self.box_group)
             brick, box = self.prevent_collision_conflict(brick, box)

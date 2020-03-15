@@ -1,6 +1,7 @@
 __author__ = 'marble_xu'
 
 import pygame as pg
+import numpy as np
 from source import setup, tools
 from source import constants as c
 from source.components import coin, powerup
@@ -39,12 +40,13 @@ class Box(pg.sprite.Sprite):
             self.frames.append(tools.get_image(sheet, *frame_rect, 
                             c.BLACK, c.BRICK_SIZE_MULTIPLIER))
     
-    def update(self, game_info):
-        self.current_time = game_info[c.CURRENT_TIME]
-        if self.state == c.RESTING:
-            self.resting()
-        elif self.state == c.BUMPED:
-            self.bumped()
+    def update(self, game_info, player_x):
+        if np.abs(player_x-self.rect.x) < c.ENEMY_UPDATE_RADIUS:
+            self.current_time = game_info[c.CURRENT_TIME]
+            if self.state == c.RESTING:
+                self.resting()
+            elif self.state == c.BUMPED:
+                self.bumped()
 
     def resting(self):
         time_list = [375, 125, 125, 125]

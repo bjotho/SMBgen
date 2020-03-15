@@ -38,6 +38,18 @@ class Player(pg.sprite.Sprite):
             self.set_player_image(self.small_normal_frames, 0)
             self.right_frames = self.small_normal_frames[0]
             self.left_frames = self.small_normal_frames[1]
+
+            if c.DEBUG:
+                self.right_frames = self.big_fire_frames[0]
+                self.left_frames = self.big_fire_frames[1]
+                self.big = True
+                self.fire = True
+
+                self.frame_index = 0
+                self.state = c.WALK
+                self.image = self.right_frames[self.frame_index]
+                self.rect = self.image.get_rect()
+
         self.state = c.STAND
 
     def load_data(self):

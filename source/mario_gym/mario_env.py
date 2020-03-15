@@ -30,6 +30,7 @@ class MarioEnv(gym.Env):
 
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
+        self.clock_last = c.GAME_TIME_OUT
         self.game = tools.Control()
         self.game.fps = fps
         state_dict = {c.MAIN_MENU: main_menu.Menu(),
@@ -67,9 +68,10 @@ class MarioEnv(gym.Env):
         # create the new action space
         self.action_space = gym.spaces.Discrete(len(actions))
         # create the new observation space
-        # self.observation_frames = np.ndarray(shape=(c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE))
+        self.observation_frames = np.zeros(shape=(c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE))
         # print("self.observation_frames:", self.observation_frames)
-        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(c.OBS_SIZE, c.OBS_SIZE))
+        self.observation = None
+        self.observation_space = gym.spaces.Box(low=0, high=1, shape=(c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE))
         # create the action map from the list of discrete actions
         self._action_map = {}
         self._action_meanings = {}
@@ -111,13 +113,12 @@ class MarioEnv(gym.Env):
 
     def step(self, action):
         action = self._ACTION_TO_KEYS[action]
-        # self.game.event_loop()
         self.game.keys = action
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
-        observation = None
         reward = 0
+        observation = None
         if self.game.state == self.game.state_dict[c.LEVEL]:
             observation = self.get_observation()
             reward = self._reward()
@@ -134,6 +135,9 @@ class MarioEnv(gym.Env):
         current_x = self.game.state_dict[c.LEVEL].player.rect.x
         reward = current_x - self.mario_x_last
         self.mario_x_last = current_x
+        clock_now = self.game.state_dict[c.LEVEL].overhead_info.time
+        reward += self.clock_last - clock_now
+        self.clock_last = clock_now
         return reward
 
     def _will_reset(self):
@@ -152,6 +156,14 @@ class MarioEnv(gym.Env):
     def _did_reset(self):
         """Handle any hacking after a reset occurs."""
         self.mario_x_last = c.DEBUG_START_X
+        self.clock_last = c.GAME_TIME_OUT
+
+        # Initialize frame stack
+        self.step(0)
+        for _ in range(c.OBS_FRAMES):
+            self.observation_frames = np.delete(self.observation_frames, 0, axis=0)
+            self.observation_frames = np.concatenate((self.observation_frames, self.observation))
+        #print("observation_frames:", [k for k in self.observation_frames])
 
     def reset(self):
         """Reset the environment and return the initial observation."""
@@ -163,12 +175,13 @@ class MarioEnv(gym.Env):
 
     def get_observation(self):
         raw_observation = level_state.get_observation(self.game.state_dict[c.LEVEL].player)
-        observation = np.ndarray(shape=(c.OBS_SIZE, c.OBS_SIZE))
+        self.observation = np.ndarray(shape=(1, c.OBS_SIZE, c.OBS_SIZE))
         for m, i in enumerate(raw_observation):
             for n, j in enumerate(i):
-                observation[m][n] = self._TILE_MAP[j]
-
-        return observation
+                self.observation[0][m][n] = self._TILE_MAP[j]
+        self.observation_frames = np.delete(self.observation_frames, 0, axis=0)
+        self.observation_frames = np.concatenate((self.observation_frames, self.observation))
+        return self.observation_frames
 
     def render(self, mode='human', close=False):
         if mode == 'human':
