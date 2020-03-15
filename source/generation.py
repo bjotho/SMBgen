@@ -59,7 +59,7 @@ class Generator:
         # https://github.com/golsun/deep-RL-trading/blob/master/src/agents.py#L161 # <-- TODO - Look here :D
         model = Sequential()
         model.add(Input(shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))  # model.add(Embedding(len(c.GENERATOR_TILES), 5, input_length=1))
-        model.add(LSTM(c.MEMORY_LENGTH))
+        model.add(LSTM(c.LSTM_CELLS))
         model.add(Dense(len(c.GENERATOR_TILES), activation='linear'))
         model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
         print(model.summary())
@@ -100,18 +100,30 @@ class Generator:
             else:
                 new_Qs = [reward for _ in range(len(future_predicted_sequences[index]))]
 
+            new_Qs = np.array(new_Qs)
+
             # Update Q values for given state
             current_qs = current_predicted_sequences[index]
             enc_action = self.one_hot_encode(action, len(c.GENERATOR_TILES))
             for n, action_n in enumerate(enc_action):
-                current_qs[self.choose_new_tile(action_n, greedy)] = new_Qs[n]
+                current_qs[n][self.choose_new_tile(action_n, greedy)] = new_Qs[n]
 
-            # Append updated Q values to training data
-            X.append(current_state)
+            # Insert sliding window states into X
+            generator_input = []
+            for i in range(self.gen_size):
+                state_slice = max(0, i - c.MEMORY_LENGTH)
+                tmp_state = np.concatenate((current_state[i:], action[state_slice:i]))
+                generator_input.append(self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES))[0])
+
+            # Append to training data
+            X.append(generator_input)
             y.append(current_qs)
 
-        # Fit on all transitions in minibatch, as a single batch
-        self.generator.fit(np.array(X), np.array(y), batch_size=c.MINIBATCH_SIZE, verbose=False, shuffle=False)
+        # Fit on all transitions in minibatch
+        X = np.array(X)
+        y = np.array(y)
+        for i in range(len(X)):
+            self.generator.fit(X[i], y[i], batch_size=self.gen_size, verbose=0, shuffle=False)
 
     def predict_new_states(self, states, greedy, return_qs=False):
         # Loop through states and make predictions for new_states for each state
@@ -122,7 +134,8 @@ class Generator:
             if return_qs:
                 output.append([])
             for i in range(self.gen_size):
-                tmp_state = np.concatenate((state[i:], predicted_states[-1]))
+                state_slice = max(0, len(predicted_states[-1]) - c.MEMORY_LENGTH)
+                tmp_state = np.concatenate((state[i:], predicted_states[-1][state_slice:]))
                 generator_input = self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES))
                 tile_qs = self.generator.predict(generator_input)[0]
                 if return_qs:
