@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import os
 from collections import deque
 
 import tensorflow as tf
@@ -13,6 +14,8 @@ from tensorflow_probability.python.distributions import Categorical
 from source import constants as c
 # from source.states import level_state
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+
 
 class Generator:
     def __init__(self, gen_file_path, epsilon=1.0):
@@ -22,10 +25,12 @@ class Generator:
         self.memory = []
         self.tiles_per_col = c.COL_HEIGHT - 2 if c.INSERT_GROUND else c.COL_HEIGHT
         self.gen_size = c.GEN_LENGTH * self.tiles_per_col
+        self.checkpoint_gen = os.path.join(dir_path, "checkpoints", "generator")
         self._TILE_MAP, self._CHAR_MAP = self.tokenize_tiles(c.GENERATOR_TILES)
         print("self._TILE_MAP:", self._TILE_MAP)
         print("self._CHAR_MAP:", self._CHAR_MAP)
 
+        self.setup_checkpoints()
         self.populate_memory()
         self.generator = self.create_generator()
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
@@ -40,6 +45,9 @@ class Generator:
             char_map[n] = tile
 
         return tile_map, char_map
+
+    def setup_checkpoints(self):
+        os.makedirs(self.checkpoint_gen, exist_ok=True)
 
     def populate_memory(self):
         if c.INSERT_GROUND:

@@ -27,6 +27,9 @@ class Level(tools.State):
     def __init__(self):
         tools.State.__init__(self)
         self.player = None
+        self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
+        self.gen_file_length = sum(1 for line in open(self.map_gen_file))
+        self.generator = generation.Generator(self.map_gen_file, epsilon=0.5)
 
     def startup(self, current_time, persist):
         level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
@@ -74,10 +77,8 @@ class Level(tools.State):
         self.enemies = 0
         self.timestep = 0
         self.gen_list = []
-        self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
-        self.gen_file_length = sum(1 for line in open(self.map_gen_file))
-        self.generator = generation.Generator(self.map_gen_file, epsilon=0.5)
-        self.optimal_mario_speed = 3
+        self.optimal_mario_speed = c.GAME_TIME_OUT / (self.map_data[c.MAP_FLAGPOLE][0]['x'] - c.DEBUG_START_X)
+        self.gen_list_done = False
         self.observation = None
 
     def load_map(self):
@@ -229,7 +230,7 @@ class Level(tools.State):
         # For each tile in the tiles list, create a tile with the tile's coordinates
         for tile_coordinates in tiles:
             solid_tile.create_solid_tile(group, {'sprite_x': sprite_x, 'sprite_y': sprite_y, 'x': tile_coordinates[0],
-                                                   'y': tile_coordinates[1], 'type': 0}, self)
+                                                 'y': tile_coordinates[1], 'type': 0}, self)
 
     def generate(self):
         tiles = {'ground': [],
@@ -238,7 +239,7 @@ class Level(tools.State):
                  'steps': [],
                  'solid': [],
                  'enemies': []
-                 }
+        }
 
         if self.read:
             line_num = 0
@@ -255,35 +256,48 @@ class Level(tools.State):
                     self.read = False
         else:
             new_terrain = []
-
-            if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] - (c.TILE_SIZE * c.GEN_LENGTH) or c.ONLY_GROUND:
+            if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] - c.GEN_PX_LEN or c.ONLY_GROUND:
                 for _ in range(c.GEN_LENGTH):
                     new_terrain.append(str(c.SOLID_ID * 2))
             else:
                 new_terrain = self.generator.generate()
-                done = self.map_data[c.GEN_BORDER] + c.GEN_LENGTH >= self.map_data[c.MAP_FLAGPOLE][0]['x'] - (c.TILE_SIZE * c.GEN_LENGTH)
+
+            if not self.gen_list_done:
+                gen_border = self.player.rect.x + c.GEN_DISTANCE + c.GEN_PX_LEN
+                flag_x = self.map_data[c.MAP_FLAGPOLE][0]['x']
+                self.gen_list_done = gen_border >= flag_x
                 self.gen_list.append({c.GEN_LINE: self.gen_line,
-                                      c.DONE: done})
+                                      c.DONE: self.gen_list_done})
 
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
 
+        # Add new tiles and entities to respective sprite groups
         self.setup_brick_and_box(tiles['bricks'], tiles['boxes'])
         self.setup_solid_tile(tiles['steps'], self.step_group, 0, 16)
         self.setup_solid_tile(tiles['ground'], self.ground_group, 0, 0)
         self.setup_solid_tile(tiles['solid'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
 
-        self.generator.train()
+        if not self.gen_list_done:
+            # Update weights in generator network
+            self.generator.train()
 
-        if self.player.rect.x > c.DEBUG_START_X:
-            print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
-            time.sleep(1)
+            # Update optimal_mario_speed to reflect remaining time and remaining distance to the flagpole
+            try:
+                self.optimal_mario_speed = max(0, self.overhead_info.time / (self.map_data[c.MAP_FLAGPOLE][0]['x'] - self.player.rect.x))
+            except ZeroDivisionError:
+                self.optimal_mario_speed = 0
 
-        # Decay epsilon
-        if self.generator.epsilon > c.MIN_EPSILON:
-            self.generator.epsilon *= c.EPSILON_DECAY
-            self.generator.epsilon = max(c.MIN_EPSILON, self.generator.epsilon)
+            # Decay epsilon
+            if self.generator.epsilon > c.MIN_EPSILON:
+                self.generator.epsilon *= c.EPSILON_DECAY
+                self.generator.epsilon = max(c.MIN_EPSILON, self.generator.epsilon)
+
+            # Message player that the game is about to resume
+            if self.player.rect.x > c.DEBUG_START_X:
+                print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
+                time.sleep(1)
 
         # level_state.print_2d(level_state.state)
         # for tile in tmp:
@@ -452,9 +466,15 @@ class Level(tools.State):
                 dx = self.player.rect.x - gen[c.PLAYER_X]
                 dt = self.timestep - gen[c.TIMESTEP]
                 v = float(dx / dt)
-                gen[c.REWARD] = math.e ** (-0.5 * ((v - self.optimal_mario_speed) ** 2))
+                gen[c.REWARD] = self.calc_gen_reward(v)
                 self.generator.update_replay_memory(gen)
-                print("reward:", gen[c.REWARD])
+                print("reward:", "%.4f" % gen[c.REWARD])
+
+    def calc_gen_reward(self, v):
+        if v < self.optimal_mario_speed:
+            return math.sin((math.pi / (2 * self.optimal_mario_speed)) * v)
+        else:
+            return math.e ** (-0.5 * ((v - self.optimal_mario_speed) ** 2))
 
     def check_player_x_collisions(self):
         # ground_step_pipe = pg.sprite.spritecollideany(self.player, self.ground_step_pipe_group)
