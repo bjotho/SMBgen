@@ -36,6 +36,7 @@ class Level(tools.State):
         self.game_info = persist
         self.persist = self.game_info
         self.game_info[c.CURRENT_TIME] = current_time
+        self.base_fps = self.game_info[c.BASE_FPS]
         self.death_timer = 0
         self.castle_timer = 0
 
@@ -76,8 +77,10 @@ class Level(tools.State):
         self.gen_line = 0
         self.enemies = 0
         self.timestep = 0
+        self.zero_reward_index = 0
         self.gen_list = []
-        self.optimal_mario_speed = c.GAME_TIME_OUT / (self.map_data[c.MAP_FLAGPOLE][0]['x'] - c.DEBUG_START_X)
+        self.optimal_mario_speed = (self.map_data[c.MAP_FLAGPOLE][0]['x'] - c.DEBUG_START_X)\
+                                   / (c.GAME_TIME_OUT * self.base_fps)
         self.gen_list_done = False
         self.observation = None
 
@@ -222,7 +225,7 @@ class Level(tools.State):
         self.timestep += 1
 
     def handle_states(self, keys):
-        if self.map_data[c.GEN_BORDER] - self.player.rect.x < c.GEN_DISTANCE:
+        if self.map_data[c.GEN_BORDER] - (self.player.rect.x + self.player.rect.w) < c.GEN_DISTANCE:
             self.generate()
         self.update_all_sprites(keys)
 
@@ -267,6 +270,7 @@ class Level(tools.State):
                 flag_x = self.map_data[c.MAP_FLAGPOLE][0]['x']
                 self.gen_list_done = gen_border >= flag_x
                 self.gen_list.append({c.GEN_LINE: self.gen_line,
+                                      c.OPTIMAL_V: self.optimal_mario_speed,
                                       c.DONE: self.gen_list_done})
 
             for line in new_terrain:
@@ -285,7 +289,9 @@ class Level(tools.State):
 
             # Update optimal_mario_speed to reflect remaining time and remaining distance to the flagpole
             try:
-                self.optimal_mario_speed = max(0, self.overhead_info.time / (self.map_data[c.MAP_FLAGPOLE][0]['x'] - self.player.rect.x))
+                self.optimal_mario_speed = max(0, (self.map_data[c.MAP_FLAGPOLE][0]['x']
+                                                   - (self.player.rect.x + self.player.rect.w))
+                                                  / (self.overhead_info.time * self.base_fps))
             except ZeroDivisionError:
                 self.optimal_mario_speed = 0
 
@@ -454,7 +460,7 @@ class Level(tools.State):
             self.check_player_y_collisions()
 
     def check_gen_reward(self):
-        mario_x = level_state.get_coordinates(self.player.rect.x, 0)[0]
+        mario_x = level_state.get_coordinates(self.player.rect.x + self.player.rect.w, 0)[0] + 1
         for gen in self.gen_list:
             if c.REWARD in gen:
                 continue
@@ -466,15 +472,20 @@ class Level(tools.State):
                 dx = self.player.rect.x - gen[c.PLAYER_X]
                 dt = self.timestep - gen[c.TIMESTEP]
                 v = float(dx / dt)
-                gen[c.REWARD] = self.calc_gen_reward(v)
+                gen[c.REWARD] = self.calc_gen_reward(v, gen[c.OPTIMAL_V])
                 self.generator.update_replay_memory(gen)
+                self.zero_reward_index += 1
                 print("reward:", "%.4f" % gen[c.REWARD])
+                print("v:", "%.4f" % v, "opt_v:", "%.4f" % gen[c.OPTIMAL_V])
 
-    def calc_gen_reward(self, v):
-        if v < self.optimal_mario_speed:
-            return math.sin((math.pi / (2 * self.optimal_mario_speed)) * v)
+    def calc_gen_reward(self, v, opt_v):
+        if v < opt_v:
+            try:
+                return math.sin((math.pi / (2 * opt_v)) * v)
+            except ZeroDivisionError:
+                return 0
         else:
-            return math.e ** (-0.5 * ((v - self.optimal_mario_speed) ** 2))
+            return math.e ** (-0.5 * ((v - opt_v) ** 2))
 
     def check_player_x_collisions(self):
         # ground_step_pipe = pg.sprite.spritecollideany(self.player, self.ground_step_pipe_group)

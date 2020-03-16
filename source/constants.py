@@ -57,6 +57,7 @@ SCORE = 'score'
 TOP_SCORE = 'top score'
 LIVES = 'lives'
 CURRENT_TIME = 'current time'
+BASE_FPS = 'base fps'
 LEVEL_NUM = 'level num'
 PLAYER_NAME = 'player name'
 PLAYER_MARIO = 'mario'
@@ -84,7 +85,7 @@ GEN_LINE = 'gen_line'
 TIMESTEP = 'timestep'
 PLAYER_X = 'player_x'
 REWARD = 'reward'
-STATE_VALUE = 'state_value'
+OPTIMAL_V = 'optimal_v'
 DONE = 'done'
 UPDATE_RADIUS = 1 * SCREEN_WIDTH
 
@@ -134,9 +135,7 @@ GENERATOR_TILES = [
     AIR_ID,
     BOX_ID,
     BRICK_ID,
-    SOLID_ID,
-    GOOMBA_ID,
-    KOOPA_ID
+    SOLID_ID
 ]
 
 # FOR TESTING PURPOSES (reduce lag)

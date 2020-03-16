@@ -3,19 +3,20 @@ __author__ = 'marble_xu'
 import os
 import pygame as pg
 from abc import abstractmethod
+from source.constants import BASE_FPS
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 keybinding = {
-    'action':pg.K_s,
-    'jump':pg.K_a,
-    'left':pg.K_LEFT,
-    'right':pg.K_RIGHT,
-    'down':pg.K_DOWN
+    'action': pg.K_s,
+    'jump': pg.K_a,
+    'left': pg.K_LEFT,
+    'right': pg.K_RIGHT,
+    'down': pg.K_DOWN
 }
 
 
-class State():
+class State:
     def __init__(self):
         self.start_time = 0.0
         self.current_time = 0.1
@@ -32,7 +33,7 @@ class State():
         return self.persist
     
     @abstractmethod
-    def update(sefl, surface, keys, current_time):
+    def update(self, surface, keys, current_time):
         '''abstract method'''
 
 
