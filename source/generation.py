@@ -5,7 +5,7 @@ from collections import deque
 
 import tensorflow as tf
 from tensorflow.python.keras import Input
-from tensorflow.python.keras.models import Sequential
+from tensorflow.python.keras.models import Sequential, model_from_json
 from tensorflow.python.keras.layers import LSTM, Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.python.keras.utils.np_utils import to_categorical
@@ -28,9 +28,10 @@ class Generator:
         print("self._TILE_MAP:", self._TILE_MAP)
         print("self._CHAR_MAP:", self._CHAR_MAP)
 
-        self.setup_checkpoints()
-        self.generator = self.create_generator()
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
+        loaded_model = self.load_model() if c.LOAD_GEN_MODEL else None
+        self.generator = self.create_generator(model=loaded_model)
+        print(self.generator.summary())
 
     def generator_startup(self):
         self.step = -1 if c.SNAKING else 1
@@ -48,8 +49,26 @@ class Generator:
 
         return tile_map, char_map
 
-    def setup_checkpoints(self):
+    def load_model(self):
         os.makedirs(self.checkpoint_gen, exist_ok=True)
+        self.start_checkpoint = level_state.find_latest_checkpoint(self.checkpoint_gen)
+        latest_checkpoint = None
+        if self.start_checkpoint > -1:
+            latest_checkpoint = os.path.join(self.checkpoint_gen, f"model_{str(self.start_checkpoint)}",
+                                             f"model_{str(self.start_checkpoint)}")
+        return latest_checkpoint
+
+    def save_model(self, num):
+        # Serialize model to JSON
+        model_json = self.generator.to_json()
+        model_dir_name = os.path.join(self.checkpoint_gen, f"model_{str(num)}")
+        os.makedirs(model_dir_name, exist_ok=True)
+        model_name = os.path.join(model_dir_name, f"model_{str(num)}")
+        with open(f"{model_name}.json", 'w') as json_file:
+            json_file.write(model_json)
+        # Serialize weights to HDF5
+        self.generator.save_weights(f"{model_name}.h5")
+        print("Saved generator model:", model_name)
 
     def populate_memory(self):
         if c.INSERT_GROUND:
@@ -65,20 +84,33 @@ class Generator:
                         self.memory.append(self._TILE_MAP[char])
 
     # returns train, inference_encoder and inference_decoder models
-    def create_generator(self):
+    def create_generator(self, model=None):
         # https://github.com/golsun/deep-RL-trading/blob/master/src/agents.py#L161 # <-- TODO - Look here :D
+        if model is not None:
+            # Load JSON and create model
+            json_file = open(f"{model}.json", 'r')
+            loaded_model_json = json_file.read()
+            json_file.close()
+            loaded_model = model_from_json(loaded_model_json)
+            # Load weights into new model
+            loaded_model.load_weights(f"{model}.h5")
+            loaded_model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
+            print("Loaded generator model:", model)
+            return loaded_model
+
         model = Sequential()
         model.add(Input(shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))  # model.add(Embedding(len(c.GENERATOR_TILES), 5, input_length=1))
         model.add(LSTM(c.LSTM_CELLS))
         model.add(Dense(len(c.GENERATOR_TILES), activation='linear'))
         model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
-        print(model.summary())
         return model
 
     def train(self):
         # Only start training if we have enough transitions in replay memory
         if len(self.replay_memory) < c.MIN_REPLAY_MEMORY_SIZE:
             return
+
+        print("Training on", c.MINIBATCH_SIZE, "transitions")
 
         # Get a minibatch of random samples from replay memory
         minibatch = random.sample(self.replay_memory, c.MINIBATCH_SIZE)

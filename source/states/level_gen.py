@@ -30,6 +30,7 @@ class Level(tools.State):
         self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
         self.gen_file_length = sum(1 for line in open(self.map_gen_file))
         self.generator = generation.Generator(self.map_gen_file, epsilon=0.5)
+        self.training_sessions = max(0, self.generator.start_checkpoint)
 
     def startup(self, current_time, persist):
         level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
@@ -300,9 +301,15 @@ class Level(tools.State):
         self.setup_solid_tile(tiles['solid'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
 
-        if not self.mario_done:
+        if c.TRAIN_GEN and not self.mario_done:
             # Update weights in generator network
             self.generator.train()
+
+            self.training_sessions += 1
+
+            if not (self.training_sessions % c.GEN_MODEL_SAVE_INTERVAL)\
+               and self.training_sessions > self.generator.start_checkpoint:
+                self.generator.save_model(num=self.training_sessions)
 
             # Decay epsilon
             if self.generator.epsilon > c.MIN_EPSILON:

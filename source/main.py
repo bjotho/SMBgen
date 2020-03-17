@@ -1,4 +1,5 @@
 from source import constants as c
+from source.states import level_state
 import os
 
 if not c.HUMAN_PLAYER:
@@ -22,24 +23,13 @@ def main():
     os.makedirs(checkpoint_dir, exist_ok=True)
     os.makedirs(checkpoint_all, exist_ok=True)
 
+    largest = level_state.find_latest_checkpoint(checkpoint_all)
+    latest_checkpoint = None
+    if largest > -1:
+        latest_checkpoint = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}" + f"/checkpoint-{str(largest)}")
+        print("Resuming from ", latest_checkpoint)
+
     register_env(c.ENV_NAME, lambda config: MarioEnv(config))
-
-    def find_latest_checkpoint():
-        largest = -1
-        for chkpath in os.listdir(checkpoint_all):
-            try:
-                checkpoint_id = int(chkpath.split("_")[1])
-                if checkpoint_id > largest:
-                    largest = checkpoint_id
-            except ValueError:
-                pass
-
-        if largest == -1:
-            return None
-        else:
-            ret_path = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}" + f"/checkpoint-{str(largest)}")
-            print("Running on ", ret_path)
-            return ret_path
 
     def test(trainer):
         config = dict(
@@ -69,7 +59,6 @@ def main():
         # }
         # "train_batch_size": 2048
     })
-    latest_checkpoint = find_latest_checkpoint()
     if latest_checkpoint:
         trainer.restore(latest_checkpoint)
 

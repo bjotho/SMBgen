@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from source import constants as c
 
 
@@ -123,3 +124,17 @@ def print_2d(_list, chop=None):
 
     output += "]"
     print(output)
+
+
+def find_latest_checkpoint(_dir):
+    largest = -1
+    for chkpath in os.listdir(_dir):
+        try:
+            checkpoint_id = int(chkpath.split('_')[1])
+
+            if checkpoint_id > largest:
+                largest = checkpoint_id
+        except ValueError:
+            pass
+
+    return largest

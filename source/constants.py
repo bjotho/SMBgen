@@ -66,6 +66,8 @@ PLAYER_LUIGI = 'luigi'
 # MAP GENERATION
 GENERATE_MAP = True
 RANDOM_GEN = False
+TRAIN_GEN = True
+LOAD_GEN_MODEL = True
 INSERT_GROUND = True
 ONLY_GROUND = False
 READ = True
@@ -81,6 +83,7 @@ Y_OFFSET = 64
 COL_HEIGHT = 13
 TILE_SIZE = 43
 GEN_PX_LEN = GEN_LENGTH * TILE_SIZE
+GEN_MODEL_SAVE_INTERVAL = 100  # Number of training sessions
 GEN_BORDER = 'gen_border'
 GEN_LINE = 'gen_line'
 TIMESTEP = 'timestep'
