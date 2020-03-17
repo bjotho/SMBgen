@@ -12,7 +12,7 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 from tensorflow_probability.python.distributions import Categorical
 
 from source import constants as c
-# from source.states import level_state
+from source.states import level_state
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -21,8 +21,6 @@ class Generator:
     def __init__(self, gen_file_path, epsilon=1.0):
         self.map_gen_file = gen_file_path
         self.epsilon = epsilon
-        self.step = -1 if c.SNAKING else 1
-        self.memory = []
         self.tiles_per_col = c.COL_HEIGHT - 2 if c.INSERT_GROUND else c.COL_HEIGHT
         self.gen_size = c.GEN_LENGTH * self.tiles_per_col
         self.checkpoint_gen = os.path.join(dir_path, "checkpoints", "generator")
@@ -31,9 +29,13 @@ class Generator:
         print("self._CHAR_MAP:", self._CHAR_MAP)
 
         self.setup_checkpoints()
-        self.populate_memory()
         self.generator = self.create_generator()
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
+
+    def generator_startup(self):
+        self.step = -1 if c.SNAKING else 1
+        self.memory = []
+        self.populate_memory()
 
     def tokenize_tiles(self, tiles: list):
         # Tokenize tiles and populate tile_map dict with (tile_id: token) pairs
@@ -200,14 +202,18 @@ class Generator:
                 map_col = str(2 * c.SOLID_ID)
             map_col_list = []
             for _ in range(self.tiles_per_col - 1):
-                start = len(self.memory) - c.MEMORY_LENGTH
-                state = self.get_padded_memory(start, slice=True)
-                prediction = self.generator.predict(self.one_hot_encode(state, len(c.GENERATOR_TILES)))
-                new_tile = self.choose_new_tile(prediction, greedy)
-                map_col_list.append(self._CHAR_MAP[new_tile])
-                self.update_memory(new_tile)
+                if not c.RANDOM_GEN:
+                    start = len(self.memory) - c.MEMORY_LENGTH
+                    state = self.get_padded_memory(start, slice=True)
+                    prediction = self.generator.predict(self.one_hot_encode(state, len(c.GENERATOR_TILES)))
+                    new_tile = self.choose_new_tile(prediction, greedy)
+                    map_col_list.append(self._CHAR_MAP[new_tile])
+                    self.update_memory(new_tile)
+                else:
+                    map_col_list.append(np.random.choice(c.GENERATOR_TILES))
+                    self.update_memory(self._TILE_MAP[map_col_list[-1]])
 
-            map_col_list = map_col_list[::self.step]
+                map_col_list = map_col_list[::self.step]
             for tile in map_col_list:
                 map_col += tile
             output.append(map_col)

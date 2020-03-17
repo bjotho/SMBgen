@@ -73,14 +73,18 @@ class Level(tools.State):
         self.setup_flagpole()
         self.setup_sprite_groups()
 
+        self.generator.generator_startup()
+
         self.read = c.READ
         self.gen_line = 0
         self.enemies = 0
         self.timestep = 0
         self.zero_reward_index = 0
         self.gen_list = []
-        self.optimal_mario_speed = (self.map_data[c.MAP_FLAGPOLE][0]['x'] - c.DEBUG_START_X)\
+        self.optimal_mario_speed = (self.map_data[c.MAP_FLAGPOLE][0]['x'] - self.player_x)\
                                    / (c.GAME_TIME_OUT * self.base_fps)
+        self.mario_done = False
+        self.generator_done = False
         self.gen_list_done = False
         self.observation = None
 
@@ -221,7 +225,8 @@ class Level(tools.State):
         self.game_info[c.CURRENT_TIME] = self.current_time = current_time
         self.handle_states(keys)
         self.draw(surface)
-        self.check_gen_reward()
+        if not self.gen_list_done:
+            self.check_gen_reward()
         self.timestep += 1
 
     def handle_states(self, keys):
@@ -265,13 +270,25 @@ class Level(tools.State):
             else:
                 new_terrain = self.generator.generate()
 
-            if not self.gen_list_done:
-                gen_border = self.player.rect.x + c.GEN_DISTANCE + c.GEN_PX_LEN
-                flag_x = self.map_data[c.MAP_FLAGPOLE][0]['x']
-                self.gen_list_done = gen_border >= flag_x
+            flag_x = self.map_data[c.MAP_FLAGPOLE][0]['x']
+
+            # Check if the generator has reached the flag
+            if not self.generator_done:
+                gen_border = self.player.rect.x + self.player.rect.w + c.GEN_DISTANCE + c.GEN_PX_LEN
+                self.generator_done = gen_border >= flag_x
                 self.gen_list.append({c.GEN_LINE: self.gen_line,
-                                      c.OPTIMAL_V: self.optimal_mario_speed,
-                                      c.DONE: self.gen_list_done})
+                                      c.DONE: self.generator_done})
+
+            # Check if self.gen_list entries still should be added to generator replay memory
+            elif not self.gen_list_done:
+                offset = 4 * c.GEN_PX_LEN + int(c.MEMORY_LENGTH * c.TILE_SIZE / self.generator.tiles_per_col)
+                gen_border = self.player.rect.x + self.player.rect.w + offset
+                self.gen_list_done = gen_border >= flag_x
+
+            # Check if mario has reached the flag
+            elif not self.mario_done:
+                gen_border = self.player.rect.x + self.player.rect.w
+                self.mario_done = gen_border >= flag_x
 
             for line in new_terrain:
                 tiles = self.build_tiles_dict(tiles, line)
@@ -283,17 +300,9 @@ class Level(tools.State):
         self.setup_solid_tile(tiles['solid'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
 
-        if not self.gen_list_done:
+        if not self.mario_done:
             # Update weights in generator network
             self.generator.train()
-
-            # Update optimal_mario_speed to reflect remaining time and remaining distance to the flagpole
-            try:
-                self.optimal_mario_speed = max(0, (self.map_data[c.MAP_FLAGPOLE][0]['x']
-                                                   - (self.player.rect.x + self.player.rect.w))
-                                                  / (self.overhead_info.time * self.base_fps))
-            except ZeroDivisionError:
-                self.optimal_mario_speed = 0
 
             # Decay epsilon
             if self.generator.epsilon > c.MIN_EPSILON:
@@ -467,7 +476,18 @@ class Level(tools.State):
             if mario_x >= gen[c.GEN_LINE] and c.TIMESTEP not in gen:
                 gen[c.PLAYER_X] = self.player.rect.x
                 gen[c.TIMESTEP] = self.timestep
+
+                # Update optimal_mario_speed to reflect remaining time and remaining distance to the flagpole
+                try:
+                    self.optimal_mario_speed = (self.map_data[c.MAP_FLAGPOLE][0]['x']
+                                                - (self.player.rect.x + self.player.rect.w))\
+                                                / (self.overhead_info.time * self.base_fps)
+                except ZeroDivisionError:
+                    self.optimal_mario_speed = -1
+
+                gen[c.OPTIMAL_V] = self.optimal_mario_speed
                 print("new gen:", gen)
+
             elif mario_x >= gen[c.GEN_LINE] + c.GEN_LENGTH:
                 dx = self.player.rect.x - gen[c.PLAYER_X]
                 dt = self.timestep - gen[c.TIMESTEP]
@@ -758,8 +778,11 @@ class Level(tools.State):
             self.next = c.LOAD_SCREEN
 
         print(self.gen_list)
-        self.read = c.READ
-        self.gen_line = 0
+        if not self.mario_done:
+            print("zero_index:", self.zero_reward_index)
+            gen = self.gen_list[self.zero_reward_index]
+            gen[c.REWARD] = 0
+            self.generator.update_replay_memory(gen)
 
         # if c.PRINT_GEN_REWARD:
         #     x = np.linspace(0.2, 10, 100)
