@@ -55,9 +55,9 @@ def main():
         "num_gpus": 0,
         "num_workers": 1,
         "eager": True
-        # "model": {
-        #     "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
-        # }
+        "model": {
+            "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
+        }
         # "train_batch_size": 2048
     })
     if latest_checkpoint and c.LOAD_CHECKPOINT:
@@ -73,7 +73,7 @@ def main():
         trainer.train()
         if save_counter % save_interval == 1:
             checkpoint = trainer.save(checkpoint_all)
-            print(checkpoint)
+            print("Saved checkpoint:", checkpoint)
 
         save_counter += 1
 
