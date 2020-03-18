@@ -60,7 +60,7 @@ def main():
         # }
         # "train_batch_size": 2048
     })
-    if latest_checkpoint:
+    if latest_checkpoint and c.LOAD_CHECKPOINT:
         trainer.restore(latest_checkpoint)
 
     save_interval = 10
