@@ -54,7 +54,7 @@ class MarioEnv(gym.Env):
         }
 
         self._ACTION_TO_KEYS = {}
-        self._TILE_MAP = {}
+        self._TILE_MAP,self._CHAR_MAP = self.tokenize_tiles(c.TILES)
         self.setup_spaces(actions)
 
     def buttons(self) -> list:
@@ -87,12 +87,18 @@ class MarioEnv(gym.Env):
             self._action_meanings[action] = ' '.join(button_list)
 
         self.setup_action_to_keys()
-        self.tokenize_tiles()
+        # self.tokenize_tiles()
 
-    def tokenize_tiles(self):
-        token_step = 1.0 / (len(c.TILES) - 1)
-        for n, tile in enumerate(c.TILES):
-            self._TILE_MAP[tile] = n * token_step
+    def tokenize_tiles(self, tiles: list):
+        # Tokenize tiles and populate tile_map dict with (tile_id: token) pairs
+        tile_map = {}
+        char_map = {}
+        token_step = 1.0 / (len(tiles) - 1)
+        for n, tile in enumerate(tiles):
+            tile_map[tile] = n * token_step
+            char_map[n * token_step] = tile
+
+        return tile_map, char_map
 
     def setup_action_to_keys(self):
         """Map action to keyboard keys"""
@@ -127,6 +133,13 @@ class MarioEnv(gym.Env):
                 self.done = True
 
         info = self.game.state.persist
+
+        if c.PRINT_OBSERVATION:
+            print("observation:")
+            for frame in self.observation:
+                for col in frame:
+                    print([self._CHAR_MAP[tile] for tile in col])
+
 
         # returns observation, reward, done, info
         return observation, reward, self.done, info
@@ -163,7 +176,7 @@ class MarioEnv(gym.Env):
         for _ in range(c.OBS_FRAMES):
             self.observation_frames = np.delete(self.observation_frames, 0, axis=0)
             self.observation_frames = np.concatenate((self.observation_frames, self.observation))
-        #print("observation_frames:", [k for k in self.observation_frames])
+        # print("observation_frames:", [k for k in self.observation_frames])
 
     def reset(self):
         """Reset the environment and return the initial observation."""
