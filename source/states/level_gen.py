@@ -4,7 +4,6 @@ import os
 import json
 import math
 import time
-from threading import Thread
 import numpy as np
 
 import pygame as pg
@@ -83,7 +82,6 @@ class Level(tools.State):
         self.timestep = 0
         self.zero_reward_index = 0
         self.gen_list = []
-        self.thread_list = []
         self.optimal_mario_speed = (self.map_data[c.MAP_FLAGPOLE][0]['x'] - self.player_x)\
                                    / (c.GAME_TIME_OUT * self.base_fps)
         self.mario_done = False
@@ -234,10 +232,7 @@ class Level(tools.State):
 
     def handle_states(self, keys):
         if self.map_data[c.GEN_BORDER] - (self.player.rect.x + self.player.rect.w) < c.GEN_DISTANCE:
-            thread = Thread(target=self.generate)
-            thread.start()
-            thread.join()
-            print("thread finished")
+            self.generate()
         self.update_all_sprites(keys)
 
     def setup_solid_tile(self, tiles, group, sprite_x, sprite_y):
@@ -322,7 +317,7 @@ class Level(tools.State):
                 self.generator.epsilon = max(c.MIN_EPSILON, self.generator.epsilon)
 
             # Message player that the game is about to resume
-            if self.player.rect.x > c.DEBUG_START_X:
+            if self.player.rect.x > self.player_x and c.HUMAN_PLAYER:
                 print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
                 time.sleep(1)
 
