@@ -502,8 +502,8 @@ class Level(tools.State):
                 gen[c.REWARD] = self.calc_gen_reward(v, gen[c.OPTIMAL_V])
                 self.generator.update_replay_memory(gen)
                 self.zero_reward_index += 1
-                print("reward:", "%.4f" % gen[c.REWARD])
-                print("v:", "%.4f" % v, "opt_v:", "%.4f" % gen[c.OPTIMAL_V])
+                print("reward:", "%.3f" % gen[c.REWARD])
+                print("v:", "%.3f" % v, "opt_v:", "%.3f" % gen[c.OPTIMAL_V])
 
     def calc_gen_reward(self, v, opt_v):
         if v < opt_v:

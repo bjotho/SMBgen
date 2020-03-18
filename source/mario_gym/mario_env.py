@@ -54,12 +54,23 @@ class MarioEnv(gym.Env):
         }
 
         self._ACTION_TO_KEYS = {}
-        self._TILE_MAP = level_state.tokenize_tiles(c.TILES)
+        self._TILE_MAP, self._CHAR_MAP = self.tokenize_tiles(c.TILES)
         self.setup_spaces(actions)
 
     def buttons(self) -> list:
         """Return the buttons that can be used as actions."""
         return list(self._button_map.keys())
+
+    def tokenize_tiles(self, tiles: list):
+        # Tokenize tiles and populate tile_map dict with (tile_id: token) pairs
+        tile_map = {}
+        char_map = {}
+        token_step = 1.0 / (len(tiles) - 1)
+        for n, tile in enumerate(tiles):
+            tile_map[tile] = n * token_step
+            char_map[n * token_step] = tile
+
+        return tile_map, char_map
 
     def setup_spaces(self, actions: list):
         """Setup binary to discrete action space converter.
@@ -138,12 +149,13 @@ class MarioEnv(gym.Env):
         """Handle any hacking before a reset occurs."""
         if self.game.state.next == c.GAME_OVER:
             self.game.state.persist = {
+                c.BASE_FPS: 60,
                 c.COIN_TOTAL: 0,
                 c.SCORE: 0,
                 c.LIVES: 3,
                 c.TOP_SCORE: 0,
                 c.CURRENT_TIME: 0.0,
-                c.LEVEL_NUM: random.choice([1, 3, 4]),
+                c.LEVEL_NUM: 1,
                 c.PLAYER_NAME: c.PLAYER_MARIO
             }
 
