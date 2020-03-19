@@ -318,8 +318,9 @@ class Level(tools.State):
 
             # Message player that the game is about to resume
             if self.player.rect.x > self.player_x and c.HUMAN_PLAYER:
-                print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
-                time.sleep(1)
+                pass
+                # print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
+                # time.sleep(1)
 
         # level_state.print_2d(level_state.state)
         # for tile in tmp:
@@ -784,8 +785,7 @@ class Level(tools.State):
             # self.game_info[c.LEVEL_NUM] += 1
             self.next = c.LOAD_SCREEN
 
-        print(self.gen_list)
-        if not self.mario_done:
+        if not self.mario_done and c.HUMAN_PLAYER:
             print("zero_index:", self.zero_reward_index)
             gen = self.gen_list[self.zero_reward_index]
             gen[c.REWARD] = 0

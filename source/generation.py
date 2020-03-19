@@ -94,15 +94,15 @@ class Generator:
             loaded_model = model_from_json(loaded_model_json)
             # Load weights into new model
             loaded_model.load_weights(f"{model}.h5")
-            loaded_model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
+            loaded_model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
             print("Loaded generator model:", model)
             return loaded_model
 
         model = Sequential()
         model.add(Input(shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))  # model.add(Embedding(len(c.GENERATOR_TILES), 5, input_length=1))
         model.add(LSTM(c.LSTM_CELLS))
-        model.add(Dense(len(c.GENERATOR_TILES), activation='softmax'))
-        model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
+        model.add(Dense(len(c.GENERATOR_TILES), activation='linear'))
+        model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
         return model
 
     def train(self):
@@ -146,7 +146,7 @@ class Generator:
 
             # Update Q values for given state
             current_qs = current_predicted_sequences[index]
-            enc_action = self.one_hot_encode(action, len(c.GENERATOR_TILES))
+            enc_action = self.one_hot_encode(action)
             for n, action_n in enumerate(enc_action):
                 current_qs[n][self.choose_new_tile(action_n, greedy)] = new_Qs[n]
 
@@ -155,7 +155,7 @@ class Generator:
             for i in range(self.gen_size):
                 state_slice = max(0, i - c.MEMORY_LENGTH)
                 tmp_state = np.concatenate((current_state[i:], action[state_slice:i]))
-                generator_input.append(self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES)))
+                generator_input.append(self.one_hot_encode(tmp_state))
 
             # Append to training data
             X.append(generator_input)
@@ -178,7 +178,7 @@ class Generator:
             for i in range(self.gen_size):
                 state_slice = max(0, len(predicted_states[-1]) - c.MEMORY_LENGTH)
                 tmp_state = np.concatenate((state[i:], predicted_states[-1][state_slice:]))
-                one_hot = self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES))
+                one_hot = self.one_hot_encode(tmp_state)
                 generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
                 tile_qs = self.generator.predict(generator_input)[0]
                 if return_qs:
@@ -194,18 +194,26 @@ class Generator:
             new_tile = np.argmax(qs)
         else:
             # Semi-random-variant
-            # dist = Categorical(probs=qs)
-            # n = 1e4
-            # empirical_prob = tf.cast(
-            #     tf.histogram_fixed_width(
-            #         dist.sample(int(n)),
-            #         [0, len(c.GENERATOR_TILES)],
-            #         nbins=len(c.GENERATOR_TILES)),
-            #     dtype=tf.float64) / n
-            # empirical_prob /= np.sum(empirical_prob)
-            new_tile = self.weighted_tile_choice(p=qs)
+            empirical_prob = self.get_empirical_prob(qs)
+            new_tile = self.weighted_tile_choice(p=empirical_prob)
 
         return new_tile
+
+    def get_empirical_prob(self, q_list):
+        output = []
+        sub_zero = True
+        for q in q_list:
+            if q > 0:
+                output.append(q)
+                sub_zero = False
+            else:
+                output.append(0)
+
+        if sub_zero:
+            return self.one_hot_encode(q_list)
+
+        output /= np.sum(output)
+        return output
 
     def weighted_tile_choice(self, p):
         choice = np.random.random()
@@ -238,7 +246,7 @@ class Generator:
                 if not c.RANDOM_GEN:
                     start = len(self.memory) - c.MEMORY_LENGTH
                     state = self.get_padded_memory(start, slice=True)
-                    one_hot = self.one_hot_encode(state, len(c.GENERATOR_TILES))
+                    one_hot = self.one_hot_encode(state)
                     generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
                     prediction = self.generator.predict(generator_input)[0]
                     new_tile = self.choose_new_tile(prediction, greedy)
@@ -260,9 +268,8 @@ class Generator:
 
         return output
 
-    def one_hot_encode(self, seq, cardinality):
-        out = to_categorical([seq], num_classes=cardinality)[0]
-        return out
+    def one_hot_encode(self, seq, cardinality=len(c.GENERATOR_TILES)):
+        return to_categorical([seq], num_classes=cardinality)[0]
 
     def one_hot_decode(self, encoded_seq):
         return [np.argmax(vector) for vector in encoded_seq]

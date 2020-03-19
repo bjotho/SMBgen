@@ -168,6 +168,16 @@ class MarioEnv(gym.Env):
 
     def _will_reset(self):
         """Handle any hacking before a reset occurs."""
+        try:
+            game = self.game.state_dict[c.LEVEL]
+            if not game.mario_done:
+                print("zero_index:", game.zero_reward_index)
+                gen = game.gen_list[game.zero_reward_index]
+                gen[c.REWARD] = 0
+                game.generator.update_replay_memory(gen)
+        except AttributeError:
+            pass
+
         if self.game.state.next == c.GAME_OVER:
             self.game.state.persist = {
                 c.BASE_FPS: 60,
