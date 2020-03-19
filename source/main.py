@@ -52,7 +52,7 @@ def main():
     ray_init()
 
     trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
-        "num_gpus": 0,
+        "num_gpus": 1,
         "num_workers": 1,
         "eager": True,
         "model": {

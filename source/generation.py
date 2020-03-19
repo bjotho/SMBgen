@@ -155,7 +155,7 @@ class Generator:
             for i in range(self.gen_size):
                 state_slice = max(0, i - c.MEMORY_LENGTH)
                 tmp_state = np.concatenate((current_state[i:], action[state_slice:i]))
-                generator_input.append(self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES))[0])
+                generator_input.append(self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES)))
 
             # Append to training data
             X.append(generator_input)
@@ -178,7 +178,8 @@ class Generator:
             for i in range(self.gen_size):
                 state_slice = max(0, len(predicted_states[-1]) - c.MEMORY_LENGTH)
                 tmp_state = np.concatenate((state[i:], predicted_states[-1][state_slice:]))
-                generator_input = self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES))
+                one_hot = self.one_hot_encode(tmp_state, len(c.GENERATOR_TILES))
+                generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
                 tile_qs = self.generator.predict(generator_input)[0]
                 if return_qs:
                     output[-1].append(tile_qs)
@@ -200,7 +201,7 @@ class Generator:
                     dist.sample(int(n)),
                     [0, len(c.GENERATOR_TILES)],
                     nbins=len(c.GENERATOR_TILES)),
-                dtype=tf.float32) / n
+                dtype=tf.float64) / n
             empirical_prob /= np.sum(empirical_prob)
             new_tile = self.weighted_tile_choice(p=empirical_prob)
 
@@ -237,7 +238,9 @@ class Generator:
                 if not c.RANDOM_GEN:
                     start = len(self.memory) - c.MEMORY_LENGTH
                     state = self.get_padded_memory(start, slice=True)
-                    prediction = self.generator.predict(self.one_hot_encode(state, len(c.GENERATOR_TILES)))
+                    one_hot = self.one_hot_encode(state, len(c.GENERATOR_TILES))
+                    generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
+                    prediction = self.generator.predict(generator_input)[0]
                     new_tile = self.choose_new_tile(prediction, greedy)
                     map_col_list.append(self._CHAR_MAP[new_tile])
                     self.update_memory(new_tile)
@@ -258,7 +261,8 @@ class Generator:
         return output
 
     def one_hot_encode(self, seq, cardinality):
-        return to_categorical([seq], num_classes=cardinality)
+        out = to_categorical([seq], num_classes=cardinality)[0]
+        return out
 
     def one_hot_decode(self, encoded_seq):
         return [np.argmax(vector) for vector in encoded_seq]

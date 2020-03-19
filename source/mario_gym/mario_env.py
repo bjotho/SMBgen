@@ -80,6 +80,7 @@ class MarioEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(len(actions))
 
         # create the new observation space
+        self.obs_counter = 0
         self.observation = None
         self.observation_frames = np.zeros(shape=(c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE))
         self.observation_space = gym.spaces.Box(low=0, high=1, shape=(c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE))
@@ -136,6 +137,22 @@ class MarioEnv(gym.Env):
                 self.done = True
 
         info = self.game.state.persist
+
+        if c.PRINT_OBSERVATION:
+            if not self.obs_counter % 10:
+                print("observation:")
+                print("[")
+                for frame in self.observation_frames:
+                    print("  [")
+                    for col in frame:
+                        print("   ", [self._CHAR_MAP[tile] for tile in col])
+
+                    print("  ]")
+
+                print("]")
+
+            self.obs_counter += 1
+            self.obs_counter = self.obs_counter % 10
 
         # returns observation, reward, done, info
         return observation, reward, self.done, info
