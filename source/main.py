@@ -52,8 +52,8 @@ def main():
     ray_init()
 
     trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
-        "num_gpus": 1,
-        "num_workers": 1,
+        "num_gpus": 2,
+        "num_workers": 4,
         "eager": False,
         "model": {
             "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]

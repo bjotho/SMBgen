@@ -83,7 +83,7 @@ Y_OFFSET = 64
 COL_HEIGHT = 13
 TILE_SIZE = 43
 GEN_PX_LEN = GEN_LENGTH * TILE_SIZE
-GEN_MODEL_SAVE_INTERVAL = 20  # Number of training sessions
+GEN_MODEL_SAVE_INTERVAL = 100  # Number of training sessions
 GEN_BORDER = 'gen_border'
 GEN_LINE = 'gen_line'
 TIMESTEP = 'timestep'
@@ -145,8 +145,8 @@ GENERATOR_TILES = [
 ]
 
 # FOR TESTING PURPOSES (reduce lag)
-while len(GENERATOR_TILES) < 100:
-    GENERATOR_TILES.append(AIR_ID)
+# while len(GENERATOR_TILES) < 100:
+#     GENERATOR_TILES.append(AIR_ID)
 
 # GENERATION NETWORK PARAMETERS
 LEARNING_RATE = 0.001
