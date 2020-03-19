@@ -54,7 +54,7 @@ def main():
     trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
         "num_gpus": 1,
         "num_workers": 1,
-        "eager": True,
+        "eager": False,
         "model": {
             "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
         }

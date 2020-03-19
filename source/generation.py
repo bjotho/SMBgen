@@ -94,15 +94,15 @@ class Generator:
             loaded_model = model_from_json(loaded_model_json)
             # Load weights into new model
             loaded_model.load_weights(f"{model}.h5")
-            loaded_model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
+            loaded_model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
             print("Loaded generator model:", model)
             return loaded_model
 
         model = Sequential()
         model.add(Input(shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))  # model.add(Embedding(len(c.GENERATOR_TILES), 5, input_length=1))
         model.add(LSTM(c.LSTM_CELLS))
-        model.add(Dense(len(c.GENERATOR_TILES), activation='linear'))
-        model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
+        model.add(Dense(len(c.GENERATOR_TILES), activation='softmax'))
+        model.compile(loss='categorical_crossentropy', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
         return model
 
     def train(self):
@@ -194,16 +194,16 @@ class Generator:
             new_tile = np.argmax(qs)
         else:
             # Semi-random-variant
-            dist = Categorical(probs=qs)
-            n = 1e4
-            empirical_prob = tf.cast(
-                tf.histogram_fixed_width(
-                    dist.sample(int(n)),
-                    [0, len(c.GENERATOR_TILES)],
-                    nbins=len(c.GENERATOR_TILES)),
-                dtype=tf.float64) / n
-            empirical_prob /= np.sum(empirical_prob)
-            new_tile = self.weighted_tile_choice(p=empirical_prob)
+            # dist = Categorical(probs=qs)
+            # n = 1e4
+            # empirical_prob = tf.cast(
+            #     tf.histogram_fixed_width(
+            #         dist.sample(int(n)),
+            #         [0, len(c.GENERATOR_TILES)],
+            #         nbins=len(c.GENERATOR_TILES)),
+            #     dtype=tf.float64) / n
+            # empirical_prob /= np.sum(empirical_prob)
+            new_tile = self.weighted_tile_choice(p=qs)
 
         return new_tile
 
