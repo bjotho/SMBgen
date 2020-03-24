@@ -143,6 +143,14 @@ class MarioEnv(gym.Env):
         self.clock_last = clock_now
         return reward
 
+    def calculate_loss(self, ob):
+        n_chunks = 8
+        n = ob.shape[0]
+        chunk_size = n // n_chunks
+        assert n % n_chunks == 0
+        sli = lambda i: slice(i * chunk_size, (i + 1) * chunk_size)
+        return np.concatenate([getsess])
+
     def _will_reset(self):
         """Handle any hacking before a reset occurs."""
         if self.game.state.next == c.GAME_OVER:
