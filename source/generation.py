@@ -2,6 +2,10 @@ import numpy as np
 import random
 import os
 from collections import deque
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 import tensorflow as tf
 from tensorflow.python.keras import Input
@@ -31,6 +35,8 @@ class Generator:
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
         loaded_model_num = self.load_model_num() if c.LOAD_GEN_MODEL else None
         self.generator = self.create_generator(model=loaded_model_num)
+        if loaded_model_num:
+            self.load_replay_memory()
         print(self.generator.summary())
 
     def generator_startup(self):
@@ -72,6 +78,23 @@ class Generator:
         # Serialize weights to HDF5
         self.generator.save_weights(f"{model_name}.h5")
         print("Saved generator model:", model_name)
+
+    def load_replay_memory(self):
+        try:
+            pickle_file = os.path.join(self.checkpoint_gen, f"model_{str(self.start_checkpoint)}/{c.REP_MEM}.pickle")
+            with open(pickle_file, 'rb') as file:
+                self.replay_memory = pickle.load(file)
+
+            print("Loaded replay_memory:", pickle_file)
+        except:
+            pass
+
+    def save_replay_memory(self, num):
+        pickle_file = os.path.join(self.checkpoint_gen, f"model_{str(num)}", f"{c.REP_MEM}.pickle")
+        with open(pickle_file, 'wb') as file:
+            pickle.dump(self.replay_memory, file, protocol=pickle.HIGHEST_PROTOCOL)
+
+        print("Saved replay_memory:", pickle_file)
 
     def populate_memory(self):
         if c.INSERT_GROUND:

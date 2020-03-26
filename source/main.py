@@ -48,6 +48,7 @@ def main():
 
         model_num = env.game.state_dict[c.LEVEL].training_sessions
         env.game.state_dict[c.LEVEL].generator.save_model(num=model_num)
+        env.game.state_dict[c.LEVEL].generator.save_replay_memory(num=model_num)
 
     def restart_ray():
         global _ray_error
@@ -56,7 +57,7 @@ def main():
         largest = level_state.find_latest_checkpoint(checkpoint_all)
         latest_checkpoint = None
         if largest > -1:
-            latest_checkpoint = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}" + f"/checkpoint-{str(largest)}")
+            latest_checkpoint = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}/checkpoint-{str(largest)}")
             print("Resuming from ", latest_checkpoint)
 
         register_env(c.ENV_NAME, lambda config: MarioEnv(config))

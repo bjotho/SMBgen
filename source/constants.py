@@ -84,6 +84,7 @@ COL_HEIGHT = 13
 TILE_SIZE = 43
 GEN_PX_LEN = GEN_LENGTH * TILE_SIZE
 GEN_MODEL_SAVE_INTERVAL = 100  # Number of training sessions
+REP_MEM = 'rep_mem'
 GEN_BORDER = 'gen_border'
 GEN_LINE = 'gen_line'
 TIMESTEP = 'timestep'
