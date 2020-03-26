@@ -307,7 +307,6 @@ class Level(tools.State):
 
             if not (self.training_sessions % c.GEN_MODEL_SAVE_INTERVAL)\
                and self.training_sessions > self.generator.start_checkpoint:
-                print("training_sessions:", self.training_sessions, "start_checkpoint:", self.generator.start_checkpoint)
                 self.generator.save_model(num=self.training_sessions)
 
             # Decay epsilon
