@@ -25,12 +25,12 @@ class Generator:
         self.gen_size = c.GEN_LENGTH * self.tiles_per_col
         self.checkpoint_gen = os.path.join(dir_path, "checkpoints", "generator")
         self._TILE_MAP, self._CHAR_MAP = self.tokenize_tiles(c.GENERATOR_TILES)
-        print("self._TILE_MAP:", self._TILE_MAP)
-        print("self._CHAR_MAP:", self._CHAR_MAP)
+        # print("generator._TILE_MAP:", self._TILE_MAP)
+        # print("generator._CHAR_MAP:", self._CHAR_MAP)
 
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
-        loaded_model = self.load_model() if c.LOAD_GEN_MODEL else None
-        self.generator = self.create_generator(model=loaded_model)
+        loaded_model_num = self.load_model_num() if c.LOAD_GEN_MODEL else None
+        self.generator = self.create_generator(model=loaded_model_num)
         print(self.generator.summary())
 
     def generator_startup(self):
@@ -49,13 +49,16 @@ class Generator:
 
         return tile_map, char_map
 
-    def load_model(self):
+    def load_model_num(self):
         os.makedirs(self.checkpoint_gen, exist_ok=True)
         self.start_checkpoint = level_state.find_latest_checkpoint(self.checkpoint_gen)
         latest_checkpoint = None
         if self.start_checkpoint > -1:
             latest_checkpoint = os.path.join(self.checkpoint_gen, f"model_{str(self.start_checkpoint)}",
                                              f"model_{str(self.start_checkpoint)}")
+        else:
+            self.start_checkpoint = 0
+
         return latest_checkpoint
 
     def save_model(self, num):
@@ -105,10 +108,11 @@ class Generator:
         model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
         return model
 
+    # Train the generator model if replay memory is large enough. Return 0 if replay memory is too small, 1 otherwise
     def train(self):
         # Only start training if we have enough transitions in replay memory
         if len(self.replay_memory) < c.MIN_REPLAY_MEMORY_SIZE:
-            return
+            return 0
 
         print("Training on", c.MINIBATCH_SIZE, "transitions")
 
@@ -166,6 +170,8 @@ class Generator:
         y = np.array(y)
         for i in range(len(X)):
             self.generator.fit(X[i], y[i], batch_size=self.gen_size, verbose=0, shuffle=False)
+
+        return 1
 
     def predict_new_states(self, states, greedy, return_qs=False):
         # Loop through states and make predictions for new_states for each state

@@ -55,7 +55,16 @@ class MarioEnv(gym.Env):
 
         self._ACTION_TO_KEYS = {}
         self._TILE_MAP, self._CHAR_MAP = self.tokenize_tiles(c.TILES)
+        # print("mario_env._TILE_MAP:")
+        # self.print_dict(self._TILE_MAP)
+        # print("mario_env._CHAR_MAP:")
+        # self.print_dict(self._CHAR_MAP)
         self.setup_spaces(actions)
+
+    @staticmethod
+    def print_dict(_dict):
+        for pair in _dict.items():
+            print(pair)
 
     def buttons(self) -> list:
         """Return the buttons that can be used as actions."""
@@ -133,7 +142,6 @@ class MarioEnv(gym.Env):
             observation = self.get_observation()
             reward = self._reward()
             if self.game.state_dict[c.LEVEL].done or self.game.state_dict[c.LEVEL].player.dead:
-                reward = -15
                 self.done = True
 
         info = self.game.state.persist
@@ -158,12 +166,29 @@ class MarioEnv(gym.Env):
         return observation, reward, self.done, info
 
     def _reward(self):
+        # Current x-value of mario
         current_x = self.game.state_dict[c.LEVEL].player.rect.x
+
+        # Difference in current x-value and last x-value
         reward = current_x - self.mario_x_last
+
+        # Update last x-value
         self.mario_x_last = current_x
+
+        # Time left on game clock
         clock_now = self.game.state_dict[c.LEVEL].overhead_info.time
+
+        # Difference in remaining time. Clock counts down from 300,
+        # hence no clock tick: reward += 0, clock tick: reward += 1
         reward += self.clock_last - clock_now
+
+        # Update last clock value
         self.clock_last = clock_now
+
+        # If mario is dead, set reward to -15
+        if self.game.state_dict[c.LEVEL].player.dead:
+            reward = -15
+
         return reward
 
     def _will_reset(self):
@@ -173,7 +198,7 @@ class MarioEnv(gym.Env):
             if not game.mario_done:
                 print("zero_index:", game.zero_reward_index)
                 gen = game.gen_list[game.zero_reward_index]
-                gen[c.REWARD] = 0
+                gen[c.REWARD] = -1
                 game.generator.update_replay_memory(gen)
         except AttributeError:
             pass

@@ -302,13 +302,12 @@ class Level(tools.State):
         self.setup_enemies(tiles['enemies'])
 
         if c.TRAIN_GEN and not self.mario_done:
-            # Update weights in generator network
-            self.generator.train()
-
-            self.training_sessions += 1
+            # Update weights in generator network and increment training_sessions if model is trained
+            self.training_sessions += self.generator.train()
 
             if not (self.training_sessions % c.GEN_MODEL_SAVE_INTERVAL)\
                and self.training_sessions > self.generator.start_checkpoint:
+                print("training_sessions:", self.training_sessions, "start_checkpoint:", self.generator.start_checkpoint)
                 self.generator.save_model(num=self.training_sessions)
 
             # Decay epsilon
@@ -318,9 +317,8 @@ class Level(tools.State):
 
             # Message player that the game is about to resume
             if self.player.rect.x > self.player_x and c.HUMAN_PLAYER:
-                pass
-                # print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
-                # time.sleep(1)
+                print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
+                time.sleep(1)
 
         # level_state.print_2d(level_state.state)
         # for tile in tmp:
@@ -788,7 +786,7 @@ class Level(tools.State):
         if not self.mario_done and c.HUMAN_PLAYER:
             print("zero_index:", self.zero_reward_index)
             gen = self.gen_list[self.zero_reward_index]
-            gen[c.REWARD] = 0
+            gen[c.REWARD] = -1
             self.generator.update_replay_memory(gen)
 
         # if c.PRINT_GEN_REWARD:

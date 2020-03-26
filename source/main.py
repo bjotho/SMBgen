@@ -7,10 +7,13 @@ if not c.HUMAN_PLAYER:
     from source.mario_gym.mario_env import MarioEnv
     from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
     from ray import init as ray_init
+    from ray import shutdown as ray_shutdown
+    from ray.memory_monitor import RayOutOfMemoryError
     from ray.tune.registry import register_env
     from ray.rllib.agents import dqn
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+_ray_error = False
 
 
 def main():
@@ -23,15 +26,9 @@ def main():
     os.makedirs(checkpoint_dir, exist_ok=True)
     os.makedirs(checkpoint_all, exist_ok=True)
 
-    largest = level_state.find_latest_checkpoint(checkpoint_all)
-    latest_checkpoint = None
-    if largest > -1:
-        latest_checkpoint = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}" + f"/checkpoint-{str(largest)}")
-        print("Resuming from ", latest_checkpoint)
-
-    register_env(c.ENV_NAME, lambda config: MarioEnv(config))
-
     def test(trainer):
+        global _ray_error
+
         config = dict(
             actions=COMPLEX_MOVEMENT,
             window=False,
@@ -39,43 +36,69 @@ def main():
         )
         env = MarioEnv(config)
 
-        while True:
+        while not _ray_error:
             current_state = env.reset()
             done = False
 
-            while not done:
+            while not done and not _ray_error:
                 action = trainer.compute_action(current_state)
                 new_state, reward, done, info = env.step(action)
                 env.render()
                 current_state = new_state
 
-    ray_init()
+        model_num = env.game.state_dict[c.LEVEL].training_sessions
+        env.game.state_dict[c.LEVEL].generator.save_model(num=model_num)
 
-    trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
-        "num_gpus": 2,
-        "num_workers": 4,
-        "eager": False,
-        "model": {
-            "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
-        }
-        # "train_batch_size": 2048
-    })
-    if latest_checkpoint and c.LOAD_CHECKPOINT:
-        trainer.restore(latest_checkpoint)
+    def restart_ray():
+        global _ray_error
+        _ray_error = False
 
-    save_interval = 10
-    save_counter = 0
+        largest = level_state.find_latest_checkpoint(checkpoint_all)
+        latest_checkpoint = None
+        if largest > -1:
+            latest_checkpoint = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}" + f"/checkpoint-{str(largest)}")
+            print("Resuming from ", latest_checkpoint)
 
-    eval_thread = Thread(target=test, args=(trainer, ))
-    eval_thread.daemon = True
-    eval_thread.start()
-    while True:
-        trainer.train()
-        if save_counter % save_interval == 1:
-            checkpoint = trainer.save(checkpoint_all)
-            print("Saved checkpoint:", checkpoint)
+        register_env(c.ENV_NAME, lambda config: MarioEnv(config))
 
-        save_counter += 1
+        ray_init()
+
+        trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
+            "num_gpus": 1,
+            "num_workers": 1,
+            "eager": False,
+            "model": {
+                "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
+            }
+            # "train_batch_size": 2048
+        })
+        if latest_checkpoint and c.LOAD_CHECKPOINT:
+            trainer.restore(latest_checkpoint)
+
+        save_interval = 10
+        save_counter = 0
+
+        eval_thread = Thread(target=test, args=(trainer, ))
+        eval_thread.daemon = True
+        eval_thread.start()
+        try:
+            while True:
+                trainer.train()
+                if save_counter % save_interval == 1:
+                    checkpoint = trainer.save(checkpoint_all)
+                    print("Saved checkpoint:", checkpoint)
+
+                save_counter += 1
+        except RayOutOfMemoryError:
+            print("Ray out of memory!")
+        finally:
+            print("Restarting ray...")
+            _ray_error = True
+            eval_thread.join()
+            ray_shutdown()
+            restart_ray()
+
+    restart_ray()
 
 
 def run_game_main_and_exit():
