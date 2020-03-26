@@ -239,7 +239,7 @@ class Generator:
                 output.append(0)
 
         if sub_zero:
-            return self.one_hot_encode(q_list)
+            return self.one_hot_encode(np.argmax(q_list))
 
         output /= np.sum(output)
         return output

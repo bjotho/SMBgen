@@ -58,7 +58,7 @@ def main():
         latest_checkpoint = None
         if largest > -1:
             latest_checkpoint = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}/checkpoint-{str(largest)}")
-            print("Resuming from ", latest_checkpoint)
+            print("Loading Mario checkpoint:", latest_checkpoint)
 
         register_env(c.ENV_NAME, lambda config: MarioEnv(config))
 
@@ -87,7 +87,7 @@ def main():
                 trainer.train()
                 if save_counter % save_interval == 1:
                     checkpoint = trainer.save(checkpoint_all)
-                    print("Saved checkpoint:", checkpoint)
+                    print("Saved Mario checkpoint:", checkpoint)
 
                 save_counter += 1
         except RayOutOfMemoryError:
