@@ -14,6 +14,8 @@ if not c.HUMAN_PLAYER:
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 _ray_error = False
+save_interval = 10
+save_counter = 0
 
 
 def main():
@@ -49,9 +51,13 @@ def main():
         model_num = env.game.state_dict[c.LEVEL].training_sessions
         env.game.state_dict[c.LEVEL].generator.save_model(num=model_num)
         env.game.state_dict[c.LEVEL].generator.save_replay_memory(num=model_num)
+        checkpoint = trainer.save(checkpoint_all)
+        print("Saved Mario checkpoint:", checkpoint)
 
     def restart_ray():
         global _ray_error
+        global save_interval
+        global save_counter
         _ray_error = False
 
         largest = level_state.find_latest_checkpoint(checkpoint_all)
@@ -65,8 +71,8 @@ def main():
         ray_init()
 
         trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
-            "num_gpus": 1,
-            "num_workers": 1,
+            "num_gpus": 2,
+            "num_workers": 4,
             "eager": False,
             "model": {
                 "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
@@ -75,9 +81,6 @@ def main():
         })
         if latest_checkpoint and c.LOAD_CHECKPOINT:
             trainer.restore(latest_checkpoint)
-
-        save_interval = 10
-        save_counter = 0
 
         eval_thread = Thread(target=test, args=(trainer, ))
         eval_thread.daemon = True
