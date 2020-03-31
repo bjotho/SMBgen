@@ -7,13 +7,12 @@ try:
 except:
     import pickle
 
-import tensorflow as tf
+from tensorflow.python.keras.callbacks import TensorBoard
 from tensorflow.python.keras import Input
 from tensorflow.python.keras.models import Sequential, model_from_json
 from tensorflow.python.keras.layers import LSTM, Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.python.keras.utils.np_utils import to_categorical
-from tensorflow_probability.python.distributions import Categorical
 
 from source import constants as c
 from source.states import level_state
@@ -33,9 +32,14 @@ class Generator:
         # print("generator._CHAR_MAP:", self._CHAR_MAP)
 
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
-        loaded_model_num = self.load_model_num() if c.LOAD_GEN_MODEL else None
-        self.generator = self.create_generator(model=loaded_model_num)
-        if loaded_model_num:
+        loaded_model_path = self.load_model_path() if c.LOAD_GEN_MODEL else None
+        callback_dir = os.path.join(dir_path, "checkpoints", "generator_graphs")
+        os.makedirs(callback_dir, exist_ok=True)
+
+        self.generator = self.create_generator(model=loaded_model_path)
+        self.tensorboard = TensorBoard(log_dir=callback_dir, histogram_freq=0, write_graph=True, write_images=False)
+
+        if loaded_model_path:
             self.load_replay_memory()
         print(self.generator.summary())
 
@@ -55,7 +59,7 @@ class Generator:
 
         return tile_map, char_map
 
-    def load_model_num(self):
+    def load_model_path(self):
         os.makedirs(self.checkpoint_gen, exist_ok=True)
         self.start_checkpoint = level_state.find_latest_checkpoint(self.checkpoint_gen)
         latest_checkpoint = None
@@ -125,13 +129,14 @@ class Generator:
             return loaded_model
 
         model = Sequential()
-        model.add(Input(shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))  # model.add(Embedding(len(c.GENERATOR_TILES), 5, input_length=1))
+        model.add(Input(shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))
         model.add(LSTM(c.LSTM_CELLS))
         model.add(Dense(len(c.GENERATOR_TILES), activation='linear'))
         model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
         return model
 
-    # Train the generator model if replay memory is large enough. Return 0 if replay memory is too small, 1 otherwise
+    # Train the generator model if replay memory is large enough.
+    # Return 1 if the generator model is trained, 0 otherwise
     def train(self):
         # Only start training if we have enough transitions in replay memory
         if len(self.replay_memory) < c.MIN_REPLAY_MEMORY_SIZE:
@@ -192,7 +197,7 @@ class Generator:
         X = np.array(X)
         y = np.array(y)
         for i in range(len(X)):
-            self.generator.fit(X[i], y[i], batch_size=self.gen_size, verbose=0, shuffle=False)
+            self.generator.fit(X[i], y[i], batch_size=self.gen_size, verbose=0, shuffle=False, callbacks=[self.tensorboard])
 
         return 1
 
@@ -331,7 +336,7 @@ class Generator:
     def get_padded_memory(self, pos, slice=False):
         if pos < 0:
             # Prepend padding to memory list
-            padding_size = -pos
+            padding_size = np.abs(pos)
             padding = [self._TILE_MAP[c.AIR_ID] for _ in range(padding_size)]
             return padding + self.memory
 

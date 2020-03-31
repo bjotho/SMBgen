@@ -10,3 +10,4 @@ tensorflow-probability
 tensorboardX
 pandas
 numpy
+setuptools>=41.0.0

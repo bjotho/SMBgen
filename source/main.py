@@ -71,8 +71,8 @@ def main():
         ray_init()
 
         trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
-            "num_gpus": 2,
-            "num_workers": 4,
+            "num_gpus": 1,
+            "num_workers": 1,
             "eager": False,
             "model": {
                 "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
@@ -95,7 +95,6 @@ def main():
                 save_counter += 1
         except RayOutOfMemoryError:
             print("Ray out of memory!")
-        finally:
             print("Restarting ray...")
             _ray_error = True
             eval_thread.join()
