@@ -33,11 +33,11 @@ class Generator:
 
         self.replay_memory = deque(maxlen=c.REPLAY_MEMORY_SIZE)
         loaded_model_path = self.load_model_path() if c.LOAD_GEN_MODEL else None
-        callback_dir = os.path.join(dir_path, "checkpoints", "generator_graphs")
+        callback_dir = os.path.join(dir_path, "checkpoints", "generator_graphs", f"graph_{self.start_checkpoint}")
         os.makedirs(callback_dir, exist_ok=True)
 
         self.generator = self.create_generator(model=loaded_model_path)
-        self.tensorboard = TensorBoard(log_dir=callback_dir, histogram_freq=0, write_graph=True, write_images=False)
+        self.tensorboard = TensorBoard(log_dir=callback_dir, histogram_freq=0, write_graph=True, write_images=True)
 
         if loaded_model_path:
             self.load_replay_memory()
@@ -131,7 +131,7 @@ class Generator:
         model = Sequential()
         model.add(Input(shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))
         model.add(LSTM(c.LSTM_CELLS))
-        model.add(Dense(len(c.GENERATOR_TILES), activation='linear'))
+        model.add(Dense(len(c.GENERATOR_TILES), activation='linear'))  # model.add(LSTM(len(c.GENERATOR_TILES), return_sequences=True))
         model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
         return model
 
@@ -228,26 +228,15 @@ class Generator:
             new_tile = np.argmax(qs)
         else:
             # Semi-random-variant
-            empirical_prob = self.get_empirical_prob(qs)
+            empirical_prob = self.softmax(qs)
             new_tile = self.weighted_tile_choice(p=empirical_prob)
 
         return new_tile
 
-    def get_empirical_prob(self, q_list):
-        output = []
-        sub_zero = True
-        for q in q_list:
-            if q > 0:
-                output.append(q)
-                sub_zero = False
-            else:
-                output.append(0)
-
-        if sub_zero:
-            return self.one_hot_encode(np.argmax(q_list))
-
-        output /= np.sum(output)
-        return output
+    @staticmethod
+    def softmax(x):
+        """Compute softmax values for each sets of scores in x."""
+        return np.exp(x) / np.sum(np.exp(x), axis=0)
 
     def weighted_tile_choice(self, p):
         choice = np.random.random()
