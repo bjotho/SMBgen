@@ -265,7 +265,7 @@ class Generator:
             if c.INSERT_GROUND:
                 map_col = str(2 * c.SOLID_ID)
             map_col_list = []
-            for _ in range(self.tiles_per_col - 1):
+            for _ in range(self.tiles_per_col):
                 if not c.RANDOM_GEN:
                     start = len(self.memory) - c.MEMORY_LENGTH
                     state = self.get_padded_memory(start, slice=True)
