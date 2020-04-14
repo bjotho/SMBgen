@@ -4,7 +4,7 @@ import os
 from collections import deque
 try:
     import cPickle as pickle
-except:
+except ImportError:
     import pickle
 
 from tensorflow.python.keras.callbacks import TensorBoard
@@ -86,7 +86,7 @@ class Generator:
 
     def load_replay_memory(self):
         try:
-            pickle_file = os.path.join(self.checkpoint_gen, f"model_{str(self.start_checkpoint)}/{c.REP_MEM}.pickle")
+            pickle_file = os.path.join(self.checkpoint_gen, f"model_{str(self.start_checkpoint)}", f"{c.REP_MEM}.pickle")
             with open(pickle_file, 'rb') as file:
                 self.replay_memory = pickle.load(file)
 

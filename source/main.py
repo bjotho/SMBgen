@@ -49,10 +49,6 @@ def main():
                 env.render()
                 current_state = new_state
 
-        print("********************* objgraph.show_refs ************************")
-        # Display env reference object. Generate the Python object relations in a png file with the file name.
-        objgraph.show_refs([env.game.state_dict[c.LEVEL].brick_group], filename="objgraph_brick_group.png")
-
         if c.TRAIN_GEN:
             model_num = env.game.state_dict[c.LEVEL].training_sessions
             env.game.state_dict[c.LEVEL].generator.save_model(num=model_num)
