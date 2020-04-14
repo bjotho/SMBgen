@@ -2,7 +2,6 @@ __author__ = 'marble_xu'
 
 import os
 import json
-import math
 import time
 import numpy as np
 
@@ -87,6 +86,7 @@ class Level(tools.State):
         self.mario_done = False
         self.generator_done = False
         self.gen_list_done = False
+        self.insert_zero_index = False
         self.observation = None
 
     def load_map(self):
@@ -309,12 +309,8 @@ class Level(tools.State):
                and self.training_sessions > self.generator.start_checkpoint:
                 self.generator.save_model(num=self.training_sessions)
 
-            # Decay epsilon
-            if self.generator.epsilon > c.MIN_EPSILON:
-                self.generator.epsilon *= c.EPSILON_DECAY
-                self.generator.epsilon = max(c.MIN_EPSILON, self.generator.epsilon)
-
-            # Message player that the game is about to resume
+            # Message player that the game is about to resume.
+            # Due to lag when generating level content.
             if self.player.rect.x > self.player_x and c.HUMAN_PLAYER:
                 print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
                 time.sleep(1)
@@ -479,6 +475,7 @@ class Level(tools.State):
             if c.REWARD in gen:
                 continue
             if mario_x >= gen[c.GEN_LINE] and c.TIMESTEP not in gen:
+                self.insert_zero_index = True
                 gen[c.PLAYER_X] = self.player.rect.x
                 gen[c.TIMESTEP] = self.timestep
 
@@ -506,11 +503,11 @@ class Level(tools.State):
     def calc_gen_reward(self, v, opt_v):
         if v < opt_v:
             try:
-                return math.sin((math.pi / (2 * opt_v)) * v)
+                return np.square(np.sin((np.pi / (2 * opt_v)) * v))
             except ZeroDivisionError:
                 return 0
         else:
-            return math.e ** (-0.5 * ((v - opt_v) ** 2))
+            return np.exp(-0.5 * (np.square(v - opt_v)))
 
     def check_player_x_collisions(self):
         # ground_step_pipe = pg.sprite.spritecollideany(self.player, self.ground_step_pipe_group)
@@ -760,6 +757,14 @@ class Level(tools.State):
                 not self.in_frozen_state()):
                 sprite.state = c.FALL
         sprite.rect.y -= 1
+
+        for sprite in self.brick_group:
+            sprite.remove_internal(check_group)
+        for sprite in self.solid_group:
+            sprite.remove_internal(check_group)
+        for sprite in self.box_group:
+            sprite.remove_internal(check_group)
+
         del check_group
 
     def check_for_player_death(self):
@@ -782,7 +787,7 @@ class Level(tools.State):
             # self.game_info[c.LEVEL_NUM] += 1
             self.next = c.LOAD_SCREEN
 
-        if not self.mario_done and c.HUMAN_PLAYER:
+        if not self.mario_done and c.HUMAN_PLAYER and self.insert_zero_index:
             print("zero_index:", self.zero_reward_index)
             gen = self.gen_list[self.zero_reward_index]
             gen[c.REWARD] = -1
@@ -790,7 +795,7 @@ class Level(tools.State):
 
         # if c.PRINT_GEN_REWARD:
         #     x = np.linspace(0.2, 10, 100)
-        #     plt.plot(x, math.e**(-(1/2) * ((x-3)**2)))
+        #     plt.plot(x, np.e**(-(1/2) * ((x-3)**2)))
         #     plt.plot(self.dx_list, self.reward_list, 'ro')
         #     plt.grid(True, which='both')
         #     plt.axis([-5, 10, 0, 2])

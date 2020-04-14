@@ -195,13 +195,21 @@ class MarioEnv(gym.Env):
         """Handle any hacking before a reset occurs."""
         try:
             game = self.game.state_dict[c.LEVEL]
-            if not game.mario_done:
+
+            # Decay epsilon
+            if game.generator.epsilon > c.MIN_EPSILON:
+                game.generator.epsilon *= c.EPSILON_DECAY
+                game.generator.epsilon = max(c.MIN_EPSILON, game.generator.epsilon)
+
+            # Insert penalty for generator at transition (generation) mario was unable to traverse.
+            if not game.mario_done and game.insert_zero_index:
                 print("zero_index:", game.zero_reward_index)
                 gen = game.gen_list[game.zero_reward_index]
                 gen[c.REWARD] = -1
                 game.generator.update_replay_memory(gen)
         except AttributeError:
             pass
+
 
         if self.game.state.next == c.GAME_OVER:
             self.game.state.persist = {

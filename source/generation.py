@@ -37,7 +37,8 @@ class Generator:
         os.makedirs(callback_dir, exist_ok=True)
 
         self.generator = self.create_generator(model=loaded_model_path)
-        self.tensorboard = TensorBoard(log_dir=callback_dir, histogram_freq=0, write_graph=True, write_images=True)
+        self.tensorboard = TensorBoard(log_dir=callback_dir, histogram_freq=0, write_graph=True, write_images=False)
+        print("tensorboard callback dir:", callback_dir)
 
         if loaded_model_path:
             self.load_replay_memory()
@@ -147,18 +148,15 @@ class Generator:
         # Get a minibatch of random samples from replay memory
         minibatch = random.sample(self.replay_memory, c.MINIBATCH_SIZE)
 
-        # Randomly set tile choice to greedy or not greedy variant
-        greedy = np.random.random() < self.epsilon
-
         # Get current states from minibatch and create list of predicted sequences
         current_states = np.array([transition[0] for transition in minibatch])
-        current_predicted_sequences = self.predict_new_states(current_states, greedy, return_qs=True)
+        current_predicted_sequences = self.predict_new_states(current_states, return_qs=True)
         current_predicted_sequences = np.array(current_predicted_sequences)
         # print("current_predicted_sequences:", current_predicted_sequences)
 
         # Get future states from minibatch, and create new list of sequece predictions
         new_current_states = [transition[3] for transition in minibatch]
-        future_predicted_sequences = self.predict_new_states(new_current_states, greedy, return_qs=True)
+        future_predicted_sequences = self.predict_new_states(new_current_states, return_qs=True)
         future_predicted_sequences = np.array(future_predicted_sequences)
         # print("future_predicted_sequences:", future_predicted_sequences)
 
@@ -180,7 +178,7 @@ class Generator:
             current_qs = current_predicted_sequences[index]
             enc_action = self.one_hot_encode(action)
             for n, action_n in enumerate(enc_action):
-                current_qs[n][self.choose_new_tile(action_n, greedy)] = new_Qs[n]
+                current_qs[n][self.choose_new_tile(action_n)] = new_Qs[n]
 
             # Insert sliding window states into X
             generator_input = []
@@ -201,7 +199,7 @@ class Generator:
 
         return 1
 
-    def predict_new_states(self, states, greedy, return_qs=False):
+    def predict_new_states(self, states, return_qs=False):
         # Loop through states and make predictions for new_states for each state
         predicted_states = []
         output = [] if return_qs else predicted_states
@@ -217,26 +215,23 @@ class Generator:
                 tile_qs = self.generator.predict(generator_input)[0]
                 if return_qs:
                     output[-1].append(tile_qs)
-                new_tile = self.choose_new_tile(tile_qs, greedy)
+                new_tile = self.choose_new_tile(tile_qs)
                 predicted_states[-1].append(new_tile)
 
         return output
 
-    def choose_new_tile(self, qs, greedy):
+    def choose_new_tile(self, qs):
+        # Randomly set tile choice to greedy or not greedy variant
+        greedy = np.random.random() < self.epsilon
+
         if greedy:
             # Greedy-variant
             new_tile = np.argmax(qs)
         else:
-            # Semi-random-variant
-            empirical_prob = self.softmax(qs)
-            new_tile = self.weighted_tile_choice(p=empirical_prob)
+            # Random-variant
+            new_tile = np.random.randint(0, len(c.GENERATOR_TILES))
 
         return new_tile
-
-    @staticmethod
-    def softmax(x):
-        """Compute softmax values for each sets of scores in x."""
-        return np.exp(x) / np.sum(np.exp(x), axis=0)
 
     def weighted_tile_choice(self, p):
         choice = np.random.random()
@@ -255,9 +250,6 @@ class Generator:
     def generate(self):
         output = []
 
-        # Randomly set tile choice to greedy or not greedy variant
-        greedy = np.random.random() < self.epsilon
-
         for _ in range(c.GEN_LENGTH):
             if c.SNAKING:
                 self.step *= -1
@@ -265,14 +257,14 @@ class Generator:
             if c.INSERT_GROUND:
                 map_col = str(2 * c.SOLID_ID)
             map_col_list = []
-            for _ in range(self.tiles_per_col - 1):
+            for _ in range(self.tiles_per_col):
                 if not c.RANDOM_GEN:
                     start = len(self.memory) - c.MEMORY_LENGTH
                     state = self.get_padded_memory(start, slice=True)
                     one_hot = self.one_hot_encode(state)
                     generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
                     prediction = self.generator.predict(generator_input)[0]
-                    new_tile = self.choose_new_tile(prediction, greedy)
+                    new_tile = self.choose_new_tile(prediction)
                     map_col_list.append(self._CHAR_MAP[new_tile])
                     self.update_memory(new_tile)
                 else:

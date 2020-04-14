@@ -1,6 +1,7 @@
 from source import constants as c
 from source.states import level_state
 import os
+import objgraph
 
 if not c.HUMAN_PLAYER:
     from threading import Thread
@@ -48,11 +49,16 @@ def main():
                 env.render()
                 current_state = new_state
 
-        model_num = env.game.state_dict[c.LEVEL].training_sessions
-        env.game.state_dict[c.LEVEL].generator.save_model(num=model_num)
-        env.game.state_dict[c.LEVEL].generator.save_replay_memory(num=model_num)
-        checkpoint = trainer.save(checkpoint_all)
-        print("Saved Mario checkpoint:", checkpoint)
+        print("********************* objgraph.show_refs ************************")
+        # Display env reference object. Generate the Python object relations in a png file with the file name.
+        objgraph.show_refs([env.game.state_dict[c.LEVEL].brick_group], filename="objgraph_brick_group.png")
+
+        if c.TRAIN_GEN:
+            model_num = env.game.state_dict[c.LEVEL].training_sessions
+            env.game.state_dict[c.LEVEL].generator.save_model(num=model_num)
+            env.game.state_dict[c.LEVEL].generator.save_replay_memory(num=model_num)
+            checkpoint = trainer.save(checkpoint_all)
+            print("Saved Mario checkpoint:", checkpoint)
 
     def restart_ray():
         global _ray_error
@@ -82,9 +88,10 @@ def main():
         if latest_checkpoint and c.LOAD_CHECKPOINT:
             trainer.restore(latest_checkpoint)
 
-        eval_thread = Thread(target=test, args=(trainer, ))
-        eval_thread.daemon = True
-        eval_thread.start()
+        if c.EVALUATE:
+            eval_thread = Thread(target=test, args=(trainer, ))
+            eval_thread.daemon = True
+            eval_thread.start()
         try:
             while True:
                 trainer.train()
@@ -95,9 +102,17 @@ def main():
                 save_counter += 1
         except RayOutOfMemoryError:
             print("Ray out of memory!")
-            print("Restarting ray...")
+            # print("Restarting ray...")
+            # print("********************* objgraph.show_most_common_types() ************************")
+            # # Display most common types in console.
+            # objgraph.show_most_common_types()
+            #
+            # print("********************* objgraph.show_growth(limit=10) ************************")
+            # # Display common type growth in console.
+            # objgraph.show_growth(limit=10)
             _ray_error = True
-            eval_thread.join()
+            if c.EVALUATE:
+                eval_thread.join()
             ray_shutdown()
             restart_ray()
 
