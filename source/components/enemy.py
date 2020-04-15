@@ -13,6 +13,7 @@ ENEMY_SPEED = 1
 def create_enemy(item, level):
     dir = c.LEFT if item['direction'] == 0 else c.RIGHT
     color = item[c.COLOR]
+    q = None if 'q' not in item else item['q']
     if c.ENEMY_RANGE in item:
         in_range = item[c.ENEMY_RANGE]
         range_start = item['range_start']
@@ -22,15 +23,15 @@ def create_enemy(item, level):
         range_start = range_end = 0
 
     if item['type'] == c.ENEMY_TYPE_GOOMBA:
-        sprite = Goomba(item['x'], item['y'], dir, color,
-                        in_range, range_start, range_end)
+        sprite = Goomba(item['x'], item['y'], q, dir, color,
+                        in_range, range_start, range_end, level=level)
     elif item['type'] == c.ENEMY_TYPE_KOOPA:
-        sprite = Koopa(item['x'], item['y'], dir, color,
-                       in_range, range_start, range_end)
+        sprite = Koopa(item['x'], item['y'], q, dir, color,
+                       in_range, range_start, range_end, level=level)
     elif item['type'] == c.ENEMY_TYPE_FLY_KOOPA:
         is_vertical = False if item['is_vertical'] == 0 else True
-        sprite = FlyKoopa(item['x'], item['y'], dir, color,
-                          in_range, range_start, range_end, is_vertical)
+        sprite = FlyKoopa(item['x'], item['y'], q, dir, color,
+                          in_range, range_start, range_end, is_vertical, level=level)
     elif item['type'] == c.ENEMY_TYPE_PIRANHA:
         sprite = Piranha(item['x'], item['y'], dir, color,
                          in_range, range_start, range_end)
@@ -53,7 +54,8 @@ class Enemy(pg.sprite.Sprite):
         pg.sprite.Sprite.__init__(self)
     
     def setup_enemy(self, x, y, direction, name, sheet, frame_rect_list,
-                    in_range, range_start, range_end, is_vertical=False, id=None):
+                    in_range, range_start, range_end, is_vertical=False, id=None, q=None, level=None):
+        self.textsurface = None if q is None else level.q_font.render(q, True, (255, 255, 255))
         self.frames = []
         self.frame_index = 0
         self.animate_timer = 0
@@ -76,6 +78,9 @@ class Enemy(pg.sprite.Sprite):
         self.id = id
         self.replacement = c.AIR_ID
         self.prev_x, self.prev_y = level_state.get_coordinates(self.rect.x, self.rect.y)
+
+        if self.textsurface is not None:
+            self.image.blit(self.textsurface, (3, 15))
 
     def load_frames(self, sheet, frame_rect_list):
         for frame_rect in frame_rect_list:
@@ -107,6 +112,9 @@ class Enemy(pg.sprite.Sprite):
             # print(self.id, "killed. New coordinates: (", new_x, new_y, ")")
             level_state.delete_observation(self.prev_x, self.prev_y)
             # level_state.print_2d(level_state.state)
+
+        if self.textsurface is not None:
+            self.image.blit(self.textsurface, (3, 15))
 
     def handle_state(self):
         if (self.state == c.WALK or
@@ -239,12 +247,13 @@ class Enemy(pg.sprite.Sprite):
 
 
 class Goomba(Enemy):
-    def __init__(self, x, y, direction, color, in_range,
-                range_start, range_end, name=c.GOOMBA):
+    def __init__(self, x, y, q, direction, color, in_range,
+                range_start, range_end, name=c.GOOMBA, level=None):
         Enemy.__init__(self)
         frame_rect_list = self.get_frame_rect(color)
         self.setup_enemy(x, y, direction, name, setup.GFX[c.ENEMY_SHEET],
-                         frame_rect_list, in_range, range_start, range_end, id=c.GOOMBA_ID)
+                         frame_rect_list, in_range, range_start, range_end,
+                         id=c.GOOMBA_ID, q=q, level=level)
         # dead jump image
         self.frames.append(pg.transform.flip(self.frames[2], False, True))
         # right walk images
@@ -268,12 +277,13 @@ class Goomba(Enemy):
 
 
 class Koopa(Enemy):
-    def __init__(self, x, y, direction, color, in_range,
-                range_start, range_end, name=c.KOOPA):
+    def __init__(self, x, y, q, direction, color, in_range,
+                range_start, range_end, name=c.KOOPA, level=None):
         Enemy.__init__(self)
         frame_rect_list = self.get_frame_rect(color)
         self.setup_enemy(x, y, direction, name, setup.GFX[c.ENEMY_SHEET],
-                         frame_rect_list, in_range, range_start, range_end, id=c.KOOPA_ID)
+                         frame_rect_list, in_range, range_start, range_end,
+                         id=c.KOOPA_ID, q=q, level=level)
         # dead jump image
         self.frames.append(pg.transform.flip(self.frames[2], False, True))
         # right walk images
@@ -304,12 +314,13 @@ class Koopa(Enemy):
 
 
 class FlyKoopa(Enemy):
-    def __init__(self, x, y, direction, color, in_range, 
-                range_start, range_end, isVertical, name=c.FLY_KOOPA):
+    def __init__(self, x, y, q, direction, color, in_range,
+                range_start, range_end, isVertical, name=c.FLY_KOOPA, level=None):
         Enemy.__init__(self)
         frame_rect_list = self.get_frame_rect(color)
         self.setup_enemy(x, y, direction, name, setup.GFX[c.ENEMY_SHEET],
-                         frame_rect_list, in_range, range_start, range_end, isVertical, id=c.FLY_KOOPA_ID)
+                         frame_rect_list, in_range, range_start, range_end, isVertical,
+                         id=c.FLY_KOOPA_ID, q=q, level=level)
         # dead jump image
         self.frames.append(pg.transform.flip(self.frames[2], False, True))
         # right walk images

@@ -249,8 +249,10 @@ class Generator:
 
     def generate(self):
         output = []
+        q_values = []
 
         for _ in range(c.GEN_LENGTH):
+            q_values.append([])
             if c.SNAKING:
                 self.step *= -1
             map_col = ""
@@ -266,6 +268,7 @@ class Generator:
                     prediction = self.generator.predict(generator_input)[0]
                     new_tile = self.choose_new_tile(prediction)
                     map_col_list.append(self._CHAR_MAP[new_tile])
+                    q_values[-1].append(str("%.2f" % prediction[new_tile]))
                     self.update_memory(new_tile)
                 else:
                     map_col_list.append(np.random.choice(c.GENERATOR_TILES))
@@ -281,7 +284,7 @@ class Generator:
                 with open(self.map_gen_file, 'a') as file:
                     file.write(map_col + "\n")
 
-        return output
+        return output, q_values
 
     def one_hot_encode(self, seq, cardinality=len(c.GENERATOR_TILES)):
         return to_categorical([seq], num_classes=cardinality)[0]

@@ -6,6 +6,7 @@ import time
 import numpy as np
 
 import pygame as pg
+import pygame.freetype
 from source import setup, tools, generation
 from source import constants as c
 from source.states import level_state
@@ -30,6 +31,7 @@ class Level(tools.State):
         self.gen_file_length = sum(1 for line in open(self.map_gen_file))
         self.generator = generation.Generator(self.map_gen_file, epsilon=0.5)
         self.training_sessions = max(0, self.generator.start_checkpoint)
+        self.q_font = pg.font.SysFont("dejavusansmono", 14, bold=True)
 
     def startup(self, current_time, persist):
         level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
@@ -142,12 +144,13 @@ class Level(tools.State):
 
     def setup_brick_and_box(self, bricks=None, boxes=None):
         # For each brick in the bricks list, create a brick with the brick's coordinates
-        for brick_coordinates in bricks:
-            brick.create_brick(self.brick_group, {'x': brick_coordinates[0], 'y': brick_coordinates[1], 'type': 0}, self)
+        for brick_data in bricks:
+            brick.create_brick(self.brick_group, {'x': brick_data[0], 'y': brick_data[1],
+                                                  'q': brick_data[2], 'type': 0}, self)
 
         # For each box in the boxes list, create a box with the box's coordinates
-        for box_coordinates in boxes:
-            self.box_group.add(box.Box(box_coordinates[0], box_coordinates[1], 1, self.coin_group))
+        for box_data in boxes:
+            self.box_group.add(box.Box(box_data[0], box_data[1], 1, box_data[2], self.coin_group, level=self))
 
     def setup_player(self):
         if self.player is None:
@@ -164,7 +167,8 @@ class Level(tools.State):
     def setup_enemies(self, enemies=None):
         index = 0
         for enemy_data in enemies:
-            item = {'x': enemy_data[0], 'y': enemy_data[1], 'direction': 0, 'type': enemy_data[2], 'color': 0}
+            item = {'x': enemy_data[0], 'y': enemy_data[1], 'q': enemy_data[2],
+                    'direction': 0, 'type': enemy_data[3], 'color': 0}
             if item['type'] == c.ENEMY_TYPE_FLY_KOOPA:
                 item['is_vertical'] = np.random.randint(0, 1)
             group = pg.sprite.Group()
@@ -237,9 +241,9 @@ class Level(tools.State):
 
     def setup_solid_tile(self, tiles, group, sprite_x, sprite_y):
         # For each tile in the tiles list, create a tile with the tile's coordinates
-        for tile_coordinates in tiles:
-            solid_tile.create_solid_tile(group, {'sprite_x': sprite_x, 'sprite_y': sprite_y, 'x': tile_coordinates[0],
-                                                 'y': tile_coordinates[1], 'type': 0}, self)
+        for tile_data in tiles:
+            solid_tile.create_solid_tile(group, {'sprite_x': sprite_x, 'sprite_y': sprite_y, 'x': tile_data[0],
+                                                 'y': tile_data[1], 'q': tile_data[2], 'type': 0}, self)
 
     def generate(self):
         tiles = {'ground': [],
@@ -247,7 +251,8 @@ class Level(tools.State):
                  'boxes': [],
                  'steps': [],
                  'solid': [],
-                 'enemies': []
+                 'enemies': [],
+                 'qs': []
         }
 
         if self.read:
@@ -265,11 +270,14 @@ class Level(tools.State):
                     self.read = False
         else:
             new_terrain = []
+            q_values = []
             if self.map_data[c.GEN_BORDER] >= self.map_data[c.MAP_FLAGPOLE][0]['x'] - c.GEN_PX_LEN or c.ONLY_GROUND:
                 for _ in range(c.GEN_LENGTH):
                     new_terrain.append(str(c.SOLID_ID * 2))
             else:
-                new_terrain = self.generator.generate()
+                new_generation = self.generator.generate()
+                new_terrain = new_generation[0]
+                q_values = new_generation[1]
 
             flag_x = self.map_data[c.MAP_FLAGPOLE][0]['x']
 
@@ -291,8 +299,8 @@ class Level(tools.State):
                 gen_border = self.player.rect.x + self.player.rect.w
                 self.mario_done = gen_border >= flag_x
 
-            for line in new_terrain:
-                tiles = self.build_tiles_dict(tiles, line)
+            for n, line in enumerate(new_terrain):
+                tiles = self.build_tiles_dict(tiles, line, q_values[n])
 
         # Add new tiles and entities to respective sprite groups
         self.setup_brick_and_box(tiles['bricks'], tiles['boxes'])
@@ -327,30 +335,34 @@ class Level(tools.State):
             if np.random.random() < 0.02:
                 group.empty()
 
-    def build_tiles_dict(self, tiles, line):
-        i = 0
-        for ch in line:
+    def build_tiles_dict(self, tiles, line, q_values=None):
+
+        if q_values is None:
+            q_values = []
+        while len(q_values) < c.COL_HEIGHT:
+            q_values = ["-"] + q_values
+
+        for n, ch in enumerate(line):
             if ch == c.GROUND_ID:
-                tiles['ground'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+                tiles['ground'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
             elif ch == c.BRICK_ID:
-                tiles['bricks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+                tiles['bricks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
             elif ch == c.BOX_ID:
-                tiles['boxes'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+                tiles['boxes'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
             elif ch == c.STEP_ID:
-                tiles['steps'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+                tiles['steps'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
             elif ch == c.SOLID_ID:
-                tiles['solid'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i)])
+                tiles['solid'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
             elif ch == c.GOOMBA_ID:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i), c.ENEMY_TYPE_GOOMBA])
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n], c.ENEMY_TYPE_GOOMBA])
             elif ch == c.KOOPA_ID:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i), c.ENEMY_TYPE_KOOPA])
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n], c.ENEMY_TYPE_KOOPA])
             elif ch == c.FLY_KOOPA_ID:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * i), c.ENEMY_TYPE_FLY_KOOPA])
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n], c.ENEMY_TYPE_FLY_KOOPA])
 
-            i += 1
         self.map_data[c.GEN_BORDER] += c.TILE_SIZE
         self.gen_line += 1
         return tiles

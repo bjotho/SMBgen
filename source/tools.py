@@ -3,7 +3,6 @@ __author__ = 'marble_xu'
 import os
 import pygame as pg
 from abc import abstractmethod
-from source.constants import BASE_FPS
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 

@@ -9,9 +9,10 @@ from source.states import level_state
 
 
 class Box(pg.sprite.Sprite):
-    def __init__(self, x, y, type, group=None, name=c.MAP_BOX):
+    def __init__(self, x, y, type, q=None, group=None, name=c.MAP_BOX, level=None):
         pg.sprite.Sprite.__init__(self)
-        
+
+        self.textsurface = None if q is None else level.q_font.render(q, True, (255, 255, 255))
         self.frames = []
         self.frame_index = 0
         self.load_frames()
@@ -30,6 +31,9 @@ class Box(pg.sprite.Sprite):
         self.group = group
         self.name = name
 
+        if self.textsurface is not None:
+            self.image.blit(self.textsurface, (3, 15))
+
         level_state.insert_observation(x, y, c.BOX_ID)
         
     def load_frames(self):
@@ -47,6 +51,9 @@ class Box(pg.sprite.Sprite):
                 self.resting()
             elif self.state == c.BUMPED:
                 self.bumped()
+
+            if self.textsurface is not None:
+                self.image.blit(self.textsurface, (3, 15))
 
     def resting(self):
         time_list = [375, 125, 125, 125]

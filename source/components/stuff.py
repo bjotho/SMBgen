@@ -36,7 +36,7 @@ class Checkpoint(pg.sprite.Sprite):
 
 
 class Stuff(pg.sprite.Sprite):
-    def __init__(self, x, y, sheet, image_rect_list, scale):
+    def __init__(self, x, y, sheet, image_rect_list, scale, textsurface=None):
         pg.sprite.Sprite.__init__(self)
         
         self.frames = []
@@ -48,6 +48,9 @@ class Stuff(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
+        if textsurface is not None:
+            self.image.blit(textsurface, (3, 15))
     
     def update(self, *args):
         pass

@@ -10,9 +10,9 @@ from source import constants as c
 dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "checkpoints")
 os.makedirs(os.path.join(f"{dir_path}", "generator_rewards"), exist_ok=True)
 
-write_all = True
-merge = True
-model = 556
+write_all = False
+merge = False
+model = 6700
 
 rewards = []
 models = [f"model_{str(model)}"]

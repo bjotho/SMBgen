@@ -6,13 +6,15 @@ from source.states import level_state
 
 def create_solid_tile(group, item, level):
     sprite_x, sprite_y, x, y, type = item['sprite_x'], item['sprite_y'], item['x'], item['y'], item['type']
-    group.add(SolidTile(sprite_x, sprite_y, x, y, type))
+    q = None if 'q' not in item else item['q']
+    group.add(SolidTile(sprite_x, sprite_y, x, y, q, type, level=level))
 
 
 class SolidTile(stuff.Stuff):
-    def __init__(self, sprite_x, sprite_y, x, y, type, group=None, name=c.MAP_STEP):
+    def __init__(self, sprite_x, sprite_y, x, y, q, type, group=None, name=c.MAP_STEP, level=None):
         frame_rect = [(sprite_x, sprite_y, 16, 16)]
-        stuff.Stuff.__init__(self, x, y, setup.GFX['tile_set'], frame_rect, c.SOLID_SIZE_MULTIPLIER)
+        textsurface = None if q is None else level.q_font.render(q, True, (255, 255, 255))
+        stuff.Stuff.__init__(self, x, y, setup.GFX['tile_set'], frame_rect, c.SOLID_SIZE_MULTIPLIER, textsurface)
 
         self.rest_height = y
         self.state = c.RESTING
