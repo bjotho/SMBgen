@@ -165,6 +165,9 @@ class Generator:
 
         # Enumerate transitions
         for index, (current_state, action, reward, new_current_states, done) in enumerate(minibatch):
+            # Randomly set tile choice to greedy or not greedy variant
+            greedy = np.random.random() < self.epsilon
+
             # If not a terminal state, get new qs from future states, otherwise set it to reward
             if not done:
                 max_future_Qs = [np.max(qs) for qs in future_predicted_sequences[index]]
@@ -178,7 +181,7 @@ class Generator:
             current_qs = current_predicted_sequences[index]
             enc_action = self.one_hot_encode(action)
             for n, action_n in enumerate(enc_action):
-                current_qs[n][self.choose_new_tile(action_n)] = new_Qs[n]
+                current_qs[n][self.choose_new_tile(action_n, greedy)] = new_Qs[n]
 
             # Insert sliding window states into X
             generator_input = []
@@ -204,6 +207,9 @@ class Generator:
         predicted_states = []
         output = [] if return_qs else predicted_states
         for state in states:
+            # Randomly set tile choice to greedy or not greedy variant
+            greedy = np.random.random() < self.epsilon
+
             predicted_states.append([])
             if return_qs:
                 output.append([])
@@ -215,14 +221,15 @@ class Generator:
                 tile_qs = self.generator.predict(generator_input)[0]
                 if return_qs:
                     output[-1].append(tile_qs)
-                new_tile = self.choose_new_tile(tile_qs)
+                new_tile = self.choose_new_tile(tile_qs, greedy)
                 predicted_states[-1].append(new_tile)
 
         return output
 
-    def choose_new_tile(self, qs):
-        # Randomly set tile choice to greedy or not greedy variant
-        greedy = np.random.random() < self.epsilon
+    def choose_new_tile(self, qs, greedy):
+        if not c.CHUNK_BASED_GREEDY:
+            # Randomly set tile choice to greedy or not greedy variant
+            greedy = np.random.random() < self.epsilon
 
         if greedy:
             # Greedy-variant
@@ -251,6 +258,9 @@ class Generator:
         output = []
         q_values = []
 
+        # Randomly set tile choice to greedy or not greedy variant
+        greedy = np.random.random() < self.epsilon
+
         for _ in range(c.GEN_LENGTH):
             q_values.append([])
             if c.SNAKING:
@@ -266,7 +276,7 @@ class Generator:
                     one_hot = self.one_hot_encode(state)
                     generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
                     prediction = self.generator.predict(generator_input)[0]
-                    new_tile = self.choose_new_tile(prediction)
+                    new_tile = self.choose_new_tile(prediction, greedy)
                     map_col_list.append(self._CHAR_MAP[new_tile])
                     q_values[-1].append(str("%.2f" % prediction[new_tile]))
                     self.update_memory(new_tile)

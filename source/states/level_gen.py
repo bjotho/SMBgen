@@ -318,6 +318,7 @@ class Level(tools.State):
             if not (self.training_sessions % c.GEN_MODEL_SAVE_INTERVAL)\
                and self.training_sessions > self.generator.start_checkpoint:
                 self.generator.save_model(num=self.training_sessions)
+                self.generator.save_replay_memory(num=self.training_sessions)
 
             # Message player that the game is about to resume.
             # Due to lag when generating level content.
@@ -510,7 +511,7 @@ class Level(tools.State):
                 dx = self.player.rect.x - gen[c.PLAYER_X]
                 dt = self.timestep - gen[c.TIMESTEP]
                 v = float(dx / dt)
-                gen[c.REWARD] = 1 - self.calc_gen_reward(v, gen[c.OPTIMAL_V])
+                gen[c.REWARD] = self.calc_gen_reward(v, gen[c.OPTIMAL_V])
                 self.generator.update_replay_memory(gen)
                 self.zero_reward_index += 1
                 print("reward:", "%.3f" % gen[c.REWARD])
