@@ -79,7 +79,7 @@ class Enemy(pg.sprite.Sprite):
         self.replacement = c.AIR_ID
         self.prev_x, self.prev_y = level_state.get_coordinates(self.rect.x, self.rect.y)
 
-        if self.textsurface is not None:
+        if self.textsurface is not None and c.PRINT_Q_VALUES:
             self.image.blit(self.textsurface, (3, 15))
 
     def load_frames(self, sheet, frame_rect_list):
@@ -113,7 +113,7 @@ class Enemy(pg.sprite.Sprite):
             level_state.delete_observation(self.prev_x, self.prev_y)
             # level_state.print_2d(level_state.state)
 
-        if self.textsurface is not None:
+        if self.textsurface is not None and c.PRINT_Q_VALUES:
             self.image.blit(self.textsurface, (3, 15))
 
     def handle_state(self):

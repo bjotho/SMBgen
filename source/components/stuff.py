@@ -49,7 +49,7 @@ class Stuff(pg.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
-        if textsurface is not None:
+        if textsurface is not None and c.PRINT_Q_VALUES:
             self.image.blit(textsurface, (3, 15))
     
     def update(self, *args):

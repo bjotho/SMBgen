@@ -13,7 +13,10 @@ def create_solid_tile(group, item, level):
 class SolidTile(stuff.Stuff):
     def __init__(self, sprite_x, sprite_y, x, y, q, type, group=None, name=c.MAP_STEP, level=None):
         frame_rect = [(sprite_x, sprite_y, 16, 16)]
-        textsurface = None if q is None else level.q_font.render(q, True, (255, 255, 255))
+        textsurface = None
+        if q is not None and level is not None:
+            if level.gen_line > 5:
+                textsurface = level.q_font.render(q, True, (255, 255, 255))
         stuff.Stuff.__init__(self, x, y, setup.GFX['tile_set'], frame_rect, c.SOLID_SIZE_MULTIPLIER, textsurface)
 
         self.rest_height = y

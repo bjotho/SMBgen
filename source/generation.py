@@ -274,7 +274,9 @@ class Generator:
                     map_col_list.append(np.random.choice(c.GENERATOR_TILES))
                     self.update_memory(self._TILE_MAP[map_col_list[-1]])
 
-                map_col_list = map_col_list[::self.step]
+            map_col_list = map_col_list[::self.step]
+            q_values[-1] = q_values[-1][::self.step]
+
             for tile in map_col_list:
                 map_col += tile
             output.append(map_col)

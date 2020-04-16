@@ -15,12 +15,12 @@ def create_brick(brick_group, item, level):
     x, y, type = item['x'], item['y'], item['type']
     q = None if 'q' not in item else item['q']
     if type == c.TYPE_COIN:
-        brick_group.add(Brick(x, y, type, 
+        brick_group.add(Brick(x, y, q, type,
                         color, level.coin_group))
     elif (type == c.TYPE_STAR or
           type == c.TYPE_FIREFLOWER or
           type == c.TYPE_LIFEMUSHROOM):
-        brick_group.add(Brick(x, y, type,
+        brick_group.add(Brick(x, y, q, type,
                         color, level.powerup_group))
     else:
         if c.BRICK_NUM in item:

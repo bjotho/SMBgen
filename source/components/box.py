@@ -9,7 +9,7 @@ from source.states import level_state
 
 
 class Box(pg.sprite.Sprite):
-    def __init__(self, x, y, type, q=None, group=None, name=c.MAP_BOX, level=None):
+    def __init__(self, x, y, type, group=None, name=c.MAP_BOX, q=None, level=None):
         pg.sprite.Sprite.__init__(self)
 
         self.textsurface = None if q is None else level.q_font.render(q, True, (255, 255, 255))
@@ -31,7 +31,7 @@ class Box(pg.sprite.Sprite):
         self.group = group
         self.name = name
 
-        if self.textsurface is not None:
+        if self.textsurface is not None and c.PRINT_Q_VALUES:
             self.image.blit(self.textsurface, (3, 15))
 
         level_state.insert_observation(x, y, c.BOX_ID)
@@ -52,7 +52,7 @@ class Box(pg.sprite.Sprite):
             elif self.state == c.BUMPED:
                 self.bumped()
 
-            if self.textsurface is not None:
+            if self.textsurface is not None and c.PRINT_Q_VALUES:
                 self.image.blit(self.textsurface, (3, 15))
 
     def resting(self):

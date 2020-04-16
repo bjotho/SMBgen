@@ -6,7 +6,6 @@ import time
 import numpy as np
 
 import pygame as pg
-import pygame.freetype
 from source import setup, tools, generation
 from source import constants as c
 from source.states import level_state
@@ -150,7 +149,7 @@ class Level(tools.State):
 
         # For each box in the boxes list, create a box with the box's coordinates
         for box_data in boxes:
-            self.box_group.add(box.Box(box_data[0], box_data[1], 1, box_data[2], self.coin_group, level=self))
+            self.box_group.add(box.Box(box_data[0], box_data[1], 1, self.coin_group, q=box_data[2], level=self))
 
     def setup_player(self):
         if self.player is None:
@@ -252,7 +251,7 @@ class Level(tools.State):
                  'steps': [],
                  'solid': [],
                  'enemies': [],
-                 'qs': []
+                 'air qs': []
         }
 
         if self.read:
@@ -275,9 +274,7 @@ class Level(tools.State):
                 for _ in range(c.GEN_LENGTH):
                     new_terrain.append(str(c.SOLID_ID * 2))
             else:
-                new_generation = self.generator.generate()
-                new_terrain = new_generation[0]
-                q_values = new_generation[1]
+                new_terrain, q_values = self.generator.generate()
 
             flag_x = self.map_data[c.MAP_FLAGPOLE][0]['x']
 
@@ -308,6 +305,11 @@ class Level(tools.State):
         self.setup_solid_tile(tiles['ground'], self.ground_group, 0, 0)
         self.setup_solid_tile(tiles['solid'], self.solid_group, 432, 0)
         self.setup_enemies(tiles['enemies'])
+
+        if self.gen_line > c.PLATFORM_LENGTH and c.PRINT_Q_VALUES:
+            for q_data in tiles['air qs']:
+                textsurface = self.q_font.render(q_data[2], True, (255, 255, 255))
+                self.background.blit(textsurface, (q_data[0] + 5, q_data[1] + 15))
 
         if c.TRAIN_GEN and not self.mario_done:
             # Update weights in generator network and increment training_sessions if model is trained
@@ -340,7 +342,7 @@ class Level(tools.State):
         if q_values is None:
             q_values = []
         while len(q_values) < c.COL_HEIGHT:
-            q_values = ["-"] + q_values
+            q_values = ["N/A"] + q_values
 
         for n, ch in enumerate(line):
             if ch == c.GROUND_ID:
@@ -355,13 +357,15 @@ class Level(tools.State):
                 tiles['solid'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
             elif ch == c.GOOMBA_ID:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n], c.ENEMY_TYPE_GOOMBA])
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * (n - 1)), q_values[n], c.ENEMY_TYPE_GOOMBA])
             elif ch == c.KOOPA_ID:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n], c.ENEMY_TYPE_KOOPA])
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * (n - 1)), q_values[n], c.ENEMY_TYPE_KOOPA])
             elif ch == c.FLY_KOOPA_ID:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n], c.ENEMY_TYPE_FLY_KOOPA])
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * (n - 1)), q_values[n], c.ENEMY_TYPE_FLY_KOOPA])
+            elif ch == c.AIR_ID:
+                tiles['air qs'].append((self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]))
 
         self.map_data[c.GEN_BORDER] += c.TILE_SIZE
         self.gen_line += 1
