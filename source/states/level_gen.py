@@ -27,7 +27,6 @@ class Level(tools.State):
         tools.State.__init__(self)
         self.player = None
         self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
-        self.gen_file_length = sum(1 for line in open(self.map_gen_file))
         self.generator = generation.Generator(self.map_gen_file, epsilon=0.5)
         self.training_sessions = max(0, self.generator.start_checkpoint)
         self.q_font = pg.font.SysFont("dejavusansmono", 14, bold=True)
@@ -76,6 +75,7 @@ class Level(tools.State):
 
         self.generator.generator_startup()
 
+        self.gen_file_length = sum(1 for line in open(self.map_gen_file))
         self.read = c.READ
         self.gen_line = 0
         self.enemies = 0
@@ -297,7 +297,10 @@ class Level(tools.State):
                 self.mario_done = gen_border >= flag_x
 
             for n, line in enumerate(new_terrain):
-                tiles = self.build_tiles_dict(tiles, line, q_values[n])
+                try:
+                    tiles = self.build_tiles_dict(tiles, line, q_values[n])
+                except IndexError:
+                    tiles = self.build_tiles_dict(tiles, line)
 
         # Add new tiles and entities to respective sprite groups
         self.setup_brick_and_box(tiles['bricks'], tiles['boxes'])
@@ -322,7 +325,7 @@ class Level(tools.State):
 
             # Message player that the game is about to resume.
             # Due to lag when generating level content.
-            if self.player.rect.x > self.player_x and c.HUMAN_PLAYER:
+            if self.player.rect.x > self.player_x and (not self.read) and c.HUMAN_PLAYER:
                 print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
                 time.sleep(1)
 

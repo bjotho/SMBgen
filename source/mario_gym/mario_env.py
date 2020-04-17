@@ -71,7 +71,8 @@ class MarioEnv(gym.Env):
         return list(self._button_map.keys())
 
     def tokenize_tiles(self, tiles: list):
-        # Tokenize tiles and populate tile_map dict with (tile_id: token) pairs
+        # Tokenize tiles and populate tile_map dict with (tile_id: token) pairs,
+        # and populate char_map dict with (token: tile_id) pairs.
         tile_map = {}
         char_map = {}
         token_step = 1.0 / (len(tiles) - 1)
@@ -209,7 +210,6 @@ class MarioEnv(gym.Env):
                 game.generator.update_replay_memory(gen)
         except AttributeError:
             pass
-
 
         if self.game.state.next == c.GAME_OVER:
             self.game.state.persist = {
