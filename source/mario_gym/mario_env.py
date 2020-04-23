@@ -171,6 +171,8 @@ class MarioEnv(gym.Env):
         return observation, reward, self.done, info
 
     def _reward(self):
+        """Mario reward function"""
+
         # Current x-value of mario
         current_x = self.game.state_dict[c.LEVEL].player.rect.x
 

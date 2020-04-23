@@ -30,6 +30,16 @@ class Level(tools.State):
         self.generator = generation.Generator(self.map_gen_file, epsilon=0.5)
         self.training_sessions = max(0, self.generator.start_checkpoint)
         self.q_font = pg.font.SysFont("dejavusansmono", 14, bold=True)
+        self.GEN_DICT = {
+            c.GROUND_ID: 'ground',
+            c.BRICK_ID: 'bricks',
+            c.BOX_ID: 'boxes',
+            c.STEP_ID: 'steps',
+            c.SOLID_ID: 'solid',
+            c.AIR_ID: 'air'
+        }
+        for enemy_id in c.ENEMY_IDS:
+            self.GEN_DICT[enemy_id] = 'enemies'
 
     def startup(self, current_time, persist):
         level_state.state = [[c.AIR_ID for _ in range(c.COL_HEIGHT)]]
@@ -75,7 +85,7 @@ class Level(tools.State):
 
         self.generator.generator_startup()
 
-        self.gen_file_length = sum(1 for line in open(self.map_gen_file))
+        self.gen_file_length = sum(1 for _line in open(self.map_gen_file))
         self.read = c.READ
         self.gen_line = 0
         self.enemies = 0
@@ -245,14 +255,10 @@ class Level(tools.State):
                                                  'y': tile_data[1], 'q': tile_data[2], 'type': 0}, self)
 
     def generate(self):
-        tiles = {'ground': [],
-                 'bricks': [],
-                 'boxes': [],
-                 'steps': [],
-                 'solid': [],
-                 'enemies': [],
-                 'air': []
-        }
+        tiles = {}
+        for item in self.GEN_DICT.items():
+            item = item[-1]
+            tiles[item] = []
 
         if self.read:
             line_num = 0
@@ -343,34 +349,26 @@ class Level(tools.State):
                 group.empty()
 
     def build_tiles_dict(self, tiles, line, q_values=None):
+        """Fill the tiles dictionary with coordinates, Q-values and potentially type for each tile in line"""
 
+        # Prepend "N/A" to q_values list until it has length = c.COL_HEIGHT
         if q_values is None:
             q_values = []
         while len(q_values) < c.COL_HEIGHT:
             q_values = ["N/A"] + q_values
 
+        # Build the tiles dict in the format:
+        #   tiles[tile_type].append([x, y, q])
+        # or if tile_type is an enemy:
+        #   tiles['enemies'].append([x, y, q, type])
+        line = line.replace("\n", "")
         for n, ch in enumerate(line):
-            if ch == c.GROUND_ID:
-                tiles['ground'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
-            elif ch == c.BRICK_ID:
-                tiles['bricks'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
-            elif ch == c.BOX_ID:
-                tiles['boxes'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
-            elif ch == c.STEP_ID:
-                tiles['steps'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
-            elif ch == c.SOLID_ID:
-                tiles['solid'].append([self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
-            elif ch == c.GOOMBA_ID:
+            if ch not in c.ENEMY_IDS:
+                tiles[self.GEN_DICT[ch]].append(
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]])
+            else:
                 tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * (n - 1)), q_values[n], c.ENEMY_TYPE_GOOMBA])
-            elif ch == c.KOOPA_ID:
-                tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * (n - 1)), q_values[n], c.ENEMY_TYPE_KOOPA])
-            elif ch == c.FLY_KOOPA_ID:
-                tiles['enemies'].append(
-                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * (n - 1)), q_values[n], c.ENEMY_TYPE_FLY_KOOPA])
-            elif ch == c.AIR_ID:
-                tiles['air'].append((self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]))
+                    [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * (n - 1)), q_values[n], int(ch)])
 
         self.map_data[c.GEN_BORDER] += c.TILE_SIZE
         self.gen_line += 1
