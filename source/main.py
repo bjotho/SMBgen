@@ -1,7 +1,7 @@
 from source import constants as c
 from source.states import level_state
 import os
-import objgraph
+# import objgraph
 
 if not c.HUMAN_PLAYER:
     from threading import Thread
@@ -34,7 +34,7 @@ def main():
 
         config = dict(
             actions=COMPLEX_MOVEMENT,
-            window=False,
+            window=True,
             fps=60_000
         )
         env = MarioEnv(config)
@@ -46,7 +46,6 @@ def main():
             while not done and not _ray_error:
                 action = trainer.compute_action(current_state)
                 new_state, reward, done, info = env.step(action)
-                env.render()
                 current_state = new_state
 
         if c.TRAIN_GEN:
@@ -65,12 +64,11 @@ def main():
         largest = level_state.find_latest_checkpoint(checkpoint_all)
         latest_checkpoint = None
         if largest > -1:
-            latest_checkpoint = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}/checkpoint-{str(largest)}")
-            print("Loading Mario checkpoint:", latest_checkpoint)
+            latest_checkpoint = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}", f"checkpoint-{str(largest)}")
 
         register_env(c.ENV_NAME, lambda config: MarioEnv(config))
 
-        ray_init()
+        ray_init(ignore_reinit_error=True)
 
         trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
             "num_gpus": 1,
@@ -78,11 +76,17 @@ def main():
             "eager": False,
             "model": {
                 "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
-            }
+            },
+            "env_config": dict(
+                actions=COMPLEX_MOVEMENT,
+                window=False,
+                fps=60_000
+            )
             # "train_batch_size": 2048
         })
         if latest_checkpoint and c.LOAD_CHECKPOINT:
             trainer.restore(latest_checkpoint)
+            print("Loaded Mario checkpoint:", latest_checkpoint)
 
         if c.EVALUATE:
             eval_thread = Thread(target=test, args=(trainer, ))
@@ -96,16 +100,17 @@ def main():
                     print("Saved Mario checkpoint:", checkpoint)
 
                 save_counter += 1
+
         except RayOutOfMemoryError:
             print("Ray out of memory!")
-            # print("Restarting ray...")
             # print("********************* objgraph.show_most_common_types() ************************")
             # # Display most common types in console.
             # objgraph.show_most_common_types()
-            #
             # print("********************* objgraph.show_growth(limit=10) ************************")
             # # Display common type growth in console.
             # objgraph.show_growth(limit=10)
+        finally:
+            # print("Restarting ray...")
             _ray_error = True
             if c.EVALUATE:
                 eval_thread.join()

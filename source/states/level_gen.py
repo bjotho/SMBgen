@@ -251,7 +251,7 @@ class Level(tools.State):
                  'steps': [],
                  'solid': [],
                  'enemies': [],
-                 'air qs': []
+                 'air': []
         }
 
         if self.read:
@@ -296,6 +296,7 @@ class Level(tools.State):
                 gen_border = self.player.rect.x + self.player.rect.w
                 self.mario_done = gen_border >= flag_x
 
+            # Build tiles dict using encoded tiles in new_terrain
             for n, line in enumerate(new_terrain):
                 try:
                     tiles = self.build_tiles_dict(tiles, line, q_values[n])
@@ -310,7 +311,7 @@ class Level(tools.State):
         self.setup_enemies(tiles['enemies'])
 
         if self.gen_line > c.PLATFORM_LENGTH and c.PRINT_Q_VALUES:
-            for q_data in tiles['air qs']:
+            for q_data in tiles['air']:
                 textsurface = self.q_font.render(q_data[2], True, (255, 255, 255))
                 self.background.blit(textsurface, (q_data[0] + 5, q_data[1] + 15))
 
@@ -369,7 +370,7 @@ class Level(tools.State):
                 tiles['enemies'].append(
                     [self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * (n - 1)), q_values[n], c.ENEMY_TYPE_FLY_KOOPA])
             elif ch == c.AIR_ID:
-                tiles['air qs'].append((self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]))
+                tiles['air'].append((self.map_data[c.GEN_BORDER], c.GEN_HEIGHT - (c.TILE_SIZE * n), q_values[n]))
 
         self.map_data[c.GEN_BORDER] += c.TILE_SIZE
         self.gen_line += 1

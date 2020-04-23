@@ -22,12 +22,13 @@ class MarioEnv(gym.Env):
         fps = 60 if "fps" not in config else config["fps"]
         actions = COMPLEX_MOVEMENT if "actions" not in config else config["actions"]
 
-        if has_window:
+        if not has_window:
             os.environ['SDL_VIDEODRIVER'] = 'dummy'
         import pygame
 
         self.pg = pygame
 
+        self.has_window = has_window
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
         self.clock_last = c.GAME_TIME_OUT
@@ -162,6 +163,9 @@ class MarioEnv(gym.Env):
 
             self.obs_counter += 1
             self.obs_counter = self.obs_counter % 10
+
+        if self.has_window:
+            self.render()
 
         # returns observation, reward, done, info
         return observation, reward, self.done, info
