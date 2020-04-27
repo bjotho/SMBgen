@@ -287,7 +287,6 @@ class Generator:
             map_col_list = map_col_list[::self.step]
             q_values[-1] = q_values[-1][::self.step]
 
-            print("map_col_list before:", map_col_list)
             two_tile_enemy = False
             for n, tile in enumerate(map_col_list):
                 if two_tile_enemy:
@@ -298,8 +297,6 @@ class Generator:
 
                 if tile in [c.KOOPA_ID, c.FLY_KOOPA_ID]:
                     two_tile_enemy = True
-
-            print("map_col_list after:", map_col_list)
 
             for tile in map_col_list:
                 map_col += tile
