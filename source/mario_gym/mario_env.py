@@ -29,7 +29,7 @@ class MarioEnv(gym.Env):
         import pygame
 
         self.pg = pygame
-        # self.rollout = curiosity.Rollout()
+        # self.rollout = curiosity.Rollout(p1, p2, p3, ..., pn)
 
         self.has_window = has_window
         self.last_observation = None
