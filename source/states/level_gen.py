@@ -27,7 +27,7 @@ class Level(tools.State):
         tools.State.__init__(self)
         self.player = None
         self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
-        self.generator = generation.Generator(self.map_gen_file, epsilon=0.5)
+        self.generator = generation.Generator(self.map_gen_file, epsilon=1.0)
         self.training_sessions = max(0, self.generator.start_checkpoint)
         self.q_font = pg.font.SysFont("dejavusansmono", 14, bold=True)
         self.GEN_DICT = {
@@ -489,6 +489,9 @@ class Level(tools.State):
             self.check_player_y_collisions()
 
     def check_gen_reward(self):
+        """Check if Mario has traversed a chunk of generated tiles and insert a transition
+        into the generator replay memory cotaining (state, action, reward, new_state, done)"""
+
         mario_x = level_state.get_coordinates(self.player.rect.x + self.player.rect.w, 0)[0] + 1
         for gen in self.gen_list:
             if c.REWARD in gen:

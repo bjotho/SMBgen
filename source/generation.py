@@ -136,9 +136,10 @@ class Generator:
         model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
         return model
 
-    # Train the generator model if replay memory is large enough.
-    # Return 1 if the generator model is trained, 0 otherwise
     def train(self):
+        """Train the generator model if replay memory is large enough.
+        Return 1 if the generator model is trained, 0 otherwise"""
+
         # Only start training if we have enough transitions in replay memory
         if len(self.replay_memory) < c.MIN_REPLAY_MEMORY_SIZE:
             return 0
