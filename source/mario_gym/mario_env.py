@@ -13,6 +13,8 @@ if c.GENERATE_MAP:
 else:
     from source.states import level
 
+# from source.mario_gym import curiosity
+
 
 class MarioEnv(gym.Env):
 
@@ -27,8 +29,11 @@ class MarioEnv(gym.Env):
         import pygame
 
         self.pg = pygame
+        # self.rollout = curiosity.Rollout()
 
         self.has_window = has_window
+        self.last_observation = None
+        self.observation = None
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
         self.clock_last = c.GAME_TIME_OUT
@@ -134,14 +139,14 @@ class MarioEnv(gym.Env):
 
     def step(self, action):
         action = self._ACTION_TO_KEYS[action]
+        # self.game.event_loop()
         self.game.keys = action
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
         reward = 0
-        observation = None
         if self.game.state == self.game.state_dict[c.LEVEL]:
-            observation = self.get_observation()
+            self.observation = self.get_observation()
             reward = self._reward()
             if self.game.state_dict[c.LEVEL].done or self.game.state_dict[c.LEVEL].player.dead:
                 self.done = True
@@ -167,8 +172,11 @@ class MarioEnv(gym.Env):
         if self.has_window:
             self.render()
 
+        # self.rollout.inc_step_count()
+
+        self.last_observation = self.observation
         # returns observation, reward, done, info
-        return observation, reward, self.done, info
+        return self.observation, reward, self.done, info
 
     def _reward(self):
         """Mario reward function"""
