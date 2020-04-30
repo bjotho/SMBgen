@@ -30,6 +30,7 @@ class MarioEnv(gym.Env):
 
         self.last_observation = None
         self.observation = None
+        self.step_count = 0
 
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
@@ -88,6 +89,7 @@ class MarioEnv(gym.Env):
             # set this action maps value to the byte action value
             self._action_map[action] = action_list
             self._action_meanings[action] = ' '.join(button_list)
+            self.step_count += 1
 
         self.setup_action_to_keys()
         self.tokenize_tiles()
@@ -142,14 +144,6 @@ class MarioEnv(gym.Env):
         reward += self.clock_last - clock_now
         self.clock_last = clock_now
         return reward
-
-    def calculate_loss(self, ob):
-        n_chunks = 8
-        n = ob.shape[0]
-        chunk_size = n // n_chunks
-        assert n % n_chunks == 0
-        sli = lambda i: slice(i * chunk_size, (i + 1) * chunk_size)
-        return np.concatenate([getsess])
 
     def _will_reset(self):
         """Handle any hacking before a reset occurs."""
