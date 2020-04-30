@@ -140,6 +140,7 @@ class Generator:
     # Return 1 if the generator model is trained, 0 otherwise
     def train(self):
         # Only start training if we have enough transitions in replay memory
+        print("len(self.replay_memory)", len(self.replay_memory))
         if len(self.replay_memory) < c.MIN_REPLAY_MEMORY_SIZE:
             return 0
 
@@ -254,6 +255,7 @@ class Generator:
 
         return i - 1
 
+
     def generate(self):
         output = []
         q_values = []
@@ -261,10 +263,11 @@ class Generator:
         # Randomly set tile choice to greedy or not greedy variant
         greedy = np.random.random() < self.epsilon
 
+        # c.GEN_LENGTH: 5
+        # self.tiles_per_col: 11 or 13 (c.INSERT_GROUND = False)
+
         for _ in range(c.GEN_LENGTH):
             q_values.append([])
-            if c.SNAKING:
-                self.step *= -1
             map_col = ""
             if c.INSERT_GROUND:
                 map_col = str(2 * c.SOLID_ID)
@@ -272,11 +275,20 @@ class Generator:
             for _ in range(self.tiles_per_col):
                 if not c.RANDOM_GEN:
                     start = len(self.memory) - c.MEMORY_LENGTH
+                    #print("start", start)
                     state = self.get_padded_memory(start, slice=True)
+                    #print("state", state)
                     one_hot = self.one_hot_encode(state)
+                    #print("one_ho", one_hot)
                     generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
+                    #print("np.concatenate((np.array([1]), one_hot.shape))", np.concatenate((np.array([1]), one_hot.shape)))
+                    #print("generator_input", generator_input)
                     prediction = self.generator.predict(generator_input)[0]
+                    # self.generator.predict(generator_input) er et array som inneholder arrayet
+                    # med prediction, derfor [0]
+                    #print("prediction", prediction)
                     new_tile = self.choose_new_tile(prediction, greedy)
+                    #print("new_tile", new_tile)
                     map_col_list.append(self._CHAR_MAP[new_tile])
                     q_values[-1].append(str("%.2f" % prediction[new_tile]))
                     self.update_memory(new_tile)
@@ -284,8 +296,11 @@ class Generator:
                     map_col_list.append(np.random.choice(c.GENERATOR_TILES))
                     self.update_memory(self._TILE_MAP[map_col_list[-1]])
 
+            #print("q_values before step", q_values)
             map_col_list = map_col_list[::self.step]
             q_values[-1] = q_values[-1][::self.step]
+
+            #print("q_values after step", q_values)
 
             for tile in map_col_list:
                 map_col += tile
