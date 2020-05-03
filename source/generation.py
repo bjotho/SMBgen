@@ -8,9 +8,9 @@ except ImportError:
     import pickle
 
 from tensorflow.python.keras.callbacks import TensorBoard
-from tensorflow.python.keras import Input
+# from tensorflow.python.keras import Input
 from tensorflow.python.keras.models import Sequential, model_from_json
-from tensorflow.python.keras.layers import LSTM, Dense
+from tensorflow.python.keras.layers import LSTM, RepeatVector, TimeDistributed, Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
@@ -114,9 +114,9 @@ class Generator:
                     for char in clean_line[::self.step]:
                         self.memory.append(self._TILE_MAP[char])
 
-    # returns train, inference_encoder and inference_decoder models
     def create_generator(self, model=None):
-        # https://github.com/golsun/deep-RL-trading/blob/master/src/agents.py#L161 # <-- TODO - Look here :D
+        """Creates or loads generator model"""
+
         if model is not None:
             # Load JSON and create model
             json_file = open(f"{model}.json", 'r')
@@ -130,10 +130,12 @@ class Generator:
             return loaded_model
 
         model = Sequential()
-        model.add(Input(shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))
-        model.add(LSTM(c.LSTM_CELLS))
-        model.add(Dense(len(c.GENERATOR_TILES), activation='linear'))  # model.add(LSTM(len(c.GENERATOR_TILES), return_sequences=True))
+        model.add(LSTM(units=self.gen_size, input_shape=(c.MEMORY_LENGTH, len(c.GENERATOR_TILES))))
+        model.add(RepeatVector(self.gen_size))
+        model.add(LSTM(units=self.gen_size, return_sequences=True))
+        model.add(TimeDistributed(Dense(len(c.GENERATOR_TILES), activation='linear')))
         model.compile(loss='mse', optimizer=Adam(lr=c.LEARNING_RATE), metrics=['accuracy'])
+
         return model
 
     def train(self):
@@ -151,45 +153,32 @@ class Generator:
 
         # Get current states from minibatch and create list of predicted sequences
         current_states = np.array([transition[0] for transition in minibatch])
-        current_predicted_sequences = self.predict_new_states(current_states, return_qs=True)
-        current_predicted_sequences = np.array(current_predicted_sequences)
-        # print("current_predicted_sequences:", current_predicted_sequences)
+        current_predicted_sequences = np.array(self.predict_new_states(current_states, return_qs=True))
 
         # Get future states from minibatch, and create new list of sequece predictions
-        new_current_states = [transition[3] for transition in minibatch]
-        future_predicted_sequences = self.predict_new_states(new_current_states, return_qs=True)
-        future_predicted_sequences = np.array(future_predicted_sequences)
-        # print("future_predicted_sequences:", future_predicted_sequences)
+        new_current_states = np.array([transition[3] for transition in minibatch])
+        future_predicted_sequences = np.array(self.predict_new_states(new_current_states, return_qs=True))
 
         X = []
         y = []
 
         # Enumerate transitions
-        for index, (current_state, action, reward, new_current_states, done) in enumerate(minibatch):
-            # Randomly set tile choice to greedy or not greedy variant
-            greedy = np.random.random() < self.epsilon
+        for index, (current_state, action, reward, new_current_state, done) in enumerate(minibatch):
 
             # If not a terminal state, get new qs from future states, otherwise set it to reward
             if not done:
                 max_future_Qs = [np.max(qs) for qs in future_predicted_sequences[index]]
-                new_Qs = [reward + c.DISCOUNT * fqs for fqs in max_future_Qs]
+                new_Qs = np.array([reward + c.DISCOUNT * fqs for fqs in max_future_Qs])
             else:
-                new_Qs = [reward for _ in range(len(future_predicted_sequences[index]))]
+                new_Qs = np.array([reward for _ in range(len(future_predicted_sequences[index]))])
 
-            new_Qs = np.array(new_Qs)
-
-            # Update Q values for given state
+            # Update Q-values for given state
             current_qs = current_predicted_sequences[index]
-            enc_action = self.one_hot_encode(action)
-            for n, action_n in enumerate(enc_action):
-                current_qs[n][self.choose_new_tile(action_n, greedy)] = new_Qs[n]
+            for n, action_n in enumerate(action):
+                current_qs[n][action_n] = new_Qs[n]
 
-            # Insert sliding window states into X
-            generator_input = []
-            for i in range(self.gen_size):
-                state_slice = max(0, i - c.MEMORY_LENGTH)
-                tmp_state = np.concatenate((current_state[i:], action[state_slice:i]))
-                generator_input.append(self.one_hot_encode(tmp_state))
+            # One-hot encode current state from transition
+            generator_input = self.one_hot_encode(current_state)
 
             # Append to training data
             X.append(generator_input)
@@ -198,8 +187,7 @@ class Generator:
         # Fit on all transitions in minibatch
         X = np.array(X)
         y = np.array(y)
-        for i in range(len(X)):
-            self.generator.fit(X[i], y[i], batch_size=self.gen_size, verbose=0, shuffle=False, callbacks=[self.tensorboard])
+        self.generator.fit(X, y, batch_size=c.MINIBATCH_SIZE, verbose=0, shuffle=False, callbacks=[self.tensorboard])
 
         return 1
 
@@ -209,20 +197,19 @@ class Generator:
         output = [] if return_qs else predicted_states
         for state in states:
             # Randomly set tile choice to greedy or not greedy variant
-            greedy = np.random.random() < self.epsilon
+            greedy = np.random.random() > self.epsilon
 
             predicted_states.append([])
+
+            one_hot = self.one_hot_encode(state)
+            generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
+            tile_qs = self.generator.predict(generator_input)[0]
             if return_qs:
-                output.append([])
-            for i in range(self.gen_size):
-                state_slice = max(0, len(predicted_states[-1]) - c.MEMORY_LENGTH)
-                tmp_state = np.concatenate((state[i:], predicted_states[-1][state_slice:]))
-                one_hot = self.one_hot_encode(tmp_state)
-                generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
-                tile_qs = self.generator.predict(generator_input)[0]
-                if return_qs:
-                    output[-1].append(tile_qs)
-                new_tile = self.choose_new_tile(tile_qs, greedy)
+                output.append(tile_qs)
+
+            # Iterate over each list of Q-values and pick one new tile per list
+            for qs in tile_qs:
+                new_tile = self.choose_new_tile(qs, greedy)
                 predicted_states[-1].append(new_tile)
 
         return output
@@ -230,9 +217,9 @@ class Generator:
     def choose_new_tile(self, qs, greedy):
         if not c.CHUNK_BASED_GREEDY:
             # Randomly set tile choice to greedy or not greedy variant
-            greedy = np.random.random() < self.epsilon
+            greedy = np.random.random() > self.epsilon
 
-        if greedy:
+        if greedy or c.GREEDY:
             # Greedy-variant
             new_tile = np.argmax(qs)
         else:
@@ -260,8 +247,15 @@ class Generator:
         q_values = []
 
         # Randomly set tile choice to greedy or not greedy variant
-        greedy = np.random.random() < self.epsilon
+        greedy = np.random.random() > self.epsilon
 
+        start = len(self.memory) - c.MEMORY_LENGTH
+        state = self.get_padded_memory(start, slice=True)
+        one_hot = self.one_hot_encode(state)
+        generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
+        prediction = self.generator.predict([generator_input, generator_input])[0]
+
+        i = 0
         for _ in range(c.GEN_LENGTH):
             q_values.append([])
             if c.SNAKING:
@@ -272,18 +266,15 @@ class Generator:
             map_col_list = []
             for _ in range(self.tiles_per_col):
                 if not c.RANDOM_GEN:
-                    start = len(self.memory) - c.MEMORY_LENGTH
-                    state = self.get_padded_memory(start, slice=True)
-                    one_hot = self.one_hot_encode(state)
-                    generator_input = np.reshape(one_hot, np.concatenate((np.array([1]), one_hot.shape)))
-                    prediction = self.generator.predict(generator_input)[0]
-                    new_tile = self.choose_new_tile(prediction, greedy)
+                    new_tile = self.choose_new_tile(prediction[i], greedy)
                     map_col_list.append(self._CHAR_MAP[new_tile])
-                    q_values[-1].append(str("%.2f" % prediction[new_tile]))
+                    q_values[-1].append(str("%.2f" % prediction[i][new_tile]))
                     self.update_memory(new_tile)
                 else:
                     map_col_list.append(np.random.choice(c.GENERATOR_TILES))
                     self.update_memory(self._TILE_MAP[map_col_list[-1]])
+
+                i += 1
 
             map_col_list = map_col_list[::self.step]
             q_values[-1] = q_values[-1][::self.step]

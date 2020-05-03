@@ -330,19 +330,6 @@ class Level(tools.State):
                 self.generator.save_model(num=self.training_sessions)
                 self.generator.save_replay_memory(num=self.training_sessions)
 
-            # Message player that the game is about to resume.
-            # Due to lag when generating level content.
-            if self.player.rect.x > self.player_x and (not self.read) and c.HUMAN_PLAYER:
-                print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
-                time.sleep(1)
-
-        # level_state.print_2d(level_state.state)
-        # for tile in tmp:
-        #     print(tile)
-        # self.randomly_clear_tiles([self.solid_group,
-        #                            self.brick_group,
-        #                            self.box_group])
-
     def randomly_clear_tiles(self, groups):
         for group in groups:
             if np.random.random() < 0.02:
