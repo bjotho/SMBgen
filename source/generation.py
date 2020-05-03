@@ -160,7 +160,7 @@ class Generator:
         y = []
 
         # Enumerate transitions
-        for index, (current_state, action, reward, new_current_states, done) in enumerate(minibatch):
+        for index, (current_state, action, reward, new_current_state, done) in enumerate(minibatch):
 
             # If not a terminal state, get new qs from future states, otherwise set it to reward
             if not done:
