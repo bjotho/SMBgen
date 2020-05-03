@@ -150,38 +150,29 @@ class Generator:
 
         # Get current states from minibatch and create list of predicted sequences
         current_states = np.array([transition[0] for transition in minibatch])
-        current_predicted_sequences = self.predict_new_states(current_states, return_qs=True)
-        current_predicted_sequences = np.array(current_predicted_sequences)
-        # print("current_predicted_sequences:", current_predicted_sequences)
+        current_predicted_sequences = np.array(self.predict_new_states(current_states, return_qs=True))
 
         # Get future states from minibatch, and create new list of sequece predictions
         new_current_states = [transition[3] for transition in minibatch]
-        future_predicted_sequences = self.predict_new_states(new_current_states, return_qs=True)
-        future_predicted_sequences = np.array(future_predicted_sequences)
-        # print("future_predicted_sequences:", future_predicted_sequences)
+        future_predicted_sequences = np.array(self.predict_new_states(new_current_states, return_qs=True))
 
         X = []
         y = []
 
         # Enumerate transitions
         for index, (current_state, action, reward, new_current_states, done) in enumerate(minibatch):
-            # Randomly set tile choice to greedy or not greedy variant
-            greedy = np.random.random() < self.epsilon
 
             # If not a terminal state, get new qs from future states, otherwise set it to reward
             if not done:
                 max_future_Qs = [np.max(qs) for qs in future_predicted_sequences[index]]
-                new_Qs = [reward + c.DISCOUNT * fqs for fqs in max_future_Qs]
+                new_Qs = np.array([reward + c.DISCOUNT * fqs for fqs in max_future_Qs])
             else:
-                new_Qs = [reward for _ in range(len(future_predicted_sequences[index]))]
-
-            new_Qs = np.array(new_Qs)
+                new_Qs = np.array([reward for _ in range(len(future_predicted_sequences[index]))])
 
             # Update Q values for given state
             current_qs = current_predicted_sequences[index]
-            enc_action = self.one_hot_encode(action)
-            for n, action_n in enumerate(enc_action):
-                current_qs[n][self.choose_new_tile(action_n, greedy)] = new_Qs[n]
+            for n, action_n in enumerate(action):
+                current_qs[n][action_n] = new_Qs[n]
 
             # Insert sliding window states into X
             generator_input = []
@@ -208,7 +199,7 @@ class Generator:
         output = [] if return_qs else predicted_states
         for state in states:
             # Randomly set tile choice to greedy or not greedy variant
-            greedy = np.random.random() < self.epsilon
+            greedy = np.random.random() > self.epsilon
 
             predicted_states.append([])
             if return_qs:
@@ -229,9 +220,9 @@ class Generator:
     def choose_new_tile(self, qs, greedy):
         if not c.CHUNK_BASED_GREEDY:
             # Randomly set tile choice to greedy or not greedy variant
-            greedy = np.random.random() < self.epsilon
+            greedy = np.random.random() > self.epsilon
 
-        if greedy:
+        if greedy or c.GREEDY:
             # Greedy-variant
             new_tile = np.argmax(qs)
         else:
@@ -259,7 +250,7 @@ class Generator:
         q_values = []
 
         # Randomly set tile choice to greedy or not greedy variant
-        greedy = np.random.random() < self.epsilon
+        greedy = np.random.random() > self.epsilon
 
         for _ in range(c.GEN_LENGTH):
             q_values.append([])

@@ -336,13 +336,6 @@ class Level(tools.State):
                 print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
                 time.sleep(1)
 
-        # level_state.print_2d(level_state.state)
-        # for tile in tmp:
-        #     print(tile)
-        # self.randomly_clear_tiles([self.solid_group,
-        #                            self.brick_group,
-        #                            self.box_group])
-
     def randomly_clear_tiles(self, groups):
         for group in groups:
             if np.random.random() < 0.02:
