@@ -321,7 +321,7 @@ class Level(tools.State):
                 textsurface = self.q_font.render(q_data[2], True, (255, 255, 255))
                 self.background.blit(textsurface, (q_data[0] + 5, q_data[1] + 15))
 
-        if c.TRAIN_GEN and not self.mario_done:
+        if c.TRAIN_GEN and not self.mario_done and self.insert_zero_index:
             # Update weights in generator network and increment training_sessions if model is trained
             self.training_sessions += self.generator.train()
 
@@ -800,6 +800,7 @@ class Level(tools.State):
             print("zero_index:", self.zero_reward_index)
             gen = self.gen_list[self.zero_reward_index]
             gen[c.REWARD] = -1
+            gen[c.DONE] = True
             self.generator.update_replay_memory(gen)
 
         # if c.PRINT_GEN_REWARD:
