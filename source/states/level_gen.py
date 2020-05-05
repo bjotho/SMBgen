@@ -16,9 +16,6 @@ if c.HUMAN_PLAYER:
 else:
     from source.components import fast_player as player
 
-if c.PRINT_GEN_REWARD:
-    import matplotlib.pyplot as plt
-
 maps_path = os.path.join(os.path.dirname(os.path.realpath(__file__).replace('/states', '')), 'data', 'maps')
 
 
@@ -803,18 +800,8 @@ class Level(tools.State):
             print("zero_index:", self.zero_reward_index)
             gen = self.gen_list[self.zero_reward_index]
             gen[c.REWARD] = -1
+            gen[c.DONE] = True
             self.generator.update_replay_memory(gen)
-
-        # if c.PRINT_GEN_REWARD:
-        #     x = np.linspace(0.2, 10, 100)
-        #     plt.plot(x, np.e**(-(1/2) * ((x-3)**2)))
-        #     plt.plot(self.dx_list, self.reward_list, 'ro')
-        #     plt.grid(True, which='both')
-        #     plt.axis([-5, 10, 0, 2])
-        #     plt.axvline(x=0, color='black')
-        #     plt.xlabel('dx')
-        #     plt.ylabel('Reward')
-        #     plt.show()
 
     def update_viewport(self):
         third = self.viewport.x + self.viewport.w // 3
