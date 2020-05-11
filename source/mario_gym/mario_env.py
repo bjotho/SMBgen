@@ -9,13 +9,13 @@ from source import tools
 from source import constants as c
 from source.mario_gym.actions import COMPLEX_MOVEMENT
 from source.states import main_menu, load_screen, level_state
-from source.mario_gym.curiosity import Rollout
+from source.mario_gym.curiosity import Curiosity
 if c.GENERATE_MAP:
     from source.states import level_gen as level
 else:
     from source.states import level
 
-getsess = tf.compat.v1.get_default_session
+#getsess = tf.compat.v1.get_default_session
 
 class MarioEnv(gym.Env):
 
@@ -64,6 +64,8 @@ class MarioEnv(gym.Env):
         # print("mario_env._CHAR_MAP:")
         # self.print_dict(self._CHAR_MAP)
         self.setup_spaces(actions)
+
+        self.curiosity = Curiosity(self.observation_space, self.action_space)
 
     @staticmethod
     def print_dict(_dict):
@@ -141,6 +143,7 @@ class MarioEnv(gym.Env):
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
+
         reward = 0
         observation = None
         if self.game.state == self.game.state_dict[c.LEVEL]:
@@ -170,43 +173,9 @@ class MarioEnv(gym.Env):
         if self.has_window:
             self.render()
 
+        self.curiosity.step_counter()
         # returns observation, reward, done, info
         return observation, reward, self.done, info
-
-    def calculate_loss(self, ob, last_ob, acs):
-        n_chunks = 8
-        n = ob.shape[0]
-        chunk_size = n // n_chunks
-        assert n % n_chunks == 0
-        sli = lambda i: slice(i * chunk_size, (i + 1) * chunk_size)
-        return np.concatenate([getsess().run(self.loss,
-                                             {self.obs: ob[sli(i)], self.last_ob: last_ob[sli(i)],
-                                              self.ac: acs[sli(i)]}) for i in range(n_chunks)], 0)
-
-    def get_loss(self):
-        ac = tf.one_hot(self.ac, self.ac_space.n, axis=2)
-        sh = tf.shape(ac)
-        ac = flatten_two_dims(ac)
-
-        def add_ac(x):
-            return tf.concat([x, ac], axis=-1)
-
-        with tf.variable_scope(self.scope):
-            x = flatten_two_dims(self.features)
-            x = tf.layers.dense(add_ac(x), self.hidsize, activation=tf.nn.leaky_relu)
-
-            def residual(x):
-                res = tf.layers.dense(add_ac(x), self.hidsize, activation=tf.nn.leaky_relu)
-                res = tf.layers.dense(add_ac(res), self.hidsize, activation=None)
-                return x + res
-
-            for _ in range(4):
-                x = residual(x)
-            n_out_features = self.out_features.get_shape()[-1].value
-            x = tf.layers.dense(add_ac(x), n_out_features, activation=None)
-            x = unflatten_first_dim(x, sh)
-        return tf.reduce_mean((x - tf.stop_gradient(self.out_features)) ** 2, -1)
-
 
     def _reward(self):
         """Mario reward function"""
@@ -300,3 +269,37 @@ class MarioEnv(gym.Env):
     def render(self, mode='human', close=False):
         if mode == 'human':
             self.pg.display.update()
+
+    def calculate_loss(self, ob, last_ob, acs):
+        n_chunks = 8
+        n = ob.shape[0]
+        chunk_size = n // n_chunks
+        assert n % n_chunks == 0
+        sli = lambda i: slice(i * chunk_size, (i + 1) * chunk_size)
+        return np.concatenate([getsess().run(self.loss,
+                                            {self.obs: ob[sli(i)], self.last_ob: last_ob[sli(i)],
+                                            self.ac: acs[sli(i)]}) for i in range(n_chunks)], 0)
+
+    def get_loss(self):
+        ac = tf.one_hot(self.ac, self.ac_space.n, axis=2)
+        sh = tf.shape(ac)
+        ac = flatten_two_dims(ac)
+
+        def add_ac(x):
+            return tf.concat([x, ac], axis=-1)
+
+        with tf.variable_scope(self.scope):
+            x = flatten_two_dims(self.features)
+            x = tf.layers.dense(add_ac(x), self.hidsize, activation=tf.nn.leaky_relu)
+
+            def residual(x):
+                res = tf.layers.dense(add_ac(x), self.hidsize, activation=tf.nn.leaky_relu)
+                res = tf.layers.dense(add_ac(res), self.hidsize, activation=None)
+                return x + res
+
+            for _ in range(4):
+                x = residual(x)
+            n_out_features = self.out_features.get_shape()[-1].value
+            x = tf.layers.dense(add_ac(x), n_out_features, activation=None)
+            x = unflatten_first_dim(x, sh)
+        return tf.reduce_mean((x - tf.stop_gradient(self.out_features)) ** 2, -1)
