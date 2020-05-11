@@ -251,6 +251,7 @@ class MarioEnv(gym.Env):
                 print("zero_index:", game.zero_reward_index)
                 gen = game.gen_list[game.zero_reward_index]
                 gen[c.REWARD] = -1
+                gen[c.DONE] = True
                 game.generator.update_replay_memory(gen)
         except AttributeError:
             pass

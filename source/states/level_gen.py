@@ -27,7 +27,7 @@ class Level(tools.State):
         tools.State.__init__(self)
         self.player = None
         self.map_gen_file = os.path.join(maps_path, 'level_gen.txt')
-        self.generator = generation.Generator(self.map_gen_file, epsilon=0.5)
+        self.generator = generation.Generator(self.map_gen_file, epsilon=1.0)
         self.training_sessions = max(0, self.generator.start_checkpoint)
         self.q_font = pg.font.SysFont("dejavusansmono", 14, bold=True)
         self.GEN_DICT = {
@@ -321,7 +321,7 @@ class Level(tools.State):
                 textsurface = self.q_font.render(q_data[2], True, (255, 255, 255))
                 self.background.blit(textsurface, (q_data[0] + 5, q_data[1] + 15))
 
-        if c.TRAIN_GEN and not self.mario_done:
+        if c.TRAIN_GEN and not self.mario_done and self.insert_zero_index:
             # Update weights in generator network and increment training_sessions if model is trained
             self.training_sessions += self.generator.train()
 
@@ -329,19 +329,6 @@ class Level(tools.State):
                and self.training_sessions > self.generator.start_checkpoint:
                 self.generator.save_model(num=self.training_sessions)
                 self.generator.save_replay_memory(num=self.training_sessions)
-
-            # Message player that the game is about to resume.
-            # Due to lag when generating level content.
-            if self.player.rect.x > self.player_x and (not self.read) and c.HUMAN_PLAYER:
-                print("\\\\\\\\\n \\\\\\\\\n  \\\\\\\\\n   \\\\\\\\\n   ////\n  ////\n ////\n////")
-                time.sleep(1)
-
-        # level_state.print_2d(level_state.state)
-        # for tile in tmp:
-        #     print(tile)
-        # self.randomly_clear_tiles([self.solid_group,
-        #                            self.brick_group,
-        #                            self.box_group])
 
     def randomly_clear_tiles(self, groups):
         for group in groups:
@@ -489,6 +476,9 @@ class Level(tools.State):
             self.check_player_y_collisions()
 
     def check_gen_reward(self):
+        """Check if Mario has traversed a chunk of generated tiles and insert a transition
+        into the generator replay memory cotaining (state, action, reward, new_state, done)"""
+
         mario_x = level_state.get_coordinates(self.player.rect.x + self.player.rect.w, 0)[0] + 1
         for gen in self.gen_list:
             if c.REWARD in gen:
@@ -810,6 +800,7 @@ class Level(tools.State):
             print("zero_index:", self.zero_reward_index)
             gen = self.gen_list[self.zero_reward_index]
             gen[c.REWARD] = -1
+            gen[c.DONE] = True
             self.generator.update_replay_memory(gen)
 
         # if c.PRINT_GEN_REWARD:
