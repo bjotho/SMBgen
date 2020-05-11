@@ -2,17 +2,20 @@ import random
 import gym
 import os
 import numpy as np
+import tensorflow as tf
 
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_RETURN, K_s, K_a, KMOD_NONE
 from source import tools
 from source import constants as c
 from source.mario_gym.actions import COMPLEX_MOVEMENT
 from source.states import main_menu, load_screen, level_state
+from source.mario_gym.curiosity import Rollout
 if c.GENERATE_MAP:
     from source.states import level_gen as level
 else:
     from source.states import level
 
+getsess = tf.compat.v1.get_default_session
 
 class MarioEnv(gym.Env):
 
@@ -22,16 +25,13 @@ class MarioEnv(gym.Env):
         fps = 60 if "fps" not in config else config["fps"]
         actions = COMPLEX_MOVEMENT if "actions" not in config else config["actions"]
 
-        if has_window:
+        if not has_window:
             os.environ['SDL_VIDEODRIVER'] = 'dummy'
         import pygame
 
         self.pg = pygame
 
-        self.last_observation = None
-        self.observation = None
-        self.step_count = 0
-
+        self.has_window = has_window
         self.done = False
         self.mario_x_last = c.DEBUG_START_X
         self.clock_last = c.GAME_TIME_OUT
@@ -58,12 +58,33 @@ class MarioEnv(gym.Env):
         }
 
         self._ACTION_TO_KEYS = {}
-        self._TILE_MAP = {}
+        self._TILE_MAP, self._CHAR_MAP = self.tokenize_tiles(c.TILES)
+        # print("mario_env._TILE_MAP:")
+        # self.print_dict(self._TILE_MAP)
+        # print("mario_env._CHAR_MAP:")
+        # self.print_dict(self._CHAR_MAP)
         self.setup_spaces(actions)
+
+    @staticmethod
+    def print_dict(_dict):
+        for pair in _dict.items():
+            print(pair)
 
     def buttons(self) -> list:
         """Return the buttons that can be used as actions."""
         return list(self._button_map.keys())
+
+    def tokenize_tiles(self, tiles: list):
+        # Tokenize tiles and populate tile_map dict with (tile_id: token) pairs,
+        # and populate char_map dict with (token: tile_id) pairs.
+        tile_map = {}
+        char_map = {}
+        token_step = 1.0 / (len(tiles) - 1)
+        for n, tile in enumerate(tiles):
+            tile_map[tile] = n * token_step
+            char_map[n * token_step] = tile
+
+        return tile_map, char_map
 
     def setup_spaces(self, actions: list):
         """Setup binary to discrete action space converter.
@@ -71,33 +92,31 @@ class MarioEnv(gym.Env):
 
         # create the new action space
         self.action_space = gym.spaces.Discrete(len(actions))
+
         # create the new observation space
-        self.observation_frames = np.zeros(shape=(c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE))
-        # print("self.observation_frames:", self.observation_frames)
+        self.obs_counter = 0
         self.observation = None
+        self.observation_frames = np.zeros(shape=(c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE))
         self.observation_space = gym.spaces.Box(low=0, high=1, shape=(c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE))
+
         # create the action map from the list of discrete actions
         self._action_map = {}
         self._action_meanings = {}
+
         # iterate over all the actions (as button lists)
         for action, button_list in enumerate(actions):
             # the value of this action's bitmap
             action_list = []
+
             # iterate over the buttons in this button list
             for button in button_list:
                 action_list.append(self._button_map[button])
+
             # set this action maps value to the byte action value
             self._action_map[action] = action_list
             self._action_meanings[action] = ' '.join(button_list)
-            self.step_count += 1
 
         self.setup_action_to_keys()
-        self.tokenize_tiles()
-
-    def tokenize_tiles(self):
-        token_step = 1.0 / (len(c.TILES) - 1)
-        for n, tile in enumerate(c.TILES):
-            self._TILE_MAP[tile] = n * token_step
 
     def setup_action_to_keys(self):
         """Map action to keyboard keys"""
@@ -118,43 +137,133 @@ class MarioEnv(gym.Env):
 
     def step(self, action):
         action = self._ACTION_TO_KEYS[action]
-        # self.game.event_loop()
         self.game.keys = action
         self.game.update()
         self.game.clock.tick(self.game.fps)
 
         reward = 0
+        observation = None
         if self.game.state == self.game.state_dict[c.LEVEL]:
-            self.observation = self.get_observation()
+            observation = self.get_observation()
             reward = self._reward()
             if self.game.state_dict[c.LEVEL].done or self.game.state_dict[c.LEVEL].player.dead:
-                reward = -15
                 self.done = True
 
         info = self.game.state.persist
-        self.last_observation = self.observation
+
+        if c.PRINT_OBSERVATION:
+            if not self.obs_counter % 10:
+                print("observation:")
+                print("[")
+                for frame in self.observation_frames:
+                    print("  [")
+                    for col in frame:
+                        print("   ", [self._CHAR_MAP[tile] for tile in col])
+
+                    print("  ]")
+
+                print("]")
+
+            self.obs_counter += 1
+            self.obs_counter = self.obs_counter % 10
+
+        if self.has_window:
+            self.render()
+
         # returns observation, reward, done, info
-        return self.observation, self.last_observation, reward, self.done, info
+        return observation, reward, self.done, info
+
+    def calculate_loss(self, ob, last_ob, acs):
+        n_chunks = 8
+        n = ob.shape[0]
+        chunk_size = n // n_chunks
+        assert n % n_chunks == 0
+        sli = lambda i: slice(i * chunk_size, (i + 1) * chunk_size)
+        return np.concatenate([getsess().run(self.loss,
+                                             {self.obs: ob[sli(i)], self.last_ob: last_ob[sli(i)],
+                                              self.ac: acs[sli(i)]}) for i in range(n_chunks)], 0)
+
+    def get_loss(self):
+        ac = tf.one_hot(self.ac, self.ac_space.n, axis=2)
+        sh = tf.shape(ac)
+        ac = flatten_two_dims(ac)
+
+        def add_ac(x):
+            return tf.concat([x, ac], axis=-1)
+
+        with tf.variable_scope(self.scope):
+            x = flatten_two_dims(self.features)
+            x = tf.layers.dense(add_ac(x), self.hidsize, activation=tf.nn.leaky_relu)
+
+            def residual(x):
+                res = tf.layers.dense(add_ac(x), self.hidsize, activation=tf.nn.leaky_relu)
+                res = tf.layers.dense(add_ac(res), self.hidsize, activation=None)
+                return x + res
+
+            for _ in range(4):
+                x = residual(x)
+            n_out_features = self.out_features.get_shape()[-1].value
+            x = tf.layers.dense(add_ac(x), n_out_features, activation=None)
+            x = unflatten_first_dim(x, sh)
+        return tf.reduce_mean((x - tf.stop_gradient(self.out_features)) ** 2, -1)
+
 
     def _reward(self):
+        """Mario reward function"""
+
+        # Current x-value of mario
         current_x = self.game.state_dict[c.LEVEL].player.rect.x
+
+        # Difference in current x-value and last x-value
         reward = current_x - self.mario_x_last
+
+        # Update last x-value
         self.mario_x_last = current_x
+
+        # Time left on game clock
         clock_now = self.game.state_dict[c.LEVEL].overhead_info.time
+
+        # Difference in remaining time. Clock counts down from 300,
+        # hence no clock tick: reward += 0, clock tick: reward += 1
         reward += self.clock_last - clock_now
+
+        # Update last clock value
         self.clock_last = clock_now
+
+        # If mario is dead, set reward to -15
+        if self.game.state_dict[c.LEVEL].player.dead:
+            reward = -15
+
         return reward
 
     def _will_reset(self):
         """Handle any hacking before a reset occurs."""
+        try:
+            game = self.game.state_dict[c.LEVEL]
+
+            # Decay epsilon
+            if game.generator.epsilon > c.MIN_EPSILON:
+                game.generator.epsilon *= c.EPSILON_DECAY
+                game.generator.epsilon = max(c.MIN_EPSILON, game.generator.epsilon)
+
+            # Insert penalty for generator at transition (generation) mario was unable to traverse.
+            if not game.mario_done and game.insert_zero_index:
+                print("zero_index:", game.zero_reward_index)
+                gen = game.gen_list[game.zero_reward_index]
+                gen[c.REWARD] = -1
+                game.generator.update_replay_memory(gen)
+        except AttributeError:
+            pass
+
         if self.game.state.next == c.GAME_OVER:
             self.game.state.persist = {
+                c.BASE_FPS: 60,
                 c.COIN_TOTAL: 0,
                 c.SCORE: 0,
                 c.LIVES: 3,
                 c.TOP_SCORE: 0,
                 c.CURRENT_TIME: 0.0,
-                c.LEVEL_NUM: random.choice([1, 3, 4]),
+                c.LEVEL_NUM: 1,
                 c.PLAYER_NAME: c.PLAYER_MARIO
             }
 
@@ -168,7 +277,6 @@ class MarioEnv(gym.Env):
         for _ in range(c.OBS_FRAMES):
             self.observation_frames = np.delete(self.observation_frames, 0, axis=0)
             self.observation_frames = np.concatenate((self.observation_frames, self.observation))
-        #print("observation_frames:", [k for k in self.observation_frames])
 
     def reset(self):
         """Reset the environment and return the initial observation."""
