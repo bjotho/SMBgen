@@ -5,7 +5,9 @@ gym
 tabulate
 pygame
 opencv-python
-tensorflow
+tensorflow>=2.0.0b1
+tensorflow-probability
 tensorboardX
 pandas
 numpy
+setuptools>=41.0.0

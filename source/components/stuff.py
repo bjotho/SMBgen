@@ -21,6 +21,7 @@ class Collider(pg.sprite.Sprite):
             for j in range(y, y + height, c.TILE_SIZE):
                 level_state.insert_observation(i, j, c.SOLID_ID)
 
+
 class Checkpoint(pg.sprite.Sprite):
     def __init__(self, x, y, width, height, type, enemy_groupid=0, map_index=0, name=c.MAP_CHECKPOINT):
         pg.sprite.Sprite.__init__(self)
@@ -35,7 +36,7 @@ class Checkpoint(pg.sprite.Sprite):
 
 
 class Stuff(pg.sprite.Sprite):
-    def __init__(self, x, y, sheet, image_rect_list, scale):
+    def __init__(self, x, y, sheet, image_rect_list, scale, textsurface=None):
         pg.sprite.Sprite.__init__(self)
         
         self.frames = []
@@ -47,6 +48,9 @@ class Stuff(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
+        if textsurface is not None and c.PRINT_Q_VALUES:
+            self.image.blit(textsurface, (3, 15))
     
     def update(self, *args):
         pass

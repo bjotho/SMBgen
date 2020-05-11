@@ -14,10 +14,10 @@ np.random.seed(seed)
 print("random seed:", seed)
 
 pg.init()
-pg.event.set_allowed([pg.KEYDOWN, pg.KEYUP, pg.QUIT])
-pg.display.set_caption(c.ORIGINAL_CAPTION)
 SCREEN = pg.display.set_mode(c.SCREEN_SIZE)
 SCREEN_RECT = SCREEN.get_rect()
+pg.event.set_allowed([pg.KEYDOWN, pg.KEYUP, pg.QUIT])
+pg.display.set_caption(c.ORIGINAL_CAPTION)
 
 # Reset level_gen.txt file if SAVE_LEVEL is set to False
 if not c.SAVE_LEVEL:

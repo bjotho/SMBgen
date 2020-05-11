@@ -1,39 +1,27 @@
 from source import constants as c
+from source.states import level_state
 import os
+# import objgraph
 
 if not c.HUMAN_PLAYER:
     from threading import Thread
     from source.mario_gym.mario_env import MarioEnv
     from source.mario_gym.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
     from ray import init as ray_init
+    from ray import shutdown as ray_shutdown
+    from ray.memory_monitor import RayOutOfMemoryError
     from ray.tune.registry import register_env
     from ray.rllib.agents import dqn
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+_ray_error = False
+save_interval = 10
+save_counter = 0
 
 
 def main():
     if c.HUMAN_PLAYER:
-        import sys
-        from source import tools
-        from source.states import main_menu, load_screen
-        if c.GENERATE_MAP:
-            from source.states import level_gen as level
-        else:
-            from source.states import level
-
-        game = tools.Control()
-        game.fps = 60
-        state_dict = {c.MAIN_MENU: main_menu.Menu(),
-                      c.LOAD_SCREEN: load_screen.LoadScreen(),
-                      c.LEVEL: level.Level(),
-                      c.GAME_OVER: load_screen.GameOver(),
-                      c.TIME_OUT: load_screen.TimeOut()}
-        game.setup_states(state_dict, c.MAIN_MENU)
-        if c.SKIP_MENU:
-            game.flip_state(force=c.LEVEL)
-        game.main()
-        sys.exit(0)
+        run_game_main_and_exit()
 
     checkpoint_dir = os.path.join(dir_path, "checkpoints")
     checkpoint_all = os.path.join(dir_path, "checkpoints", "all")
@@ -41,79 +29,115 @@ def main():
     os.makedirs(checkpoint_dir, exist_ok=True)
     os.makedirs(checkpoint_all, exist_ok=True)
 
-    register_env(c.ENV_NAME, lambda config: MarioEnv(config))
-
-    def find_latest_checkpoint():
-        largest = -1
-        for chkpath in os.listdir(checkpoint_all):
-            try:
-                checkpoint_id = int(chkpath.split("_")[1])
-                if checkpoint_id > largest:
-                    largest = checkpoint_id
-            except ValueError:
-                pass
-
-
-        if largest == -1:
-            return None
-        else:
-            ret_path = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}" + f"/checkpoint-{str(largest)}")
-            print("Running on ", ret_path)
-            return ret_path
-
     def test(trainer):
+        global _ray_error
+
         config = dict(
             actions=COMPLEX_MOVEMENT,
-            window=False,
+            window=True,
             fps=60_000
         )
         env = MarioEnv(config)
 
-        while True:
+        while not _ray_error:
             current_state = env.reset()
             done = False
 
-            while not done:
+            while not done and not _ray_error:
                 action = trainer.compute_action(current_state)
                 new_state, reward, done, info = env.step(action)
-                env.render()
                 current_state = new_state
 
-    ray_init()
-
-    trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
-        "num_gpus": 2,
-        "num_workers": 8,
-        # Whether to prefer RLlib preprocessors ("rllib") or deepmind ("deepmind") when applicable.
-        #"preprocessor_pref": "deepmind",
-        "model": {
-            "dim": 4,
-            "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
-        }
-        # "train_batch_size": 2048
-    })
-    latest_checkpoint = find_latest_checkpoint()
-    if latest_checkpoint:
-        trainer.restore(latest_checkpoint)
-
-    save_interval = 10
-    save_counter = 0
-
-    eval_thread = Thread(target=test, args=(trainer, ))
-    eval_thread.daemon = True
-    eval_thread.start()
-    while True:
-        trainer.train()
-        if save_counter % save_interval == 1:
+        if c.TRAIN_GEN:
+            model_num = env.game.state_dict[c.LEVEL].training_sessions
+            env.game.state_dict[c.LEVEL].generator.save_model(num=model_num)
+            env.game.state_dict[c.LEVEL].generator.save_replay_memory(num=model_num)
             checkpoint = trainer.save(checkpoint_all)
-            print(checkpoint)
-            """_chkp_path = os.path.dirname(os.path.abspath(checkpoint))
-            try:
-                os.remove(checkpoint_latest)
-            except FileNotFoundError:
-                pass
-            os.symlink(_chkp_path, checkpoint_latest)
-            #shutil.copy(checkpoint, checkpoint_latest)
-            print("checkpoint saved at", checkpoint)"""
-        save_counter += 1
-        print("save counter:",save_counter*10,"%")
+            print("Saved Mario checkpoint:", checkpoint)
+
+    def restart_ray():
+        global _ray_error
+        global save_interval
+        global save_counter
+        _ray_error = False
+
+        largest = level_state.find_latest_checkpoint(checkpoint_all)
+        latest_checkpoint = None
+        if largest > -1:
+            latest_checkpoint = os.path.join(checkpoint_all, f"checkpoint_{str(largest)}", f"checkpoint-{str(largest)}")
+
+        register_env(c.ENV_NAME, lambda config: MarioEnv(config))
+
+        ray_init(ignore_reinit_error=True)
+
+        trainer = dqn.ApexTrainer(env=c.ENV_NAME, config={
+            "num_gpus": 1,
+            "num_workers": 1,
+            "eager": False,
+            "model": {
+                "conv_filters": [[c.OBS_FRAMES, c.OBS_SIZE, c.OBS_SIZE]]
+            },
+            "env_config": dict(
+                actions=COMPLEX_MOVEMENT,
+                window=False,
+                fps=60_000
+            )
+            # "train_batch_size": 2048
+        })
+        if latest_checkpoint and c.LOAD_CHECKPOINT:
+            trainer.restore(latest_checkpoint)
+            print("Loaded Mario checkpoint:", latest_checkpoint)
+
+        if c.EVALUATE:
+            eval_thread = Thread(target=test, args=(trainer, ))
+            eval_thread.daemon = True
+            eval_thread.start()
+        try:
+            while True:
+                trainer.train()
+                if save_counter % save_interval == 1:
+                    checkpoint = trainer.save(checkpoint_all)
+                    print("Saved Mario checkpoint:", checkpoint)
+
+                save_counter += 1
+
+        except RayOutOfMemoryError:
+            print("Ray out of memory!")
+            # print("********************* objgraph.show_most_common_types() ************************")
+            # # Display most common types in console.
+            # objgraph.show_most_common_types()
+            # print("********************* objgraph.show_growth(limit=10) ************************")
+            # # Display common type growth in console.
+            # objgraph.show_growth(limit=10)
+        finally:
+            # print("Restarting ray...")
+            _ray_error = True
+            if c.EVALUATE:
+                eval_thread.join()
+            ray_shutdown()
+            restart_ray()
+
+    restart_ray()
+
+
+def run_game_main_and_exit():
+    import sys
+    from source import tools
+    from source.states import main_menu, load_screen
+    if c.GENERATE_MAP:
+        from source.states import level_gen as level
+    else:
+        from source.states import level
+
+    game = tools.Control()
+    game.fps = 60
+    state_dict = {c.MAIN_MENU: main_menu.Menu(),
+                  c.LOAD_SCREEN: load_screen.LoadScreen(),
+                  c.LEVEL: level.Level(),
+                  c.GAME_OVER: load_screen.GameOver(),
+                  c.TIME_OUT: load_screen.TimeOut()}
+    game.setup_states(state_dict, c.MAIN_MENU)
+    if c.SKIP_MENU:
+        game.flip_state(force=c.LEVEL)
+    game.main()
+    sys.exit(0)

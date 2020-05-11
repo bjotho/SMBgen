@@ -2,13 +2,13 @@ __author__ = 'marble_xu'
 
 DEBUG = False
 DEBUG_START_X = 110
-DEBUG_START_Y = 536
+DEBUG_START_Y = 534
 
 SCREEN_HEIGHT = 600
 SCREEN_WIDTH = 800
 SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
 
-ORIGINAL_CAPTION = "Super Mario Bros"
+ORIGINAL_CAPTION = 'Super Mario Bros.'
 
 # COLORS
 #                R    G    B
@@ -52,6 +52,7 @@ PLAYER1 = '1 PLAYER GAME'
 PLAYER2 = '2 PLAYER GAME'
 
 # GAME INFO DICTIONARY KEYS
+BASE_FPS = 'base fps'
 COIN_TOTAL = 'coin total'
 SCORE = 'score'
 TOP_SCORE = 'top score'
@@ -63,28 +64,37 @@ PLAYER_MARIO = 'mario'
 PLAYER_LUIGI = 'luigi'
 
 # MAP GENERATION
-GENERATE_MAP = False
+GENERATE_MAP = True
+RANDOM_GEN = False
+TRAIN_GEN = True
+LOAD_GEN_MODEL = True
 INSERT_GROUND = True
 ONLY_GROUND = False
 READ = True
 WRITE = False
 SAVE_LEVEL = False
-PRINT_REWARD = False
+PRINT_GEN_REWARD = False
+PRINT_Q_VALUES = True
 SNAKING = True
-GEN_BORDER = 'gen_border'
+CHUNK_BASED_GREEDY = False  # If False -> Tile based greedy (greedy determined for each individual tile)
 GEN_HEIGHT = 580
-GEN_DISTANCE = 440
+GEN_DISTANCE = 2 * SCREEN_WIDTH
 GEN_LENGTH = 5
 PLATFORM_LENGTH = 5
 Y_OFFSET = 64
 COL_HEIGHT = 13
 TILE_SIZE = 43
-GEN_MEMORY = 100
-MEMORY_LENGTH = 128
-ENEMY_UPDATE_RADIUS = SCREEN_WIDTH*2
-
-# GEN NETWORK PARAMS
-
+GEN_PX_LEN = GEN_LENGTH * TILE_SIZE
+GEN_MODEL_SAVE_INTERVAL = 100  # Number of training sessions
+REP_MEM = 'rep_mem'
+GEN_BORDER = 'gen_border'
+GEN_LINE = 'gen_line'
+TIMESTEP = 'timestep'
+PLAYER_X = 'player_x'
+REWARD = 'reward'
+OPTIMAL_V = 'optimal_v'
+DONE = 'done'
+UPDATE_RADIUS = 1 * SCREEN_WIDTH
 
 # GENERATION IDENTIFIERS
 AIR_ID = '_'
@@ -109,6 +119,7 @@ FIRESTICK_ID = '4'
 FIRE_KOOPA_ID = '5'
 FIRE_ID = 'w'
 ENEMY_IDS = [GOOMBA_ID, KOOPA_ID, FLY_KOOPA_ID, PIRANHA_ID, FIRESTICK_ID, FIRE_KOOPA_ID, FIRE_ID]
+SOLID_IDS = [GROUND_ID, BRICK_ID, BOX_ID, STEP_ID, SOLID_ID, PIPE_ID]
 
 TILES = [
     STAR_ID,
@@ -137,17 +148,34 @@ GENERATOR_TILES = [
     KOOPA_ID
 ]
 
+# FOR TESTING PURPOSES (reduce lag)
+# while len(GENERATOR_TILES) < 30:
+#     GENERATOR_TILES.append(AIR_ID)
+
+# GENERATION NETWORK PARAMETERS
+LEARNING_RATE = 0.001
+MEMORY_LENGTH = 64
+LSTM_CELLS = 64
+EPSILON_DECAY = 0.995
+MIN_EPSILON = 0.01
+REPLAY_MEMORY_SIZE = 10_000
+MIN_REPLAY_MEMORY_SIZE = 200
+MINIBATCH_SIZE = 20
+DISCOUNT = 0.99
+
 # GYM COMPONENTS
 ENV_NAME = 'MarioEnv'
 ACTION_KEYS = 323
+EVALUATE = False
 SKIP_MENU = True
 HUMAN_PLAYER = False
+LOAD_CHECKPOINT = True
 CURIOSITY = False
 PRINT_OBSERVATION = False
 PRINT_LEVEL = False
-OBS_RADIUS = 5
+OBS_RADIUS = 10
 OBS_SIZE = 2 * OBS_RADIUS + 1
-OBS_FRAMES = 11
+OBS_FRAMES = OBS_SIZE
 
 # MAP COMPONENTS
 MAP_IMAGE = 'image_name'
@@ -230,7 +258,7 @@ SMALL_TO_BIG = 'small to big'
 BIG_TO_FIRE = 'big to fire'
 BIG_TO_SMALL = 'big to small'
 FLAGPOLE = 'flag pole'
-WALK_AUTO = 'walk auto'     # not handle key input in this state
+WALK_AUTO = 'walk auto'     # ignoring key input in this state
 END_OF_LEVEL_FALL = 'end of level fall'
 IN_CASTLE = 'in castle'
 DOWN_TO_PIPE = 'down to pipe'

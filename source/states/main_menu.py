@@ -12,7 +12,8 @@ from source.components import info
 class Menu(tools.State):
     def __init__(self):
         tools.State.__init__(self)
-        persist = {c.COIN_TOTAL: 0,
+        persist = {c.BASE_FPS: 60,
+                   c.COIN_TOTAL: 0,
                    c.SCORE: 0,
                    c.LIVES: 3,
                    c.TOP_SCORE: 0,
