@@ -272,7 +272,7 @@ MAX_Y_VEL = 'max_y_velocity'
 MAX_RUN_SPEED = 'max_run_speed'
 MAX_WALK_SPEED = 'max_walk_speed'
 SMALL_TURNAROUND = .35
-JUMP_GRAVITY = .31
+JUMP_GRAVITY = .25
 GRAVITY = 1.01
 
 # LIST of ENEMIES

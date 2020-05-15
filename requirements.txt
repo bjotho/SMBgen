@@ -1,4 +1,5 @@
 matplotlib
+plotly
 ray[rllib]
 lz4
 gym
